@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.out</target>
+    <layout class="ch.qos.logback.classic.PatternLayout">
+<!--      <Pattern>%-23d [%thread] %-5level %logger{32} - %m%n</Pattern>-->
+      <Pattern>%date{HH:mm:ss.SSS} - %m%n</Pattern>
+    </layout>
+  </appender>
+
+<!--  <logger name="com" level="warn"/>-->
+  <logger name="com.example.smpp" level="trace"/>
+<!--  <logger name="com.example.smpp" level="warn"/>-->
+  <logger name="com.example.smppServer.main.SmppServerMain" level="info"/>
+  <logger name="com.example.smppServer.main.SmppClientMain" level="info"/>
+
+<!--  <root level="trace">-->
+  <root level="warn">
+    <appender-ref ref="CONSOLE"/>
+  </root>
+
+</configuration>
