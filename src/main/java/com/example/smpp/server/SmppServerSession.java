@@ -42,6 +42,9 @@ public class SmppServerSession extends ConnectionBase implements SmppSession {
 
   }
 
+  /**
+   * generic_nack as response?
+   */
   @Override
   public void handleMessage(Object msg) {
     if (msg instanceof PduRequest) {

@@ -6,7 +6,7 @@ import io.vertx.core.Future;
 
 public interface SmppSession {
 //  SmppSessionBindType getBindType(); // TRANCEIVER, TRANSMITTER, RECEIVER, TRANCEIVER(smpp-v5?)
-//  SmppSessionState getState(); // INITIAL, OPENED, BINDING, BOUND, UNBINDING, CLOSED
+//  SmppSessionState getState(); // INITIAL?, OUTBOUND, OPENED, BINDING, BOUND, UNBINDING, CLOSED
 //  Set<SmppSession> getPool(); // Другие сессии того же клиента
 //  String getId(); // id = systemId + bind_type + serial_number
 //  public boolean sniffInbound(Pdu pdu);
