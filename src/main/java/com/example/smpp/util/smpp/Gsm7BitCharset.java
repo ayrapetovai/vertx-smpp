@@ -1,4 +1,4 @@
-package com.example.smpp.util;
+package com.example.smpp.util.smpp;
 
 import java.nio.CharBuffer;
 import java.nio.ByteBuffer;
@@ -423,6 +423,7 @@ public class Gsm7BitCharset extends Charset {
       data |= (((int) strBytes[3]) & 0xF) << 24;
     }
     if (data < 0) {
+      // never be here
       throw  new IllegalStateException(
           strBytes.length + " bytes are bad '" + s + "' [" +
               Integer.toHexString(strBytes[0]) + "," +

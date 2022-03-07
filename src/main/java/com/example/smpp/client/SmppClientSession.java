@@ -6,7 +6,7 @@ import com.cloudhopper.smpp.pdu.PduResponse;
 import com.example.smpp.Window;
 import com.example.smpp.PduRequestContext;
 import com.example.smpp.SmppSession;
-import com.example.smpp.util.Semaphore;
+import com.example.smpp.util.vertx.Semaphore;
 import io.netty.channel.ChannelHandlerContext;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;

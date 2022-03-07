@@ -5,7 +5,7 @@ import com.cloudhopper.smpp.pdu.PduResponse;
 import com.example.smpp.Window;
 import com.example.smpp.PduRequestContext;
 import com.example.smpp.SmppSession;
-import com.example.smpp.util.Semaphore;
+import com.example.smpp.util.vertx.Semaphore;
 import io.netty.channel.ChannelHandlerContext;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -29,7 +29,8 @@ public class SmppServerSession extends ConnectionBase implements SmppSession {
 
   public SmppServerSession(Supplier<ContextInternal> streamContextSupplier, SSLHelper sslHelper, NetServerOptions options, ChannelHandlerContext chctx, EventLoopContext context) {
     super(context, chctx);
-    windowGuard = Semaphore.create(context.owner(), 50);
+//    windowGuard = Semaphore.create(context.owner(), 50);
+    windowGuard = Semaphore.create(context.owner(), 500);
   }
 
   @Override

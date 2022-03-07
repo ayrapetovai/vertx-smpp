@@ -11,6 +11,8 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.net.JksOptions;
 
+import java.util.concurrent.Executors;
+
 public class SmppServerMain extends AbstractVerticle {
 
   SmppServer server;
@@ -35,11 +37,11 @@ public class SmppServerMain extends AbstractVerticle {
         sess
           .reply(req.getRequest().createResponse())
           .onSuccess(nothing -> {
-            vertx.runOnContext(__ -> {
+//            vertx.runOnContext(__ -> {
               sess.send(new DeliverSm())
                 .onSuccess(resp -> {})
                   .onFailure(Throwable::printStackTrace);
-            });
+//            });
           })
             .onFailure(Throwable::printStackTrace);;
       })
