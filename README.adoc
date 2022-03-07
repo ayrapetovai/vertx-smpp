@@ -1,4 +1,4 @@
-= Vertex-hello-world
+= vertex-smpp
 
 image:https://img.shields.io/badge/vert.x-4.2.5-purple.svg[link="https://vertx.io"]
 
@@ -9,6 +9,10 @@ This application was generated using http://start.vertx.io
 - Сделать накрутку метрик в коде smppServer- клиента и сервера
 - SmppServer extends TCPServerBase см. HttpServerImpl, override Handler<Channel> childHandler(...), в нем добавить в pipeline кодек для перекодировки сырых байтов в (? extends Pdu).
 - Если Message Center посылает unbind_resp - после этого он закрывает соедиение.
+- реализоваывать Outbind?
+- реализовывать JMX?
+- заставить работать по SSL
+- рефакторить колбэки и хэндлеры
 
 == Building
 

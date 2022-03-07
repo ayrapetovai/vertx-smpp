@@ -8,6 +8,8 @@ public interface SmppClient {
   // smpp builder's static API
   // --> SmppSession
   SmppClient onRequest(Handler<PduRequestContext<?>> pduRequestHandler);
+  // ---> SmppSession
+// SmppServer onUnexpectedClose();
 
   // API for built smpp client
   Future<SmppClientSession> bind(String host, int port);

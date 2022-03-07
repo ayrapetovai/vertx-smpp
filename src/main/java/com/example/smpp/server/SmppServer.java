@@ -21,8 +21,12 @@ public interface SmppServer {
   SmppServer onSessionCreated(Handler<SmppSession> sessionCreatedHandler); // удалить
   // ---> SmppSession
   SmppServer onRequest(Handler<PduRequestContext<?>> pduRequestHandler);
+  // ---> SmppSession
+// SmppServer onUnexpectedClose();
 
   // API for built smpp server
   Future<SmppServer> start(String host, int port);
 //  Future<Void> shutdown();
+//  boolean isStarted();
+//  ? getPools(); // get all connected (bound) client systems with their session pools
 }
