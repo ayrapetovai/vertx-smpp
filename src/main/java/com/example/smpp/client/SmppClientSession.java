@@ -57,14 +57,19 @@ public class SmppClientSession extends ConnectionBase implements SmppSession {
           .compose(v -> {
             req.setSequenceNumber(sequenceCounter++);
             Promise<T> respProm = window.<T>offer(req.getSequenceNumber(), System.currentTimeMillis() + 1000);
-            var written = context.<Void>promise();
-            writeToChannel(req, written);
-            written.future()
-                .onFailure(respProm::tryFail);
+            if (channel().isOpen()) {
+              var written = context.<Void>promise();
+              writeToChannel(req, written);
+              written.future()
+                  .onFailure(respProm::tryFail);
+            } else {
+              windowGuard.release(1);
+              respProm.tryFail("aquired; channel is closed");
+            }
             return respProm.future();
           });
     } else {
-      return Future.failedFuture("channel is closed");
+      return Future.failedFuture("not aquired; channel is closed");
     }
   }
 

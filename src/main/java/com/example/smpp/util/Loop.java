@@ -21,44 +21,45 @@ public class Loop {
     this.vertx = vertx;
   }
 
-  public Future<Void> forLoopInt(int initial, int upperBound, Function<Integer, Future<Boolean>> handler) {
-    var completed = Promise.<Void>promise();
-    var counter = new AtomicInteger(initial);
-
-    var maxTimers = Math.min(170, upperBound); // there was no more than 134749 rps, to config
-    var timerCounter = new int[] {maxTimers};
-    var delay = 1;
-
-    var taskRef = new Handler[]{null};
-    var task = (Handler<Long>) id -> {
-      int newCounterValue = counter.getAndIncrement();
-//      log.warn("Timer newCounterValue=" + newCounterValue);
-      if (newCounterValue < (upperBound - initial)) {
-        handler.apply(newCounterValue)
-          .onSuccess(throttled -> {
-            if (throttled && timerCounter[0] > 1) {
-              vertx.cancelTimer(id);
-              timerCounter[0]--;
-//              log.warn("Timer canceled, timers=" + timerCounter[0]);
-            } else if (timerCounter[0] < maxTimers){
-              vertx.setPeriodic(delay, taskRef[0]);
-              timerCounter[0]++;
-//              log.warn("Timer created, timers=" + timerCounter[0]);
-            }
-          });
-//      } else if (!completed.future().isComplete()){
-      } else {
-        vertx.cancelTimer(id);
-        timerCounter[0]--;
-        completed.tryComplete();
-      }
-    };
-    taskRef[0] = task;
-    for (int i = 0; i < maxTimers; i++) {
-      vertx.setPeriodic(delay, task);
-    }
-    return completed.future();
-  }
+  // works
+//  public Future<Void> forLoopInt(int initial, int upperBound, Function<Integer, Future<Boolean>> handler) {
+//    var completed = Promise.<Void>promise();
+//    var counter = new AtomicInteger(initial);
+//
+//    var maxTimers = Math.min(170, upperBound); // there was no more than 134749 rps, to config
+//    var timerCounter = new int[] {maxTimers};
+//    var delay = 1;
+//
+//    var taskRef = new Handler[]{null};
+//    var task = (Handler<Long>) id -> {
+//      int newCounterValue = counter.getAndIncrement();
+////      log.warn("Timer newCounterValue=" + newCounterValue);
+//      if (newCounterValue < (upperBound - initial)) {
+//        handler.apply(newCounterValue)
+//          .onSuccess(throttled -> {
+//            if (throttled && timerCounter[0] > 1) {
+//              vertx.cancelTimer(id);
+//              timerCounter[0]--;
+////              log.warn("Timer canceled, timers=" + timerCounter[0]);
+//            } else if (timerCounter[0] < maxTimers){
+//              vertx.setPeriodic(delay, taskRef[0]);
+//              timerCounter[0]++;
+////              log.warn("Timer created, timers=" + timerCounter[0]);
+//            }
+//          });
+////      } else if (!completed.future().isComplete()){
+//      } else {
+//        vertx.cancelTimer(id);
+//        timerCounter[0]--;
+//        completed.tryComplete();
+//      }
+//    };
+//    taskRef[0] = task;
+//    for (int i = 0; i < maxTimers; i++) {
+//      vertx.setPeriodic(delay, task);
+//    }
+//    return completed.future();
+//  }
 
   public void forever(Function<Long, Future<Boolean>> handler) {
     var counter = new AtomicLong(0);
@@ -88,30 +89,30 @@ public class Loop {
     }
   }
 
-//  public Future<Void> forLoopInt(int initial, int upperBound, Function<Integer, Future<Boolean>> handler) {
-//    var completed = Promise.<Void>promise();
-//    var counter = new AtomicInteger(initial);
-//
-//    var ctx = vertx.getOrCreateContext();
-//
-//    var jobRef = new Handler<?>[]{null};
-//    var job = (Handler<Void>) doJob -> {
-//      var cnt = counter.getAndIncrement();
-//      if (running && cnt < upperBound) {
-//        handler.apply(cnt);
-//        ctx.runOnContext((Handler<Void>) jobRef[0]);
-//      } else {
-//        completed.complete();
-//      }
-//    };
-//    jobRef[0] = job;
-//    if (initial >= upperBound) {
-//      completed.complete();
-//    } else {
-//      ctx.runOnContext(job);
-//    }
-//    return completed.future();
-//  }
+  public Future<Void> forLoopInt(int initial, int upperBound, Function<Integer, Future<Boolean>> handler) {
+    var completed = Promise.<Void>promise();
+    var counter = new AtomicInteger(initial);
+
+    var ctx = vertx.getOrCreateContext();
+
+    var jobRef = new Handler<?>[]{null};
+    var job = (Handler<Void>) doJob -> {
+      var cnt = counter.getAndIncrement();
+      if (running && cnt < upperBound) {
+        handler.apply(cnt);
+        ctx.runOnContext((Handler<Void>) jobRef[0]);
+      } else {
+        completed.complete();
+      }
+    };
+    jobRef[0] = job;
+    if (initial >= upperBound) {
+      completed.complete();
+    } else {
+      ctx.runOnContext(job);
+    }
+    return completed.future();
+  }
 //
 //  public void forever(Function<Long, Future<Boolean>> handler) {
 //    var counter = new AtomicLong(0);

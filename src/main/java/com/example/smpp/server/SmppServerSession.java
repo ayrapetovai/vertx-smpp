@@ -29,7 +29,7 @@ public class SmppServerSession extends ConnectionBase implements SmppSession {
 
   public SmppServerSession(Supplier<ContextInternal> streamContextSupplier, SSLHelper sslHelper, NetServerOptions options, ChannelHandlerContext chctx, EventLoopContext context) {
     super(context, chctx);
-    windowGuard = Semaphore.create(context.owner(), 100);
+    windowGuard = Semaphore.create(context.owner(), 50);
   }
 
   @Override
@@ -59,8 +59,10 @@ public class SmppServerSession extends ConnectionBase implements SmppSession {
     } else {
       var pduResp = (PduResponse) msg;
       var respProm = window.complement(pduResp.getSequenceNumber());
-      respProm.complete(pduResp);
-      windowGuard.release(1);
+      if (respProm != null) { // TODO при протухании запроса, его надо не только удалить из окна но и вернуть ресурс в семафор
+        respProm.tryComplete(pduResp);
+        windowGuard.release(1);
+      }
     }
   }
 

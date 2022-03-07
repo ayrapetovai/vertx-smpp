@@ -18,13 +18,13 @@ public class SmppServerMain extends AbstractVerticle {
   @Override
   public void start(Promise<Void> startPromise) {
     var opts = new SmppServerOptions();
-    opts
-      .setSsl(true)
-      .setKeyStoreOptions(
-        new JksOptions()
-          .setPath("server-keystore.jks")
-          .setPassword("wibble")
-      );
+//    opts
+//      .setSsl(true)
+//      .setKeyStoreOptions(
+//        new JksOptions()
+//          .setPath("server-keystore.jks")
+//          .setPassword("wibble")
+//      );
     server = Smpp.server(vertx, opts);
     server
       .onSessionCreated(sess -> {
@@ -37,9 +37,11 @@ public class SmppServerMain extends AbstractVerticle {
           .onSuccess(nothing -> {
             vertx.runOnContext(__ -> {
               sess.send(new DeliverSm())
-                .onSuccess(resp -> {});
+                .onSuccess(resp -> {})
+                  .onFailure(Throwable::printStackTrace);
             });
-          });
+          })
+            .onFailure(Throwable::printStackTrace);;
       })
       .start("localhost", 2776)
 //      .start("localhost", 2777)

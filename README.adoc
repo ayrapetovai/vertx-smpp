@@ -8,6 +8,7 @@ This application was generated using http://start.vertx.io
 - Сделать возможность для пользователя реагиривать на недоставку сообщений
 - Сделать накрутку метрик в коде smppServer- клиента и сервера
 - SmppServer extends TCPServerBase см. HttpServerImpl, override Handler<Channel> childHandler(...), в нем добавить в pipeline кодек для перекодировки сырых байтов в (? extends Pdu).
+- Если Message Center посылает unbind_resp - после этого он закрывает соедиение.
 
 == Building
 

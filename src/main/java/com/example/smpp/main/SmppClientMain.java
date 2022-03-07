@@ -5,16 +5,17 @@ import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.cloudhopper.smpp.type.SmppInvalidArgumentException;
 import com.example.smpp.Smpp;
 import com.example.smpp.client.SmppClient;
-import com.example.smpp.client.SmppClientImpl;
-import com.example.smpp.client.SmppClientOptions;
+import com.example.smpp.util.Gsm7BitCharset;
 import com.example.smpp.util.Loop;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.CloseFuture;
-import io.vertx.core.impl.VertxInternal;
 
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,8 +24,8 @@ public class SmppClientMain extends AbstractVerticle {
 //  private static final int SUBMIT_SM_NUMBER = 50_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 2_000_000;
-//  private static final int SUBMIT_SM_NUMBER = 1_000_000;
-  private static final int SUBMIT_SM_NUMBER = 100_000;
+  private static final int SUBMIT_SM_NUMBER = 1_000_000;
+//  private static final int SUBMIT_SM_NUMBER = 100_000;
 //  private static final int SUBMIT_SM_NUMBER = 20_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000;
 //  private static final int SUBMIT_SM_NUMBER = 1_000;
@@ -65,14 +66,9 @@ public class SmppClientMain extends AbstractVerticle {
             .forLoopInt(0, SUBMIT_SM_NUMBER, i -> {
               var throttled = Promise.<Boolean>promise();
               submitSmCount[0]++;
-              String text160 = "\u20AC Lorem [ipsum] dolor sit amet, consectetur adipiscing elit. Proin feugiat, leo id commodo tincidunt, nibh diam ornare est, vitae accumsan risus lacus sed sem metus.";
-//            String text160 = "\u20AC ";
-              byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_GSM);
-              var sendSubmitSmStart = new long[]{System.nanoTime()};
               var ssm = new SubmitSm();
-              try {
-                ssm.setShortMessage(textBytes);
-              } catch (SmppInvalidArgumentException ignored) {}
+              addShortMessage(ssm);
+              var sendSubmitSmStart = new long[]{System.nanoTime()};
               sess.send(ssm)
                   .onSuccess(submitSmResp -> {
 //System.out.println("got resp " + submitSmResp);
@@ -90,20 +86,53 @@ public class SmppClientMain extends AbstractVerticle {
             .onComplete(v -> {
               end[0] = System.currentTimeMillis();
               System.out.println("done");
+              var submitSmThroughput = ((double)submitSmRespCount[0]/((double)(end[0] - start[0])/1000.0));
               System.out.println(
                   "submitSm=" + submitSmCount[0] +
                   ", submitSmResp=" + submitSmRespCount[0] +
-                      ", throughput " + ((double)submitSmRespCount[0]/((double)(end[0] - start[0])/1000.0)));
+                      ", throughput=" + submitSmThroughput);
               System.out.println("submitSm latency=" + (0.000_001 * (double)submitSmLatencySumNano[0]/(double)submitSmRespCount[0]));
+
+              var deliverSmThroughput = ((double)deliverSmRespCount[0]/((double)(end[0] - start[0])/1000.0));
               System.out.println(
                   "deliverSm=" + deliverSmCount[0] +
                   ", deliverSmResp=" + deliverSmRespCount[0] +
-                      ", throughput " + ((double)deliverSmRespCount[0]/((double)(end[0] - start[0])/1000.0)));
+                      ", throughput=" + deliverSmThroughput);
+
+              System.out.println("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
 //              startPromise.complete();
 //              vertx.close();
             });
       })
       .onFailure(startPromise::fail);
+
+
+    // make second session
+//    client
+//        .bind("localhost", 2776)
+//        .onSuccess(sess -> {
+//        });
+  }
+
+  private static final CharsetEncoder gsmEncoder = new Gsm7BitCharset("UTF-8", new String[]{"gsm"}).newEncoder();
+
+  private void addShortMessage(SubmitSm ssm) {
+    String text160 = "\u20AC Lorem [ipsum] dolor sit amet, consectetur adipiscing elit. Proin feugiat, leo id commodo tincidunt, nibh diam ornare est, vitae accumsan risus lacus sed sem metus.";
+//    String text160 = "\u20AC ";
+    byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_GSM);
+//    byte[] textBytes = text160.getBytes(StandardCharsets.UTF_8);
+
+//    byte[] textBytes = new byte[0];
+//    try {
+//      textBytes = gsmEncoder.encode(CharBuffer.wrap(text160)).array();
+//    } catch (CharacterCodingException e) {
+//      e.printStackTrace();
+//    }
+    try {
+      ssm.setShortMessage(textBytes);
+    } catch (SmppInvalidArgumentException e) {
+      e.printStackTrace();
+    }
   }
 // cloudhopper
 //submitSm=1000000, submitSmResp=999970, throughput 143221.1400744772
