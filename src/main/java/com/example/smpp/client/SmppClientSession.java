@@ -17,9 +17,9 @@ import io.vertx.core.spi.metrics.NetworkMetrics;
 
 public class SmppClientSession extends ConnectionBase implements SmppSession {
   private final Window window = new Window();
-  private final Handler<PduRequestContext<?>> requestHandler;
-  private int sequenceCounter = 0;
   private final Semaphore windowGuard;
+  private int sequenceCounter = 0;
+  private final Handler<PduRequestContext<?>> requestHandler;
 
   protected SmppClientSession(ContextInternal context, ChannelHandlerContext chctx, Handler<PduRequestContext<?>> requestHandler) {
     super(context, chctx);
@@ -51,6 +51,7 @@ public class SmppClientSession extends ConnectionBase implements SmppSession {
     }
   }
 
+  @Override
   public<T extends PduResponse> Future<T> send(PduRequest<T> req) {
     if (channel().isOpen()) {
       return windowGuard.aquire(1)

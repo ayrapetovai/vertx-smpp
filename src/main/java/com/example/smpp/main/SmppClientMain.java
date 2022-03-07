@@ -158,20 +158,21 @@ public class SmppClientMain extends AbstractVerticle {
     }
   }
 // vertex-smpp(1), text
-//submitSm=1000000, submitSmResp=1000000, throughput=45291.90633633769
-//submitSm latency=0.753768099117
-//deliverSm=1000001, deliverSmResp=1000001, throughput=45287.849282188305
-//deliverSmResp latency=0.061243197952802045
-//Overall throughput=90579.75561852599
-//Time=22079ms
+//submitSm=1000000, submitSmResp=1000000, throughput=47947.83275795934
+//submitSm latency=0.7100937028389999
+//deliverSm=1000001, deliverSmResp=1000001, throughput=47945.58181905356
+//deliverSmResp latency=0.05510074804025196
+//Overall throughput=95893.4145770129
+//Time=20856ms
 
 // cloudhopper(1), text
-//submitSm=1000000, submitSmResp=1000000, throughput=39891.49513323759
-//submitSm latency=0.858185533928
-//deliverSm=621296, deliverSmResp=621296, throughput=24784.42636029998
-//deliverSmResp latency=0.056098734786639536
-//Overall throughput=64675.92149353758
-//Time=25068ms
+//submitSm=1000000, submitSmResp=1000000, throughput=47959.330487746396
+//submitSm latency=0.692746395918
+//deliverSm=788751, deliverSmResp=788751, throughput=37822.528052172245
+//deliverSmResp latency=0.04484290301628777
+//Overall throughput=85781.85853991864
+//Time=20851ms
+
   public static void main(String[] args) {
     var vertex = Vertx.vertx();
     var depOpts = new DeploymentOptions()

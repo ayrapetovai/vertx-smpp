@@ -5,14 +5,20 @@ image:https://img.shields.io/badge/vert.x-4.2.5-purple.svg[link="https://vertx.i
 This application was generated using http://start.vertx.io
 
 == TODO
+- SmppClientSession | SmppServerSession > SmppSessionImpl
+- рефакторить колбэки и хэндлеры в Smpp*Worker и Smpp*Impl
+- Сделать накрутку метрик в коде клиента и сервера. Перцентили?
+- Разобраться с API для пользоватлея: где должны находиться меоды настройки и задаваться колбэки - в сессии или в клиенте/сервере?
+- Сделать протухание по времени нахождения в очереди, так, чтобы данные в канале не порились.
 - Сделать возможность для пользователя реагиривать на недоставку сообщений
-- Сделать накрутку метрик в коде smppServer- клиента и сервера
-- SmppServer extends TCPServerBase см. HttpServerImpl, override Handler<Channel> childHandler(...), в нем добавить в pipeline кодек для перекодировки сырых байтов в (? extends Pdu).
-- Если Message Center посылает unbind_resp - после этого он закрывает соедиение.
 - реализоваывать Outbind?
 - реализовывать JMX?
 - заставить работать по SSL
-- рефакторить колбэки и хэндлеры
+- настройки сервера и клиента (кроме ssl) должны иметь возможность для обновления в рантайме (по ресту или еще как-то)
+- обязательно удалить com.example.smpp.util.smpp.Gsm7BitCharset.Gsm7BitCharset, он распространяется под BSD лицензией
+- сделать API для колбэка проверки прав пользователя подключаться
+
+== Features
 
 == Building
 

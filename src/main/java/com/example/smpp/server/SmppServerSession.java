@@ -19,17 +19,16 @@ import io.vertx.core.spi.metrics.NetworkMetrics;
 import java.util.function.Supplier;
 
 public class SmppServerSession extends ConnectionBase implements SmppSession {
+  private final Window window = new Window();
+  private final Semaphore windowGuard;
+  private int sequenceCounter = 0;
   Supplier<ContextInternal> streamContextSupplier;
   SSLHelper sslHelper;
   NetServerOptions options;
   SmppServerConnectionHandler handler;
-  Window window = new Window();
-  int sequenceCounter = 0;
-  Semaphore windowGuard;
 
   public SmppServerSession(Supplier<ContextInternal> streamContextSupplier, SSLHelper sslHelper, NetServerOptions options, ChannelHandlerContext chctx, EventLoopContext context) {
     super(context, chctx);
-//    windowGuard = Semaphore.create(context.owner(), 50);
     windowGuard = Semaphore.create(context.owner(), 500);
   }
 
@@ -42,16 +41,6 @@ public class SmppServerSession extends ConnectionBase implements SmppSession {
   protected void handleInterestedOpsChanged() {
 
   }
-
-//  public void handleMessage(Object msg) {
-//    if (msg instanceof PduRequest) {
-//      handler.requestHandler.handle(new PduRequestContext<>((PduRequest<?>) msg, this));
-//    } else {
-//      var pduResp = (PduResponse) msg;
-//      var respProm = window.complement(pduResp.getSequenceNumber());
-//      respProm.complete(pduResp);
-//    }
-//  }
 
   @Override
   public void handleMessage(Object msg) {
@@ -67,27 +56,33 @@ public class SmppServerSession extends ConnectionBase implements SmppSession {
     }
   }
 
+  @Override
+  public<T extends PduResponse> Future<T> send(PduRequest<T> req) {
+    if (channel().isOpen()) {
+      return windowGuard.aquire(1)
+          .compose(v -> {
+            req.setSequenceNumber(sequenceCounter++);
+            Promise<T> respProm = window.<T>offer(req.getSequenceNumber(), System.currentTimeMillis() + 1000);
+            if (channel().isOpen()) {
+              var written = context.<Void>promise();
+              writeToChannel(req, written);
+              written.future()
+                  .onFailure(respProm::tryFail);
+            } else {
+              windowGuard.release(1);
+              respProm.tryFail("aquired; channel is closed");
+            }
+            return respProm.future();
+          });
+    } else {
+      return Future.failedFuture("not aquired; channel is closed");
+    }
+  }
+
+  @Override
   public Future<Void> reply(PduResponse pduResponse) {
     var written = context.<Void>promise();
     writeToChannel(pduResponse, written);
     return written.future();
-  }
-
-//  public <T extends PduResponse> Future<T>  send(PduRequest<T> req) {
-//    var written = context.<Void>promise();
-//    windowGuard.aquire(1);
-//    req.setSequenceNumber(sequenceCounter++);
-//    var respProm = window.<T>offer(req.getSequenceNumber(), System.currentTimeMillis() + 1000);
-//    writeToChannel(req, written);
-//    return respProm.future();
-//  }
-  public <T extends PduResponse> Future<T>  send(PduRequest<T> req) {
-    return windowGuard.aquire(1)
-            .compose(v -> {
-              req.setSequenceNumber(sequenceCounter++);
-              Promise<T> respProm = window.<T>offer(req.getSequenceNumber(), System.currentTimeMillis() + 1000);
-              writeToChannel(req, context.promise());
-              return respProm.future();
-            });
   }
 }
