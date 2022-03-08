@@ -128,7 +128,7 @@ public class SmppClientMain extends AbstractVerticle {
               log.info("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
               log.info("Time=" + (submitEnd[0] - start[0]) + "ms");
               startPromise.complete();
-              vertx.close();
+//              vertx.close(); // не позволяет деплоить несколько верикалей
             });
       })
       .onFailure(startPromise::fail);
@@ -161,7 +161,7 @@ public class SmppClientMain extends AbstractVerticle {
       e.printStackTrace();
     }
   }
-// vertex-smpp(1), no text
+// vertx-smpp(1), no text
 //submitSm=50000000, submitSmResp=50000000, throughput=121515.83715905694
 //submitSm latency=0.28284765920925997
 //deliverSm=50000001, deliverSmResp=50000001, throughput=121515.54426811189
@@ -169,7 +169,23 @@ public class SmppClientMain extends AbstractVerticle {
 //Overall throughput=243031.38142716885
 //Time=411469ms
 
-// vertex-smpp(1), text
+// vertx-smpp(4), no text
+//15:47:54.270 - submitSm=1000000, submitSmResp=1000000, throughput=87260.03490401396
+//15:47:54.270 - submitSm latency=1.3886247809849999
+//15:47:54.270 - deliverSm=1000001, deliverSmResp=1000001, throughput=87260.12216404887
+//15:47:54.270 - deliverSmResp latency=0.16470121744778254
+//15:47:54.270 - Overall throughput=174520.1570680628
+//15:47:54.270 - Time=11460ms
+
+// cloudhopper(4), no text
+//16:03:23.434 - submitSm=1000000, submitSmResp=1000000, throughput=18183.80186929483
+//16:03:23.434 - submitSm latency=35.967412587631
+//16:03:23.434 - deliverSm=548472, deliverSmResp=548472, throughput=9971.492982328558
+//16:03:23.434 - deliverSmResp latency=0.15386301283019005
+//16:03:23.434 - Overall throughput=28155.29485162339
+//16:03:23.434 - Time=54994ms
+
+// vertx-smpp(1), text
 //submitSm=1000000, submitSmResp=1000000, throughput=47947.83275795934
 //submitSm latency=0.7100937028389999
 //deliverSm=1000001, deliverSmResp=1000001, throughput=47945.58181905356
@@ -177,7 +193,7 @@ public class SmppClientMain extends AbstractVerticle {
 //Overall throughput=95893.4145770129
 //Time=20856ms
 
-// vertex-smpp(1), no text
+// vertx-smpp(1), no text
 //submitSm=1000000, submitSmResp=1000000, throughput=130174.43374121322
 //submitSm latency=0.34885200490900004
 //deliverSm=1000001, deliverSmResp=1000001, throughput=130157.6207210725
@@ -204,7 +220,7 @@ public class SmppClientMain extends AbstractVerticle {
   public static void main(String[] args) {
     var vertex = Vertx.vertx();
     var depOpts = new DeploymentOptions()
-      .setInstances(1) // TODO scale to 2 and more
+      .setInstances(4) // TODO scale to 2 and more
       .setWorkerPoolSize(1)
       ;
     vertex.deployVerticle(SmppClientMain.class.getCanonicalName(), depOpts);

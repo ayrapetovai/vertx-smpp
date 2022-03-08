@@ -1,12 +1,12 @@
 package com.example.smpp.server;
 
-import com.cloudhopper.smpp.pdu.BaseBind;
 import com.example.smpp.PduRequestContext;
 import com.example.smpp.SmppSession;
+import io.vertx.core.Closeable;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 
-public interface SmppServer {
+public interface SmppServer extends Closeable {
   // smpp builder's static API
 
   /**
@@ -26,7 +26,6 @@ public interface SmppServer {
 
   // API for built smpp server
   Future<SmppServer> start(String host, int port);
-//  Future<Void> shutdown();
-//  boolean isStarted();
-//  ? getPools(); // get all connected (bound) client systems with their session pools
+  boolean isListening();
+//  ? getPool(); // get all connected (bound) client systems with their session pools
 }

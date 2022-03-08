@@ -3,17 +3,19 @@ package com.example.smpp.main;
 import com.cloudhopper.smpp.pdu.DeliverSm;
 import com.example.smpp.Smpp;
 import com.example.smpp.server.SmppServer;
-import com.example.smpp.server.SmppServerImpl;
 import com.example.smpp.server.SmppServerOptions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.net.JksOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.Executors;
+import java.util.concurrent.CountDownLatch;
 
 public class SmppServerMain extends AbstractVerticle {
+  private static final Logger log = LoggerFactory.getLogger(SmppServerMain.class);
 
   SmppServer server;
 
@@ -30,7 +32,7 @@ public class SmppServerMain extends AbstractVerticle {
     server = Smpp.server(vertx, opts);
     server
       .onSessionCreated(sess -> {
-        System.out.println("session created " + sess);
+        log.info("created session#{}", sess.getId());
       })
       .onRequest(req -> {
         var sess = req.getSession(); // FIXME some req.getRequest() are null
@@ -48,10 +50,12 @@ public class SmppServerMain extends AbstractVerticle {
       .start("localhost", 2776)
 //      .start("localhost", 2777)
       .onSuccess(done -> {
-        System.out.println("Server online");
+        log.info("Server online");
         startPromise.complete();
       })
       .onFailure(startPromise::fail);
+
+    onShutdown(vertx, server);
   }
 
   public static void main(String[] args) {
@@ -61,5 +65,37 @@ public class SmppServerMain extends AbstractVerticle {
       .setWorkerPoolSize(1)
       ;
     vertex.deployVerticle(SmppServerMain.class.getCanonicalName(), depOpts);
+  }
+
+  private static void onShutdown(Vertx vertx, SmppServer server) {
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      var closePromise = Promise.<Void>promise();
+      var latch = new CountDownLatch(1);
+      if (server.isListening()) {
+        server.close(closePromise);
+        closePromise.future()
+            .onComplete(ar -> {
+              log.info("Server offline");
+              vertx.close()
+                  .onComplete(unused -> {
+                    log.debug("vertx closed");
+                    latch.countDown();
+                  });
+            });
+      } else {
+        log.info("Server was not listening");
+        vertx.close()
+            .onComplete(unused -> {
+              log.debug("vertx closed");
+              latch.countDown();
+            });
+      }
+      try {
+        log.debug("waiting for server and vertx to shutdown");
+        latch.await();
+      } catch (InterruptedException e) {
+        log.error("shutdown interrupted", e);
+      }
+    }));
   }
 }

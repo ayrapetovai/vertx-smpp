@@ -7,24 +7,33 @@ import com.cloudhopper.smpp.pdu.Unbind;
 import com.example.smpp.util.vertx.Semaphore;
 import io.netty.channel.ChannelHandlerContext;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.net.impl.ConnectionBase;
 import io.vertx.core.spi.metrics.NetworkMetrics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
 
 public class SmppSessionImpl extends ConnectionBase implements SmppSession {
+  private static final Logger log = LoggerFactory.getLogger(SmppSessionImpl.class);
+
+  private final Long id;
   private final Window window = new Window();
   private final Semaphore windowGuard;
-  private final Handler<PduRequestContext<?>> requestHandler;
+  private final SmppSessionCallbacks callbacks;
   private int sequenceCounter = 0;
-  private boolean sentUnbind = true;
+  private boolean sendUnbind = true;
   private boolean awaitUnbindResp = true;
 
-  public SmppSessionImpl(ContextInternal context, ChannelHandlerContext chctx, Handler<PduRequestContext<?>> requestHandler) {
+  public SmppSessionImpl(Long id, ContextInternal context, ChannelHandlerContext chctx, SmppSessionCallbacks callbacks) {
     super(context, chctx);
-    this.requestHandler = requestHandler;
+    Objects.requireNonNull(id);
+    Objects.requireNonNull(callbacks);
+    this.id = id;
     this.windowGuard = Semaphore.create(context.owner(), 600);
+    this.callbacks = callbacks;
   }
 
   @Override
@@ -44,7 +53,22 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   public void handleMessage(Object msg) {
     var pdu = (Pdu) msg;
     if (pdu.isRequest()) {
-      requestHandler.handle(new PduRequestContext<>((PduRequest<?>) msg, this));
+      if (pdu instanceof Unbind) {
+        doPause();
+        reply(((Unbind) pdu).createResponse())
+            .compose(ar -> {
+              var closePromise = Promise.<Void>promise();
+              close(closePromise, false);
+              closePromise.future().onComplete(a -> {
+                // TODO remove session from pool
+                //  fireSessionClosed
+                log.debug("closed");
+              });
+              return closePromise.future();
+            });
+      } else {
+        callbacks.requestHandler.handle(new PduRequestContext<>((PduRequest<?>) msg, this));
+      }
     } else {
       var pduResp = (PduResponse) msg;
       var respProm = window.complement(pduResp.getSequenceNumber());
@@ -95,7 +119,12 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
    */
   @Override
   public void close(Promise<Void> completion) {
-    if (sentUnbind) {
+    this.close(completion, this.sendUnbind);
+  }
+
+  public void close(Promise<Void> completion, boolean sendUnbindRequired) {
+    log.debug("session#{} closing", getId());
+    if (sendUnbindRequired) {
       // TODO сделать ожидание отправок
       //  if (awaitAllSent) {
       //    awaitAllSent() -> { pauseSend; pauseReply }
@@ -105,14 +134,20 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       if (awaitUnbindResp) {
         unbindRespFuture
           .compose(unbindResp -> {
-          super.close(completion);
-          return completion.future();
-        });
+            log.debug("session#{} did unbindResp close", getId());
+            super.close(completion);
+            return completion.future();
+          });
       } else {
         super.close(completion);
       }
     } else {
       super.close(completion);
     }
+  }
+
+  @Override
+  public Long getId() {
+    return id;
   }
 }

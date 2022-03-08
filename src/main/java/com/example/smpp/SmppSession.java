@@ -14,6 +14,8 @@ public interface SmppSession extends Closeable {
 //  public boolean sniffInbound(Pdu pdu);
 //  public boolean sniffOutbound(Pdu pdu);
 
+  Long getId();
+
   /**
    * Запрос помещается в окно (очередь на отправку) и отправляется, котогда до него додет черед.
    * TODO возвращенный future должен получать не PduResponse, а обвертку в которой будет инфа

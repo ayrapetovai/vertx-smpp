@@ -4,6 +4,8 @@ import com.cloudhopper.smpp.channel.SmppSessionPduDecoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
+import com.example.smpp.SmppSession;
+import com.example.smpp.SmppSessionCallbacks;
 import com.example.smpp.SmppSessionImpl;
 import com.example.smpp.SmppSessionPduEncoder;
 import io.netty.buffer.Unpooled;
@@ -31,8 +33,18 @@ public class SmppServerWorker implements Handler<Channel> {
   SSLHelper sslHelper;
   NetServerOptions options;
   SmppServerConnectionHandler hello;
+  final Pool pool;
 
-  public SmppServerWorker(EventLoopContext context, Supplier<ContextInternal> streamContextSupplier, SmppServerImpl smppServer, VertxInternal vertx, SSLHelper sslHelper, NetServerOptions options, SmppServerConnectionHandler handler) {
+  public SmppServerWorker(
+      EventLoopContext context,
+      Supplier<ContextInternal> streamContextSupplier,
+      SmppServerImpl smppServer,
+      VertxInternal vertx,
+      SSLHelper sslHelper,
+      NetServerOptions options,
+      SmppServerConnectionHandler handler,
+      Pool pool
+  ) {
     this.context = context;
     this.streamContextSupplier = streamContextSupplier;
     this.smppServer = smppServer;
@@ -40,6 +52,7 @@ public class SmppServerWorker implements Handler<Channel> {
     this.sslHelper = sslHelper;
     this.options = options;
     this.hello = handler;
+    this.pool = pool;
   }
 
   @Override
@@ -115,13 +128,19 @@ public class SmppServerWorker implements Handler<Channel> {
 //      sendServiceUnavailable(pipeline.channel());
 //      return;
 //    }
-    VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx ->
+    var callback = new SmppSessionCallbacks();
+    callback.requestHandler = hello.requestHandler;
+    VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx -> {
 //            context.emit(chctx.handler(), connectionHandler::handle);
-      new SmppSessionImpl(
-          context,
-          chctx,
-          hello.requestHandler
-      ));
+      var sess = pool.add(id ->
+        new SmppSessionImpl(
+            id,
+            context,
+            chctx,
+            callback)
+      );
+      return sess;
+    });
     handler.addHandler(conn -> {
       context.emit(conn, hello.connectionHandler::handle);
     });

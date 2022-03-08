@@ -6,6 +6,7 @@ import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
 import com.example.smpp.PduRequestContext;
 import com.example.smpp.SmppSession;
+import com.example.smpp.SmppSessionCallbacks;
 import com.example.smpp.SmppSessionImpl;
 import com.example.smpp.SmppSessionPduEncoder;
 import io.netty.channel.Channel;
@@ -35,8 +36,10 @@ public class SmppClientWorker {
     pipeline.addLast("smppDecoder", new SmppSessionPduDecoder(transcoder));
     pipeline.addLast("smppEncoder", new SmppSessionPduEncoder(transcoder));
 
+    var callbacks = new SmppSessionCallbacks();
+    callbacks.requestHandler = requestHandler;
     VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx ->
-        new SmppSessionImpl(context, chctx, requestHandler)
+        new SmppSessionImpl(-1L, context, chctx, callbacks)
     );
     handler.addHandler(conn -> {
       context.emit(conn, connectionHandler::handle);
