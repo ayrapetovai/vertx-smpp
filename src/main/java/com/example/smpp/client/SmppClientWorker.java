@@ -5,6 +5,8 @@ import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
 import com.example.smpp.PduRequestContext;
+import com.example.smpp.SmppSession;
+import com.example.smpp.SmppSessionImpl;
 import com.example.smpp.SmppSessionPduEncoder;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
@@ -15,10 +17,10 @@ import io.vertx.core.net.impl.VertxHandler;
 public class SmppClientWorker {
   private final EventLoopContext context;
   private final Handler<PduRequestContext<?>> requestHandler;
-  private final Handler<SmppClientSession> hello = (sess) -> {
+  private final Handler<SmppSession> hello = (sess) -> {
     System.out.println("hello sess");
   };
-  private final Handler<SmppClientSession> connectionHandler = (sess) -> {
+  private final Handler<SmppSession> connectionHandler = (sess) -> {
     System.out.println("incoming sess");
   };
 
@@ -27,14 +29,14 @@ public class SmppClientWorker {
     this.requestHandler = requestHandler;
   }
 
-  public SmppClientSession handle(Channel ch) {
+  public SmppSession handle(Channel ch) {
     ChannelPipeline pipeline = ch.pipeline();
     PduTranscoder transcoder = new DefaultPduTranscoder(new DefaultPduTranscoderContext());
     pipeline.addLast("smppDecoder", new SmppSessionPduDecoder(transcoder));
     pipeline.addLast("smppEncoder", new SmppSessionPduEncoder(transcoder));
 
-    VertxHandler<SmppClientSession> handler = VertxHandler.create(chctx ->
-        new SmppClientSession(context, chctx, requestHandler)
+    VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx ->
+        new SmppSessionImpl(context, chctx, requestHandler)
     );
     handler.addHandler(conn -> {
       context.emit(conn, connectionHandler::handle);

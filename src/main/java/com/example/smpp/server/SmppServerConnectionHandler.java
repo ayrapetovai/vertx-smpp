@@ -5,7 +5,7 @@ import com.example.smpp.PduRequestContext;
 import com.example.smpp.SmppSession;
 import io.vertx.core.Handler;
 
-public class SmppServerConnectionHandler  implements Handler<SmppServerSession> {
+public class SmppServerConnectionHandler  implements Handler<SmppSession> {
   public Handler<SmppSession> connectionHandler = sess -> {};
   public Handler<PduRequestContext<?>> requestHandler = req -> {};
   public Handler<PduResponse> responseHandler = res -> {};
@@ -15,7 +15,7 @@ public class SmppServerConnectionHandler  implements Handler<SmppServerSession> 
   }
 
   @Override
-  public void handle(SmppServerSession sess) {
+  public void handle(SmppSession sess) {
 //    sess.handler = this;
   }
 }

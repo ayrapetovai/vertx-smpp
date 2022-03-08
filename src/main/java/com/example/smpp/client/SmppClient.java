@@ -1,6 +1,7 @@
 package com.example.smpp.client;
 
 import com.example.smpp.PduRequestContext;
+import com.example.smpp.SmppSession;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 
@@ -12,7 +13,7 @@ public interface SmppClient {
 // SmppServer onUnexpectedClose();
 
   // API for built smpp client
-  Future<SmppClientSession> bind(String host, int port);
+  Future<SmppSession> bind(String host, int port);
 //  Future<SmppClientSession> bind(Handler<UnboundSmppSession> configurator); // *thumb up*
 
 //  Future<SmppClientSession> bindTranceiver(String host, int port);

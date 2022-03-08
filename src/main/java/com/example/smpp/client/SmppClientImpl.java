@@ -2,6 +2,8 @@ package com.example.smpp.client;
 
 import com.cloudhopper.smpp.pdu.BindTransceiver;
 import com.example.smpp.PduRequestContext;
+import com.example.smpp.SmppSession;
+import com.example.smpp.SmppSessionImpl;
 import io.netty.channel.ChannelPipeline;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -15,7 +17,7 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
   private final VertxInternal vertx;
   private final SmppClientOptions options;
 
-  private SmppClientSession session;
+  private SmppSession session;
   private Handler<PduRequestContext<?>> requestHandler;
 
   public SmppClientImpl(VertxInternal vertx, SmppClientOptions options, CloseFuture closeFuture) {
@@ -37,8 +39,8 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
   }
 
   @Override
-  public Future<SmppClientSession> bind(String host, int port) {
-    var sessionPromise = Promise.<SmppClientSession>promise();
+  public Future<SmppSession> bind(String host, int port) {
+    var sessionPromise = Promise.<SmppSession>promise();
     return connect(port, host)
         .compose(socket -> {
           return session.send(new BindTransceiver())

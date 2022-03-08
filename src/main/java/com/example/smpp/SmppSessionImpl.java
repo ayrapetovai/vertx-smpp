@@ -1,11 +1,8 @@
-package com.example.smpp.client;
+package com.example.smpp;
 
 import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
-import com.example.smpp.Window;
-import com.example.smpp.PduRequestContext;
-import com.example.smpp.SmppSession;
 import com.example.smpp.util.vertx.Semaphore;
 import io.netty.channel.ChannelHandlerContext;
 import io.vertx.core.Future;
@@ -15,16 +12,16 @@ import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.net.impl.ConnectionBase;
 import io.vertx.core.spi.metrics.NetworkMetrics;
 
-public class SmppClientSession extends ConnectionBase implements SmppSession {
+public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private final Window window = new Window();
   private final Semaphore windowGuard;
-  private int sequenceCounter = 0;
   private final Handler<PduRequestContext<?>> requestHandler;
+  private int sequenceCounter = 0;
 
-  protected SmppClientSession(ContextInternal context, ChannelHandlerContext chctx, Handler<PduRequestContext<?>> requestHandler) {
+  public SmppSessionImpl(ContextInternal context, ChannelHandlerContext chctx, Handler<PduRequestContext<?>> requestHandler) {
     super(context, chctx);
     this.requestHandler = requestHandler;
-    windowGuard = Semaphore.create(context.owner(), 500);
+    this.windowGuard = Semaphore.create(context.owner(), 500);
   }
 
   @Override
@@ -37,17 +34,21 @@ public class SmppClientSession extends ConnectionBase implements SmppSession {
 
   }
 
+  /**
+   * generic_nack as response?
+   */
   @Override
   public void handleMessage(Object msg) {
     var pdu = (Pdu) msg;
-    if (pdu.isResponse()) {
+    if (pdu.isRequest()) {
+      requestHandler.handle(new PduRequestContext<>((PduRequest<?>) msg, this));
+    } else {
       var pduResp = (PduResponse) msg;
       var respProm = window.complement(pduResp.getSequenceNumber());
-      respProm.tryComplete(pduResp);
-      windowGuard.release(1);
-    } else {
-      var pduReq = (PduRequest<?>) msg;
-      requestHandler.handle(new PduRequestContext<>(pduReq, this));
+      if (respProm != null) { // TODO при протухании запроса, его надо не только удалить из окна но и вернуть ресурс в семафор
+        respProm.tryComplete(pduResp);
+        windowGuard.release(1);
+      }
     }
   }
 

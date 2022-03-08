@@ -4,6 +4,7 @@ import com.cloudhopper.smpp.channel.SmppSessionPduDecoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
+import com.example.smpp.SmppSessionImpl;
 import com.example.smpp.SmppSessionPduEncoder;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
@@ -114,9 +115,9 @@ public class SmppServerWorker implements Handler<Channel> {
 //      sendServiceUnavailable(pipeline.channel());
 //      return;
 //    }
-    VertxHandler<SmppServerSession> handler = VertxHandler.create(chctx ->
+    VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx ->
 //            context.emit(chctx.handler(), connectionHandler::handle);
-      new SmppServerSession(
+      new SmppSessionImpl(
           context,
           chctx,
           hello.requestHandler
