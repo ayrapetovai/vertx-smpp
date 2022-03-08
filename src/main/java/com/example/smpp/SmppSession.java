@@ -2,12 +2,14 @@ package com.example.smpp;
 
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
+import io.vertx.core.Closeable;
 import io.vertx.core.Future;
 
-public interface SmppSession {
+public interface SmppSession extends Closeable {
 //  SmppSessionBindType getBindType(); // TRANCEIVER, TRANSMITTER, RECEIVER, TRANCEIVER(smpp-v5?)
 //  SmppSessionState getState(); // INITIAL?, OUTBOUND, OPENED, BINDING, BOUND, UNBINDING, CLOSED
-//  Set<SmppSession> getPool(); // Другие сессии того же клиента
+//  [?] SessionState {SmppState state, boolean sendPaused, boolean replyPaused }
+//  SmppSessionSubState getSubState(); // SEND_PAUSED, REPLAY_PAUSED, SEND_REPLAY_PAUSED, PLAY.
 //  String getId(); // id = systemId + bind_type + serial_number
 //  public boolean sniffInbound(Pdu pdu);
 //  public boolean sniffOutbound(Pdu pdu);
@@ -30,4 +32,9 @@ public interface SmppSession {
    * @return
    */
   Future<Void> reply(PduResponse pduResponse);
+
+  // void pauseAll();
+  // void pauseSend();
+  // void pauseReply();
+  // void failAllUnsentRequests();
 }

@@ -13,12 +13,15 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.CharsetEncoder;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class SmppClientMain extends AbstractVerticle {
+  private static Logger log = LoggerFactory.getLogger(SmppClientMain.class);
 
 //  private static final int SUBMIT_SM_NUMBER = 50_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000_000;
@@ -70,7 +73,7 @@ public class SmppClientMain extends AbstractVerticle {
       .onSuccess(sess -> {
 //        startPromise.complete();
         start[0] = System.currentTimeMillis();
-        System.out.println("client bound");
+        log.info("client bound");
         new Loop(vertx)
             .forLoopInt(0, SUBMIT_SM_NUMBER, i -> {
               var throttled = Promise.<Boolean>promise();
@@ -80,7 +83,6 @@ public class SmppClientMain extends AbstractVerticle {
               var sendSubmitSmStart = new long[]{System.nanoTime()};
               sess.send(ssm)
                   .onSuccess(submitSmResp -> {
-//System.out.println("got resp " + submitSmResp);
                     submitSmLatencySumNano[0] += (System.nanoTime() - sendSubmitSmStart[0]);
                     submitSmRespCount[0]++;
                     submitSmLatch.countDown(1);
@@ -102,26 +104,31 @@ public class SmppClientMain extends AbstractVerticle {
               deliverEnd[0] = System.currentTimeMillis();
               return ret;
             })
+            .compose(v -> {
+              var closePromise = Promise.<Void>promise();
+              sess.close(closePromise);
+              return closePromise.future();
+            })
             .onComplete(ar -> {
-              System.out.println("done");
+              log.info("done");
               var submitSmThroughput = ((double)submitSmRespCount[0]/((double)(submitEnd[0] - start[0])/1000.0));
-              System.out.println(
+              log.info(
                   "submitSm=" + submitSmCount[0] +
                   ", submitSmResp=" + submitSmRespCount[0] +
                       ", throughput=" + submitSmThroughput);
-              System.out.println("submitSm latency=" + (0.000_001 * (double)submitSmLatencySumNano[0]/(double)submitSmRespCount[0]));
+              log.info("submitSm latency=" + (0.000_001 * (double)submitSmLatencySumNano[0]/(double)submitSmRespCount[0]));
 
               var deliverSmThroughput = ((double)deliverSmRespCount[0]/((double)(deliverEnd[0] - start[0])/1000.0));
-              System.out.println(
+              log.info(
                   "deliverSm=" + deliverSmCount[0] +
                   ", deliverSmResp=" + deliverSmRespCount[0] +
                       ", throughput=" + deliverSmThroughput);
-              System.out.println("deliverSmResp latency=" + (0.000_001 * (double)deliverSmRespLatencySumNano[0]/(double)deliverSmRespCount[0]));
+              log.info("deliverSmResp latency=" + (0.000_001 * (double)deliverSmRespLatencySumNano[0]/(double)deliverSmRespCount[0]));
 
-              System.out.println("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
-              System.out.println("Time=" + (submitEnd[0] - start[0]) + "ms");
-//              startPromise.complete();
-//              vertx.close();
+              log.info("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
+              log.info("Time=" + (submitEnd[0] - start[0]) + "ms");
+              startPromise.complete();
+              vertx.close();
             });
       })
       .onFailure(startPromise::fail);

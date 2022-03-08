@@ -3,6 +3,7 @@ package com.example.smpp;
 import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
+import com.cloudhopper.smpp.pdu.Unbind;
 import com.example.smpp.util.vertx.Semaphore;
 import io.netty.channel.ChannelHandlerContext;
 import io.vertx.core.Future;
@@ -17,6 +18,8 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private final Semaphore windowGuard;
   private final Handler<PduRequestContext<?>> requestHandler;
   private int sequenceCounter = 0;
+  private boolean sentUnbind = true;
+  private boolean awaitUnbindResp = true;
 
   public SmppSessionImpl(ContextInternal context, ChannelHandlerContext chctx, Handler<PduRequestContext<?>> requestHandler) {
     super(context, chctx);
@@ -78,7 +81,38 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   @Override
   public Future<Void> reply(PduResponse pduResponse) {
     var written = context.<Void>promise();
+// TODO consider checks
+//    this.channel().isWritable(); {this.channel().bytesBeforeWritable();}
+//    this.channel().isActive();
     writeToChannel(pduResponse, written);
     return written.future();
+  }
+
+  /**
+   * Closes the session - discards all pdus.
+   * todo timeouts
+   * @param completion promise for connection is being closed
+   */
+  @Override
+  public void close(Promise<Void> completion) {
+    if (sentUnbind) {
+      // TODO сделать ожидание отправок
+      //  if (awaitAllSent) {
+      //    awaitAllSent() -> { pauseSend; pauseReply }
+      //      onComplete( ... )
+      //  }
+      var unbindRespFuture = send(new Unbind());
+      if (awaitUnbindResp) {
+        unbindRespFuture
+          .compose(unbindResp -> {
+          super.close(completion);
+          return completion.future();
+        });
+      } else {
+        super.close(completion);
+      }
+    } else {
+      super.close(completion);
+    }
   }
 }

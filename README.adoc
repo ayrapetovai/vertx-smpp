@@ -5,7 +5,7 @@ image:https://img.shields.io/badge/vert.x-4.2.5-purple.svg[link="https://vertx.i
 This application was generated using http://start.vertx.io
 
 == TODO
-- рефакторить колбэки и хэндлеры в Smpp*Worker и Smpp*Impl
+- рефакторить колбэки и хэндлеры в Smpp*Worker и Smpp*Impl, сделать класс SessionCallbacks, где будут все колбэки для сессии.
 - Сделать накрутку метрик в коде клиента и сервера. Перцентили?
 - Разобраться с API для пользоватлея: где должны находиться меоды настройки и задаваться колбэки - в сессии или в клиенте/сервере?
 - Сделать протухание по времени нахождения в очереди, так, чтобы данные в канале не порились.
@@ -18,6 +18,9 @@ This application was generated using http://start.vertx.io
 - сделать API для колбэка проверки прав пользователя подключаться
 
 == Features
+
+== Usage
+Клиентский код сам ведет пул сессий и управляет им из колбэков на события сессии.
 
 == Building
 

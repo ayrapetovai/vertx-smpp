@@ -9,13 +9,13 @@
   </appender>
 
 <!--  <logger name="com" level="warn"/>-->
-  <logger name="com.example.smpp" level="trace"/>
+<!--  <logger name="com.example.smpp" level="trace"/>-->
 <!--  <logger name="com.example.smpp" level="warn"/>-->
   <logger name="com.example.smppServer.main.SmppServerMain" level="info"/>
   <logger name="com.example.smppServer.main.SmppClientMain" level="info"/>
 
 <!--  <root level="trace">-->
-  <root level="warn">
+  <root level="info">
     <appender-ref ref="CONSOLE"/>
   </root>
 
