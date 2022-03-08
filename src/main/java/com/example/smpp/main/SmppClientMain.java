@@ -79,7 +79,7 @@ public class SmppClientMain extends AbstractVerticle {
               var throttled = Promise.<Boolean>promise();
               submitSmCount[0]++;
               var ssm = new SubmitSm();
-              addShortMessage(ssm);
+//              addShortMessage(ssm);
               var sendSubmitSmStart = new long[]{System.nanoTime()};
               sess.send(ssm)
                   .onSuccess(submitSmResp -> {
@@ -165,6 +165,14 @@ public class SmppClientMain extends AbstractVerticle {
 //Overall throughput=95893.4145770129
 //Time=20856ms
 
+// vertex-smpp(1), no text
+//submitSm=1000000, submitSmResp=1000000, throughput=130174.43374121322
+//submitSm latency=0.34885200490900004
+//deliverSm=1000001, deliverSmResp=1000001, throughput=130157.6207210725
+//deliverSmResp latency=0.06413832364967635
+//Overall throughput=260332.0544622857
+//Time=7682ms
+
 // cloudhopper(1), text
 //submitSm=1000000, submitSmResp=1000000, throughput=47959.330487746396
 //submitSm latency=0.692746395918
@@ -172,6 +180,14 @@ public class SmppClientMain extends AbstractVerticle {
 //deliverSmResp latency=0.04484290301628777
 //Overall throughput=85781.85853991864
 //Time=20851ms
+
+// cloudhopper(1), no text
+//submitSm=1000000, submitSmResp=1000000, throughput=139353.40022296543
+//submitSm latency=0.33387468261099995
+//deliverSm=113226, deliverSmResp=113226, throughput=15774.031763722485
+//deliverSmResp latency=0.03360748752053415
+//Overall throughput=155127.4319866879
+//Time=7176ms
 
   public static void main(String[] args) {
     var vertex = Vertx.vertx();

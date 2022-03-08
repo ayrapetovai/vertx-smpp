@@ -117,11 +117,9 @@ public class SmppServerWorker implements Handler<Channel> {
     VertxHandler<SmppServerSession> handler = VertxHandler.create(chctx ->
 //            context.emit(chctx.handler(), connectionHandler::handle);
       new SmppServerSession(
-        streamContextSupplier,
-        sslHelper,
-        options,
-        chctx,
-        context
+          context,
+          chctx,
+          hello.requestHandler
       ));
     handler.addHandler(conn -> {
       context.emit(conn, hello.connectionHandler::handle);

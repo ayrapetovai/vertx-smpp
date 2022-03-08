@@ -16,6 +16,6 @@ public class SmppServerConnectionHandler  implements Handler<SmppServerSession> 
 
   @Override
   public void handle(SmppServerSession sess) {
-    sess.handler = this;
+//    sess.handler = this;
   }
 }

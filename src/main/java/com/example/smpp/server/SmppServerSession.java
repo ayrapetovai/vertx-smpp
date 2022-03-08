@@ -1,5 +1,6 @@
 package com.example.smpp.server;
 
+import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.example.smpp.Window;
@@ -8,27 +9,21 @@ import com.example.smpp.SmppSession;
 import com.example.smpp.util.vertx.Semaphore;
 import io.netty.channel.ChannelHandlerContext;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.impl.EventLoopContext;
-import io.vertx.core.net.NetServerOptions;
 import io.vertx.core.net.impl.ConnectionBase;
-import io.vertx.core.net.impl.SSLHelper;
 import io.vertx.core.spi.metrics.NetworkMetrics;
-
-import java.util.function.Supplier;
 
 public class SmppServerSession extends ConnectionBase implements SmppSession {
   private final Window window = new Window();
   private final Semaphore windowGuard;
   private int sequenceCounter = 0;
-  Supplier<ContextInternal> streamContextSupplier;
-  SSLHelper sslHelper;
-  NetServerOptions options;
-  SmppServerConnectionHandler handler;
+  private final Handler<PduRequestContext<?>> requestHandler;
 
-  public SmppServerSession(Supplier<ContextInternal> streamContextSupplier, SSLHelper sslHelper, NetServerOptions options, ChannelHandlerContext chctx, EventLoopContext context) {
+  public SmppServerSession(ContextInternal context, ChannelHandlerContext chctx, Handler<PduRequestContext<?>> requestHandler) {
     super(context, chctx);
+    this.requestHandler = requestHandler;
     windowGuard = Semaphore.create(context.owner(), 500);
   }
 
@@ -47,8 +42,9 @@ public class SmppServerSession extends ConnectionBase implements SmppSession {
    */
   @Override
   public void handleMessage(Object msg) {
-    if (msg instanceof PduRequest) {
-      handler.requestHandler.handle(new PduRequestContext<>((PduRequest<?>) msg, this));
+    var pdu = (Pdu) msg;
+    if (pdu.isRequest()) {
+      requestHandler.handle(new PduRequestContext<>((PduRequest<?>) msg, this));
     } else {
       var pduResp = (PduResponse) msg;
       var respProm = window.complement(pduResp.getSequenceNumber());
