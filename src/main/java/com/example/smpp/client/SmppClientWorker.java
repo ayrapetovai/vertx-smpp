@@ -9,6 +9,7 @@ import com.example.smpp.SmppSession;
 import com.example.smpp.SmppSessionCallbacks;
 import com.example.smpp.SmppSessionImpl;
 import com.example.smpp.SmppSessionPduEncoder;
+import com.example.smpp.server.Pool;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
 import io.vertx.core.Handler;
@@ -17,6 +18,7 @@ import io.vertx.core.net.impl.VertxHandler;
 
 public class SmppClientWorker {
   private final EventLoopContext context;
+  private final Pool pool;
   private final Handler<PduRequestContext<?>> requestHandler;
   private final Handler<SmppSession> hello = (sess) -> {
     System.out.println("hello sess");
@@ -25,9 +27,10 @@ public class SmppClientWorker {
     System.out.println("incoming sess");
   };
 
-  public SmppClientWorker(EventLoopContext context, Handler<PduRequestContext<?>> requestHandler) {
+  public SmppClientWorker(EventLoopContext context, Handler<PduRequestContext<?>> requestHandler, Pool pool) {
     this.context = context;
     this.requestHandler = requestHandler;
+    this.pool = pool;
   }
 
   public SmppSession handle(Channel ch) {
@@ -39,7 +42,7 @@ public class SmppClientWorker {
     var callbacks = new SmppSessionCallbacks();
     callbacks.requestHandler = requestHandler;
     VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx ->
-        new SmppSessionImpl(-1L, context, chctx, callbacks)
+        pool.add(id -> new SmppSessionImpl(pool, id, context, chctx, callbacks))
     );
     handler.addHandler(conn -> {
       context.emit(conn, connectionHandler::handle);

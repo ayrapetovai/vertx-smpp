@@ -25,4 +25,8 @@ public class Pool {
   public int size() {
     return sessions.size();
   }
+
+  public void remove(Long id) {
+    sessions.remove(id);
+  }
 }

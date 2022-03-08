@@ -4,6 +4,7 @@ import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.cloudhopper.smpp.pdu.Unbind;
+import com.example.smpp.server.Pool;
 import com.example.smpp.util.vertx.Semaphore;
 import io.netty.channel.ChannelHandlerContext;
 import io.vertx.core.Future;
@@ -19,6 +20,7 @@ import java.util.Objects;
 public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private static final Logger log = LoggerFactory.getLogger(SmppSessionImpl.class);
 
+  private final Pool pool;
   private final Long id;
   private final Window window = new Window();
   private final Semaphore windowGuard;
@@ -27,10 +29,12 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private boolean sendUnbind = true;
   private boolean awaitUnbindResp = true;
 
-  public SmppSessionImpl(Long id, ContextInternal context, ChannelHandlerContext chctx, SmppSessionCallbacks callbacks) {
+  public SmppSessionImpl(Pool pool, Long id, ContextInternal context, ChannelHandlerContext chctx, SmppSessionCallbacks callbacks) {
     super(context, chctx);
+    Objects.requireNonNull(pool);
     Objects.requireNonNull(id);
     Objects.requireNonNull(callbacks);
+    this.pool = pool;
     this.id = id;
     this.windowGuard = Semaphore.create(context.owner(), 600);
     this.callbacks = callbacks;
@@ -60,7 +64,6 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
               var closePromise = Promise.<Void>promise();
               close(closePromise, false);
               closePromise.future().onComplete(a -> {
-                // TODO remove session from pool
                 //  fireSessionClosed
                 log.debug("closed");
               });
@@ -135,13 +138,16 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
         unbindRespFuture
           .compose(unbindResp -> {
             log.debug("session#{} did unbindResp close", getId());
+            pool.remove(id);
             super.close(completion);
             return completion.future();
           });
       } else {
+        pool.remove(id);
         super.close(completion);
       }
     } else {
+      pool.remove(id);
       super.close(completion);
     }
   }

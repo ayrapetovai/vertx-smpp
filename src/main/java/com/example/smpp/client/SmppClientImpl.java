@@ -3,7 +3,7 @@ package com.example.smpp.client;
 import com.cloudhopper.smpp.pdu.BindTransceiver;
 import com.example.smpp.PduRequestContext;
 import com.example.smpp.SmppSession;
-import com.example.smpp.SmppSessionImpl;
+import com.example.smpp.server.Pool;
 import io.netty.channel.ChannelPipeline;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -15,6 +15,7 @@ import io.vertx.core.spi.metrics.TCPMetrics;
 
 public class SmppClientImpl extends NetClientImpl implements SmppClient {
   private final VertxInternal vertx;
+  private final Pool pool = new Pool();
   private final SmppClientOptions options;
 
   private SmppSession session;
@@ -34,7 +35,7 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
 
   @Override
   protected void initChannel(ChannelPipeline pipeline) {
-    var worker = new SmppClientWorker(vertx.createEventLoopContext(), requestHandler);
+    var worker = new SmppClientWorker(vertx.createEventLoopContext(), requestHandler, pool);
     session = worker.handle(pipeline.channel());
   }
 

@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.CharsetEncoder;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class SmppClientMain extends AbstractVerticle {
@@ -145,7 +144,7 @@ public class SmppClientMain extends AbstractVerticle {
 
   private void addShortMessage(SubmitSm ssm) {
     String text160 = "\u20AC Lorem [ipsum] dolor sit amet, consectetur adipiscing elit. Proin feugiat, leo id commodo tincidunt, nibh diam ornare est, vitae accumsan risus lacus sed sem metus.";
-//    String text160 = "txId:" + UUID.randomUUID() + ";";
+//    String text160 = "txId:" + java.util.UUID.randomUUID() + ";";
     byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_GSM);
 //    byte[] textBytes = text160.getBytes(StandardCharsets.UTF_8);
 
@@ -161,15 +160,9 @@ public class SmppClientMain extends AbstractVerticle {
       e.printStackTrace();
     }
   }
-// vertx-smpp(1), no text
-//submitSm=50000000, submitSmResp=50000000, throughput=121515.83715905694
-//submitSm latency=0.28284765920925997
-//deliverSm=50000001, deliverSmResp=50000001, throughput=121515.54426811189
-//deliverSmResp latency=0.0544855449753491
-//Overall throughput=243031.38142716885
-//Time=411469ms
+//==================================
 
-// vertx-smpp(4), no text
+// vertx-smpp(4), no text, each
 //15:47:54.270 - submitSm=1000000, submitSmResp=1000000, throughput=87260.03490401396
 //15:47:54.270 - submitSm latency=1.3886247809849999
 //15:47:54.270 - deliverSm=1000001, deliverSmResp=1000001, throughput=87260.12216404887
@@ -177,13 +170,15 @@ public class SmppClientMain extends AbstractVerticle {
 //15:47:54.270 - Overall throughput=174520.1570680628
 //15:47:54.270 - Time=11460ms
 
-// cloudhopper(4), no text
+// cloudhopper(4), no text, sum
 //16:03:23.434 - submitSm=1000000, submitSmResp=1000000, throughput=18183.80186929483
 //16:03:23.434 - submitSm latency=35.967412587631
 //16:03:23.434 - deliverSm=548472, deliverSmResp=548472, throughput=9971.492982328558
 //16:03:23.434 - deliverSmResp latency=0.15386301283019005
 //16:03:23.434 - Overall throughput=28155.29485162339
 //16:03:23.434 - Time=54994ms
+
+//==================================
 
 // vertx-smpp(1), text
 //submitSm=1000000, submitSmResp=1000000, throughput=47947.83275795934
@@ -193,14 +188,6 @@ public class SmppClientMain extends AbstractVerticle {
 //Overall throughput=95893.4145770129
 //Time=20856ms
 
-// vertx-smpp(1), no text
-//submitSm=1000000, submitSmResp=1000000, throughput=130174.43374121322
-//submitSm latency=0.34885200490900004
-//deliverSm=1000001, deliverSmResp=1000001, throughput=130157.6207210725
-//deliverSmResp latency=0.06413832364967635
-//Overall throughput=260332.0544622857
-//Time=7682ms
-
 // cloudhopper(1), text
 //submitSm=1000000, submitSmResp=1000000, throughput=47959.330487746396
 //submitSm latency=0.692746395918
@@ -208,6 +195,16 @@ public class SmppClientMain extends AbstractVerticle {
 //deliverSmResp latency=0.04484290301628777
 //Overall throughput=85781.85853991864
 //Time=20851ms
+
+//==================================
+
+// vertx-smpp(1), no text
+//submitSm=1000000, submitSmResp=1000000, throughput=130174.43374121322
+//submitSm latency=0.34885200490900004
+//deliverSm=1000001, deliverSmResp=1000001, throughput=130157.6207210725
+//deliverSmResp latency=0.06413832364967635
+//Overall throughput=260332.0544622857
+//Time=7682ms
 
 // cloudhopper(1), no text
 //submitSm=1000000, submitSmResp=1000000, throughput=139353.40022296543
@@ -220,7 +217,7 @@ public class SmppClientMain extends AbstractVerticle {
   public static void main(String[] args) {
     var vertex = Vertx.vertx();
     var depOpts = new DeploymentOptions()
-      .setInstances(4) // TODO scale to 2 and more
+      .setInstances(1) // TODO scale to 2 and more
       .setWorkerPoolSize(1)
       ;
     vertex.deployVerticle(SmppClientMain.class.getCanonicalName(), depOpts);

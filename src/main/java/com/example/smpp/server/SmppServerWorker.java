@@ -130,17 +130,9 @@ public class SmppServerWorker implements Handler<Channel> {
 //    }
     var callback = new SmppSessionCallbacks();
     callback.requestHandler = hello.requestHandler;
-    VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx -> {
+    VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx ->
 //            context.emit(chctx.handler(), connectionHandler::handle);
-      var sess = pool.add(id ->
-        new SmppSessionImpl(
-            id,
-            context,
-            chctx,
-            callback)
-      );
-      return sess;
-    });
+      pool.add(id -> new SmppSessionImpl(pool, id, context, chctx, callback)));
     handler.addHandler(conn -> {
       context.emit(conn, hello.connectionHandler::handle);
     });
