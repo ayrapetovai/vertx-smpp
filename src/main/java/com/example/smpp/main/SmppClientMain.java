@@ -20,7 +20,7 @@ import java.nio.charset.CharsetEncoder;
 import java.util.concurrent.TimeUnit;
 
 public class SmppClientMain extends AbstractVerticle {
-  private static Logger log = LoggerFactory.getLogger(SmppClientMain.class);
+  private static final Logger log = LoggerFactory.getLogger(SmppClientMain.class);
 
 //  private static final int SUBMIT_SM_NUMBER = 50_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000_000;

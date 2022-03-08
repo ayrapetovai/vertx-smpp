@@ -1,6 +1,7 @@
 package com.example.smpp.main;
 
 import com.cloudhopper.smpp.pdu.DeliverSm;
+import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.example.smpp.Smpp;
 import com.example.smpp.server.SmppServer;
 import com.example.smpp.server.SmppServerOptions;
@@ -34,18 +35,19 @@ public class SmppServerMain extends AbstractVerticle {
       .onSessionCreated(sess -> {
         log.info("created session#{}", sess.getId());
       })
-      .onRequest(req -> {
-        var sess = req.getSession(); // FIXME some req.getRequest() are null
-        sess
-          .reply(req.getRequest().createResponse())
-          .onSuccess(nothing -> {
-//            vertx.runOnContext(__ -> {
-              sess.send(new DeliverSm())
-                .onSuccess(resp -> {})
-                  .onFailure(Throwable::printStackTrace);
-//            });
-          })
-            .onFailure(Throwable::printStackTrace);;
+      .onRequest(reqCtx -> {
+          var sess = reqCtx.getSession();
+          sess
+              .reply(reqCtx.getRequest().createResponse())
+              .onSuccess(nothing -> {
+                if (reqCtx.getRequest() instanceof SubmitSm) {
+                  sess.send(new DeliverSm())
+                      .onSuccess(resp -> {
+                      })
+                      .onFailure(Throwable::printStackTrace);
+                }
+              })
+              .onFailure(Throwable::printStackTrace);
       })
       .start("localhost", 2776)
 //      .start("localhost", 2777)
