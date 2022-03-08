@@ -16,8 +16,6 @@ import io.vertx.core.Vertx;
 
 import java.nio.charset.CharsetEncoder;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class SmppClientMain extends AbstractVerticle {
@@ -35,7 +33,6 @@ public class SmppClientMain extends AbstractVerticle {
 //  private static final int SUBMIT_SM_NUMBER = 4;
 //  private static final int SUBMIT_SM_NUMBER = 1;
   SmppClient client;
-  ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   @Override
   public void start(Promise<Void> startPromise) {
@@ -55,13 +52,13 @@ public class SmppClientMain extends AbstractVerticle {
 
     client = Smpp.client(vertx);
     client
-      .onRequest(req -> {
-        // FIXME some req.getRequest() are null
-        if (req.getRequest() instanceof DeliverSm) {
+      .onRequest(reqCtx -> {
+        // FIXME some reqCtx.getRequest() are null
+        if (reqCtx.getRequest() instanceof DeliverSm) {
           deliverSmCount[0]++;
           var sendDeliverSmRespStart = new long[]{System.nanoTime()};
-          req.getSession()
-              .reply(req.getRequest().createResponse())
+          reqCtx.getSession()
+              .reply(reqCtx.getRequest().createResponse())
               .onSuccess(nothing -> {
                 deliverSmRespLatencySumNano[0] += (System.nanoTime() - sendDeliverSmRespStart[0]);
                 deliverSmRespCount[0]++;
@@ -157,6 +154,14 @@ public class SmppClientMain extends AbstractVerticle {
       e.printStackTrace();
     }
   }
+// vertex-smpp(1), no text
+//submitSm=50000000, submitSmResp=50000000, throughput=121515.83715905694
+//submitSm latency=0.28284765920925997
+//deliverSm=50000001, deliverSmResp=50000001, throughput=121515.54426811189
+//deliverSmResp latency=0.0544855449753491
+//Overall throughput=243031.38142716885
+//Time=411469ms
+
 // vertex-smpp(1), text
 //submitSm=1000000, submitSmResp=1000000, throughput=47947.83275795934
 //submitSm latency=0.7100937028389999

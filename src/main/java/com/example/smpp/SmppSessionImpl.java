@@ -21,7 +21,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   public SmppSessionImpl(ContextInternal context, ChannelHandlerContext chctx, Handler<PduRequestContext<?>> requestHandler) {
     super(context, chctx);
     this.requestHandler = requestHandler;
-    this.windowGuard = Semaphore.create(context.owner(), 500);
+    this.windowGuard = Semaphore.create(context.owner(), 600);
   }
 
   @Override
@@ -61,9 +61,9 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
             Promise<T> respProm = window.<T>offer(req.getSequenceNumber(), System.currentTimeMillis() + 1000);
             if (channel().isOpen()) {
               var written = context.<Void>promise();
-              writeToChannel(req, written);
               written.future()
                   .onFailure(respProm::tryFail);
+              writeToChannel(req, written);
             } else {
               windowGuard.release(1);
               respProm.tryFail("aquired; channel is closed");
