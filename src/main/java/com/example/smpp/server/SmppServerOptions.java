@@ -2,28 +2,28 @@ package com.example.smpp.server;
 
 import io.vertx.core.net.NetServerOptions;
 
+// R - хотелось бы менять в рантайме
+// S - это поле должно иметь одно и тоже значение на протяжении всего времени работы сессии
 public class SmppServerOptions extends NetServerOptions {
-  // boolean dropAllOnUnbind = false; // per session? При получении unbind, не досылать resp и другие pdu, сразу убить сессию
-  // boolean replyToUnbind = true; //per session? В ответ на unbind посылать unbind_resp
-  // Duration bindTimeout; // per session? Время, за которое сервер выдаст bind_resp
-  // Duration unbindTimeout; // per session? Время, которе дается клиенту на отправку unbind_resp, по истечении все pdu в окне дропаются и соединение закрывается
+// R  boolean dropAllOnUnbind = false; // per session? При получении unbind, не досылать resp и другие pdu, сразу убить сессию
+// R  boolean replyToUnbind = true; //per session? В ответ на unbind посылать unbind_resp
+// R  Duration bindTimeout; // per session? Время, за которое сервер выдаст bind_resp
+// R  Duration unbindTimeout; // per session? Время, которе дается клиенту на отправку unbind_resp, по истечении все pdu в окне дропаются и соединение закрывается
 
-//    private String name; // for identification on local JVM?
-//    private int windowSize; // per session?
-//    private long bindTimeout; // per session?
-//    private String systemId; // per session?
+// R  private int windowSize; // per session?
+// S  private String name; // for identification on local JVM?
+// S  private String systemId; // per session?
 
-//    private int defaultWindowSize; // per session?
-//    private long defaultWindowWaitTimeout; // per session? (aquire(..., TimeUnit.))
-//    private long defaultRequestExpiryTimeout; // per session?
-//    private long defaultWindowMonitorInterval; // per session?
-//    private boolean defaultSessionCountersEnabled = false; // per session?
+// R  private long defaultWindowWaitTimeout; // per session? (aquire(..., TimeUnit.))
+// R  private long defaultRequestExpiryTimeout; // per session?
+// R  private long defaultWindowMonitorInterval; // per session?
+// R  private boolean defaultSessionCountersEnabled = false; // per session?
 
-//    private boolean autoNegotiateInterfaceVersion;
-//    private byte interfaceVersion;// smpp version the server supports
-//    private int maxConnectionSize;
-//    private boolean reuseAddress;
+// R  private int maxConnectionSize;
+// S  private boolean autoNegotiateInterfaceVersion;
+// S  private byte interfaceVersion;// smpp version the server supports
+// S  private boolean reuseAddress;
 
-//    private boolean jmxEnabled;
-//    private String jmxDomain;
+// S  private boolean jmxEnabled;
+// S  private String jmxDomain;
 }

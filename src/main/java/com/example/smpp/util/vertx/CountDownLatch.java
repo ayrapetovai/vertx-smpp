@@ -27,7 +27,7 @@ public class CountDownLatch {
     } else {
       var expiresAtNano = System.nanoTime() + unit.toNanos(timeout);
       var taskRef = new Handler[]{null};
-      var task = (Handler<Void>)v -> {
+      var task = (Handler<Void>) v -> {
         if (this.count == 0) {
           awaitPromise.tryComplete();
         } else {

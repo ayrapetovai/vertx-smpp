@@ -16,6 +16,8 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetEncoder;
 import java.util.concurrent.TimeUnit;
 
@@ -93,17 +95,13 @@ public class SmppClientMain extends AbstractVerticle {
                   });
               return throttled.future();
             })
+            .compose(v -> submitSmLatch.await(90, TimeUnit.SECONDS))
             .compose(v -> {
-              var ret =  submitSmLatch.await(25, TimeUnit.SECONDS);
               submitEnd[0] = System.currentTimeMillis();
-              return ret;
+              return deliverSmRespLatch.await(90, TimeUnit.SECONDS);
             })
             .compose(v -> {
-              var ret = deliverSmRespLatch.await(90, TimeUnit.SECONDS);
               deliverEnd[0] = System.currentTimeMillis();
-              return ret;
-            })
-            .compose(v -> {
               var closePromise = Promise.<Void>promise();
               sess.close(closePromise);
               return closePromise.future();
@@ -116,6 +114,7 @@ public class SmppClientMain extends AbstractVerticle {
                   ", submitSmResp=" + submitSmRespCount[0] +
                       ", throughput=" + submitSmThroughput);
               log.info("submitSm latency=" + (0.000_001 * (double)submitSmLatencySumNano[0]/(double)submitSmRespCount[0]));
+              log.info("submit_sm time=" + (submitEnd[0] - start[0]) + "ms");
 
               var deliverSmThroughput = ((double)deliverSmRespCount[0]/((double)(deliverEnd[0] - start[0])/1000.0));
               log.info(
@@ -123,9 +122,9 @@ public class SmppClientMain extends AbstractVerticle {
                   ", deliverSmResp=" + deliverSmRespCount[0] +
                       ", throughput=" + deliverSmThroughput);
               log.info("deliverSmResp latency=" + (0.000_001 * (double)deliverSmRespLatencySumNano[0]/(double)deliverSmRespCount[0]));
+              log.info("deliver_sm time=" + (deliverEnd[0] - start[0]) + "ms");
 
               log.info("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
-              log.info("Time=" + (submitEnd[0] - start[0]) + "ms");
               startPromise.complete();
 //              vertx.close(); // не позволяет деплоить несколько верикалей
             });
@@ -140,8 +139,6 @@ public class SmppClientMain extends AbstractVerticle {
 //        });
   }
 
-  private static final CharsetEncoder gsmEncoder = new Gsm7BitCharset("UTF-8", new String[]{"gsm"}).newEncoder();
-
   private void addShortMessage(SubmitSm ssm) {
     String text160 = "\u20AC Lorem [ipsum] dolor sit amet, consectetur adipiscing elit. Proin feugiat, leo id commodo tincidunt, nibh diam ornare est, vitae accumsan risus lacus sed sem metus.";
 //    String text160 = "txId:" + java.util.UUID.randomUUID() + ";";
@@ -150,6 +147,7 @@ public class SmppClientMain extends AbstractVerticle {
 
 //    byte[] textBytes = new byte[0];
 //    try {
+//      CharsetEncoder gsmEncoder = new Gsm7BitCharset("UTF-8", new String[]{"gsm"}).newEncoder();
 //      textBytes = gsmEncoder.encode(CharBuffer.wrap(text160)).array();
 //    } catch (CharacterCodingException e) {
 //      e.printStackTrace();
@@ -169,6 +167,7 @@ public class SmppClientMain extends AbstractVerticle {
 //15:47:54.270 - deliverSmResp latency=0.16470121744778254
 //15:47:54.270 - Overall throughput=174520.1570680628
 //15:47:54.270 - Time=11460ms
+//throughput 700000
 
 // cloudhopper(4), no text, sum
 //16:03:23.434 - submitSm=1000000, submitSmResp=1000000, throughput=18183.80186929483
@@ -177,6 +176,28 @@ public class SmppClientMain extends AbstractVerticle {
 //16:03:23.434 - deliverSmResp latency=0.15386301283019005
 //16:03:23.434 - Overall throughput=28155.29485162339
 //16:03:23.434 - Time=54994ms
+
+//==================================
+
+// vertx-smpp(4), text(cloudhopper.CHARSET_GSM), each, window(600)
+//18:56:07.903 - submitSm=2000000, submitSmResp=2000000, throughput=32591.337222566242
+//18:56:07.903 - submitSm latency=1.293296398087
+//18:56:07.903 - submit_sm time=61366ms
+//18:56:07.903 - deliverSm=2000000, deliverSmResp=2000000, throughput=32591.337222566242
+//18:56:07.903 - deliverSmResp latency=0.093746191569
+//18:56:07.903 - deliver_sm time=61366ms
+//18:56:07.903 - Overall throughput=65182.674445132485
+//throughput 260000
+
+// vertx-smpp(4), text(Gsm7BitCharset), each, window(600)
+//19:00:31.635 - submitSm=2000000, submitSmResp=2000000, throughput=71813.28545780969
+//19:00:31.635 - submitSm latency=1.0924684289770001
+//19:00:31.635 - submit_sm time=27850ms
+//19:00:31.635 - deliverSm=2000000, deliverSmResp=2000000, throughput=71810.70697641019
+//19:00:31.635 - deliverSmResp latency=0.109346238805
+//19:00:31.635 - deliver_sm time=27851ms
+//19:00:31.635 - Overall throughput=143623.99243421986
+//throughput 547000
 
 //==================================
 
