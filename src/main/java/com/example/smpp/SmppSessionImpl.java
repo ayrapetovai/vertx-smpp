@@ -5,6 +5,7 @@ import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.cloudhopper.smpp.pdu.Unbind;
 import com.example.smpp.server.Pool;
+import com.example.smpp.session.SessionOptionsView;
 import com.example.smpp.util.vertx.Semaphore;
 import io.netty.channel.ChannelHandlerContext;
 import io.vertx.core.Future;
@@ -24,20 +25,18 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private final Long id;
   private final Window window = new Window();
   private final Semaphore windowGuard;
-  private final SmppSessionCallbacks callbacks;
+  private final SessionOptionsView optionsView;
   private int sequenceCounter = 0;
-  private boolean sendUnbind = true;
-  private boolean awaitUnbindResp = true;
 
-  public SmppSessionImpl(Pool pool, Long id, ContextInternal context, ChannelHandlerContext chctx, SmppSessionCallbacks callbacks) {
+  public SmppSessionImpl(Pool pool, Long id, ContextInternal context, ChannelHandlerContext chctx, SessionOptionsView optionsView) {
     super(context, chctx);
     Objects.requireNonNull(pool);
     Objects.requireNonNull(id);
-    Objects.requireNonNull(callbacks);
+    Objects.requireNonNull(optionsView);
     this.pool = pool;
     this.id = id;
-    this.windowGuard = Semaphore.create(context.owner(), 600);
-    this.callbacks = callbacks;
+    this.windowGuard = Semaphore.create(context.owner(), optionsView.getWindowSize());
+    this.optionsView = optionsView;
   }
 
   @Override
@@ -70,7 +69,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
               return closePromise.future();
             });
       } else {
-        callbacks.requestHandler.handle(new PduRequestContext<>((PduRequest<?>) msg, this));
+        optionsView.getOnRequest().handle(new PduRequestContext<>((PduRequest<?>) msg, this));
       }
     } else {
       var pduResp = (PduResponse) msg;
@@ -88,7 +87,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       return windowGuard.aquire(1)
           .compose(v -> {
             req.setSequenceNumber(sequenceCounter++);
-            Promise<T> respProm = window.<T>offer(req.getSequenceNumber(), System.currentTimeMillis() + 1000);
+            Promise<T> respProm = window.<T>offer(req.getSequenceNumber(), System.currentTimeMillis() + optionsView.getWindowWaitTimeout());
             if (channel().isOpen()) {
               var written = context.<Void>promise();
               written.future()
@@ -122,7 +121,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
    */
   @Override
   public void close(Promise<Void> completion) {
-    this.close(completion, this.sendUnbind);
+    this.close(completion, optionsView.isSendUnbindOnClose());
   }
 
   public void close(Promise<Void> completion, boolean sendUnbindRequired) {
@@ -134,21 +133,24 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       //      onComplete( ... )
       //  }
       var unbindRespFuture = send(new Unbind());
-      if (awaitUnbindResp) {
+      if (optionsView.isAwaitUnbindResp()) {
         unbindRespFuture
           .compose(unbindResp -> {
             log.debug("session#{} did unbindResp close", getId());
             pool.remove(id);
             super.close(completion);
+            optionsView.getOnClose().handle(this);
             return completion.future();
           });
       } else {
         pool.remove(id);
         super.close(completion);
+        optionsView.getOnClose().handle(this);
       }
     } else {
       pool.remove(id);
       super.close(completion);
+      optionsView.getOnClose().handle(this);
     }
   }
 

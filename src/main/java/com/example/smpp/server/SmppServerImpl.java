@@ -1,7 +1,6 @@
 package com.example.smpp.server;
 
-import com.example.smpp.PduRequestContext;
-import com.example.smpp.SmppSession;
+import com.example.smpp.session.ServerSessionConfigurator;
 import com.example.smpp.util.vertx.CountDownLatch;
 import io.netty.channel.Channel;
 import io.vertx.core.*;
@@ -14,12 +13,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
+// FIXME implement clone()
 public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServer {
   private static final Logger log = LoggerFactory.getLogger(SmppServerImpl.class);
 
   private final SmppServerConnectionHandler handler = new SmppServerConnectionHandler(this);
   private final Pool pool = new Pool();
+
+  private Function<ServerSessionConfigurator, Boolean> configurator;
 
   public SmppServerImpl(VertxInternal vertx, SmppServerOptions options) {
     super(vertx, options);
@@ -35,7 +38,7 @@ public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServ
 //    } else {
 //      connContext = vertx.createEventLoopContext(context.nettyEventLoop(), context.workerPool(), context.classLoader());
 //    }
-    return new SmppServerWorker((EventLoopContext) context, context::duplicate, this, vertx, sslHelper, options, handler, pool);
+    return new SmppServerWorker((EventLoopContext) context, context::duplicate, this, vertx, sslHelper, options, configurator, pool);
   }
 
   @Override
@@ -44,14 +47,12 @@ public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServ
   }
 
   @Override
-  public SmppServer onSessionCreated(Handler<SmppSession> sessionCreatedHandler) {
-    handler.connectionHandler = sessionCreatedHandler;
-    return this;
-  }
-
-  @Override
-  public SmppServer onRequest(Handler<PduRequestContext<?>> pduRequestHandler) {
-    handler.requestHandler = pduRequestHandler;
+  public SmppServer configure(Function<ServerSessionConfigurator, Boolean> configurator) {
+    if (this.configurator == null) {
+      this.configurator = configurator;
+    } else {
+      throw new IllegalStateException("only one configuration");
+    }
     return this;
   }
 

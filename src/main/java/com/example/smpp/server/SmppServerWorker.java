@@ -1,13 +1,13 @@
 package com.example.smpp.server;
 
-import com.cloudhopper.smpp.channel.SmppSessionPduDecoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
-import com.example.smpp.SmppSession;
-import com.example.smpp.SmppSessionCallbacks;
 import com.example.smpp.SmppSessionImpl;
+import com.example.smpp.SmppSessionPduDecoder;
 import com.example.smpp.SmppSessionPduEncoder;
+import com.example.smpp.session.ServerSessionConfigurator;
+import com.example.smpp.session.SmppSessionOptions;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.ssl.SniHandler;
@@ -23,16 +23,17 @@ import io.vertx.core.net.impl.*;
 import io.vertx.core.spi.metrics.TCPMetrics;
 
 import java.nio.charset.StandardCharsets;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class SmppServerWorker implements Handler<Channel> {
   final EventLoopContext context;
+  private Function<ServerSessionConfigurator, Boolean> configurator;
   Supplier<ContextInternal> streamContextSupplier;
   SmppServerImpl smppServer;
   VertxInternal vertx;
   SSLHelper sslHelper;
   NetServerOptions options;
-  SmppServerConnectionHandler hello;
   final Pool pool;
 
   public SmppServerWorker(
@@ -42,7 +43,7 @@ public class SmppServerWorker implements Handler<Channel> {
       VertxInternal vertx,
       SSLHelper sslHelper,
       NetServerOptions options,
-      SmppServerConnectionHandler handler,
+      Function<ServerSessionConfigurator, Boolean> configurator,
       Pool pool
   ) {
     this.context = context;
@@ -51,7 +52,7 @@ public class SmppServerWorker implements Handler<Channel> {
     this.vertx = vertx;
     this.sslHelper = sslHelper;
     this.options = options;
-    this.hello = handler;
+    this.configurator = configurator;
     this.pool = pool;
   }
 
@@ -128,19 +129,18 @@ public class SmppServerWorker implements Handler<Channel> {
 //      sendServiceUnavailable(pipeline.channel());
 //      return;
 //    }
-    var callbacks = new SmppSessionCallbacks();
-    callbacks.requestHandler = hello.requestHandler;
+    var sessOpts = new SmppSessionOptions();
+    var allowBind = configurator.apply(sessOpts); // TODO allowBind, wtf?
     VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx -> {
-      var sess = pool.add(id -> new SmppSessionImpl(pool, id, context, chctx, callbacks));
+      var sess = pool.add(id -> new SmppSessionImpl(pool, id, context, chctx, sessOpts));
 //            context.emit(chctx.handler(), connectionHandler::handle);
       return sess;
     });
     handler.addHandler(conn -> {
-      context.emit(conn, hello.connectionHandler::handle);
+      context.emit(conn, sessOpts.getOnCreated()::handle);
     });
     pipeline.addLast("handler", handler);
     var sess  = handler.getConnection();
-    hello.handle(sess);
   }
 
   private void handleException(Throwable e) {

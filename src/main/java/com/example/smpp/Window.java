@@ -12,30 +12,30 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-class RequestRecord<T extends PduResponse> implements Delayed {
-  final Promise<T> responsePromise;
-  final int sequenceNumber;
-  final long expiresAt;
-
-  public RequestRecord(Promise<T> responsePromise, int sequenceNumber, long expiresAt) {
-    this.expiresAt = expiresAt;
-    this.sequenceNumber = sequenceNumber;
-    this.responsePromise = responsePromise;
-  }
-
-  @Override
-  public long getDelay(TimeUnit unit) {
-    return unit.convert(expiresAt - System.currentTimeMillis(), MILLISECONDS);
-  }
-
-  @Override
-  public int compareTo(Delayed other) {
-    long diff = getDelay(MILLISECONDS) - other.getDelay(MILLISECONDS);
-    return (diff < 0) ? -1 : (diff > 0) ? 1 : 0;
-  }
-}
-
 public class Window<T extends PduResponse> {
+  private static class RequestRecord<T extends PduResponse> implements Delayed {
+    final Promise<T> responsePromise;
+    final int sequenceNumber;
+    final long expiresAt;
+
+    public RequestRecord(Promise<T> responsePromise, int sequenceNumber, long expiresAt) {
+      this.expiresAt = expiresAt;
+      this.sequenceNumber = sequenceNumber;
+      this.responsePromise = responsePromise;
+    }
+
+    @Override
+    public long getDelay(TimeUnit unit) {
+      return unit.convert(expiresAt - System.currentTimeMillis(), MILLISECONDS);
+    }
+
+    @Override
+    public int compareTo(Delayed other) {
+      long diff = getDelay(MILLISECONDS) - other.getDelay(MILLISECONDS);
+      return (diff < 0) ? -1 : (diff > 0) ? 1 : 0;
+    }
+  }
+
   private final Map<Integer, RequestRecord<T>> cache = new HashMap<>();
 
   public<T extends PduResponse> Promise<T> offer(Integer seqNum, long expiresAt) {

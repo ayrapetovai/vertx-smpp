@@ -1,6 +1,10 @@
 package com.example.smpp.session;
 
+import com.cloudhopper.smpp.pdu.PduResponse;
+import com.example.smpp.PduRequestContext;
+import com.example.smpp.SmppSession;
 import com.example.smpp.model.SmppBindType;
+import io.vertx.core.Handler;
 
 // blueprint
 //+S  private Long id; // per session
@@ -21,27 +25,36 @@ import com.example.smpp.model.SmppBindType;
 // R  private long writeTimeout; // per session
 // R  private boolean countersEnabled; // per session (metrics enabled)
 // R  private LoggingOptions loggingOptions; // per session: log_pdu, log_bytes or not
-public class SmppSessionOptions implements ServerSessionConfigurator, ClientSessionConfigurator, SessionOptionsView {
+public class SmppSessionOptions implements ServerSessionConfigurator, ClientSessionConfigurator {
 
   private Long id;
-  private SmppBindType bindType;
+  private SmppBindType bindType = SmppBindType.TRANSCEIVER;
   private String systemId;
   private String password;
   private String systemType;
   private String addressRange;  // per session: ton, npi, address
 
-  private boolean dropAllOnUnbind;
-  private boolean replyToUnbind;
-  private long bindTimeout;
-  private long unbindTimeout;
-  private long requestExpiryTimeout;
-  private int windowSize;
-  private long windowWaitTimeout;
-  private long windowMonitorInterval;
-  private long writeTimeout;
-  private boolean countersEnabled;
-  private boolean logPdu;
-  private boolean logBytes;
+  private boolean dropAllOnUnbind = false;
+  private boolean replyToUnbind = true;
+  private boolean sendUnbindOnClose = true;
+  private boolean awaitUnbindResp = true;
+  private long bindTimeout = 10000;
+  private long unbindTimeout = 10000;
+  private long requestExpiryTimeout = 10000;
+  private int windowSize = 50;
+  private long windowWaitTimeout = 5000;
+  private long windowMonitorInterval = 2000;
+  private long writeTimeout = 2000;
+  private boolean countersEnabled = false;
+  private boolean logPdu = false;
+  private boolean logBytes = false;
+
+  // TODO: check on null or call this stubs, what is more performant?
+  Handler<SmppSession> createdHandler = __ -> {};
+  Handler<PduRequestContext<?>> requestHandler = __ -> {};
+  Handler<PduResponse> unexpectedResponseHandler = __ -> {};
+  Handler<SmppSession> closeHandler = __ -> {};
+  Handler<SmppSession> unexpectedCloseHandler = __ -> {};
 
   @Override
   public void setId(Long id) {
@@ -81,6 +94,16 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   @Override
   public void setReplyToUnbind(boolean replyToUnbind) {
     this.replyToUnbind = replyToUnbind;
+  }
+
+  @Override
+  public void isSendUnbindOnClose(boolean sendUnbindOnClose) {
+    this.sendUnbindOnClose = sendUnbindOnClose;
+  }
+
+  @Override
+  public void isAwaitUnbindResp(boolean awaitUnbindResp) {
+    this.awaitUnbindResp = awaitUnbindResp;
   }
 
   @Override
@@ -174,6 +197,16 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   @Override
+  public boolean isSendUnbindOnClose() {
+    return sendUnbindOnClose;
+  }
+
+  @Override
+  public boolean isAwaitUnbindResp() {
+    return awaitUnbindResp;
+  }
+
+  @Override
   public long getBindTimeout() {
     return bindTimeout;
   }
@@ -221,5 +254,55 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   @Override
   public boolean getLogBytes() {
     return logBytes;
+  }
+
+  @Override
+  public void onCreated(Handler<SmppSession> createdHandler) {
+    this.createdHandler = createdHandler;
+  }
+
+  @Override
+  public void onRequest(Handler<PduRequestContext<?>> requestHandler) {
+    this.requestHandler = requestHandler;
+  }
+
+  @Override
+  public void onUnexpectedResponse(Handler<PduResponse> unexpectedResponseHandler) {
+    this.unexpectedResponseHandler = unexpectedResponseHandler;
+  }
+
+  @Override
+  public void onClose(Handler<SmppSession> closeHandler) {
+    this.closeHandler = closeHandler;
+  }
+
+  @Override
+  public void onUnexpectedClose(Handler<SmppSession> unexpectedCloseHandler) {
+    this.unexpectedCloseHandler = unexpectedCloseHandler;
+  }
+
+  @Override
+  public Handler<SmppSession> getOnCreated() {
+    return createdHandler;
+  }
+
+  @Override
+  public Handler<PduRequestContext<?>> getOnRequest() {
+    return requestHandler;
+  }
+
+  @Override
+  public Handler<PduResponse> getOnUnexpectedResponse() {
+    return unexpectedResponseHandler;
+  }
+
+  @Override
+  public Handler<SmppSession> getOnClose() {
+    return closeHandler;
+  }
+
+  @Override
+  public Handler<SmppSession> getOnUnexpectedClose() {
+    return unexpectedCloseHandler;
   }
 }

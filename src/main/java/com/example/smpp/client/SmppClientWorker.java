@@ -1,15 +1,15 @@
 package com.example.smpp.client;
 
-import com.cloudhopper.smpp.channel.SmppSessionPduDecoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
-import com.example.smpp.PduRequestContext;
 import com.example.smpp.SmppSession;
-import com.example.smpp.SmppSessionCallbacks;
 import com.example.smpp.SmppSessionImpl;
+import com.example.smpp.SmppSessionPduDecoder;
 import com.example.smpp.SmppSessionPduEncoder;
 import com.example.smpp.server.Pool;
+import com.example.smpp.session.ClientSessionConfigurator;
+import com.example.smpp.session.SmppSessionOptions;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
 import io.vertx.core.Handler;
@@ -19,17 +19,11 @@ import io.vertx.core.net.impl.VertxHandler;
 public class SmppClientWorker {
   private final EventLoopContext context;
   private final Pool pool;
-  private final Handler<PduRequestContext<?>> requestHandler;
-  private final Handler<SmppSession> hello = (sess) -> {
-    System.out.println("hello sess");
-  };
-  private final Handler<SmppSession> connectionHandler = (sess) -> {
-    System.out.println("incoming sess");
-  };
+  private final Handler<ClientSessionConfigurator> configurator;
 
-  public SmppClientWorker(EventLoopContext context, Handler<PduRequestContext<?>> requestHandler, Pool pool) {
+  public SmppClientWorker(EventLoopContext context, Handler<ClientSessionConfigurator> configurator, Pool pool) {
     this.context = context;
-    this.requestHandler = requestHandler;
+    this.configurator = configurator;
     this.pool = pool;
   }
 
@@ -39,17 +33,17 @@ public class SmppClientWorker {
     pipeline.addLast("smppDecoder", new SmppSessionPduDecoder(transcoder));
     pipeline.addLast("smppEncoder", new SmppSessionPduEncoder(transcoder));
 
-    var callbacks = new SmppSessionCallbacks();
-    callbacks.requestHandler = requestHandler;
+    var sessOpts = new SmppSessionOptions();
+    configurator.handle(sessOpts);
     VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx ->
-        pool.add(id -> new SmppSessionImpl(pool, id, context, chctx, callbacks))
+        pool.add(id -> new SmppSessionImpl(pool, id, context, chctx, sessOpts))
     );
-    handler.addHandler(conn -> {
-      context.emit(conn, connectionHandler::handle);
-    });
+//    handler.addHandler(conn -> {
+//      context.emit(conn, connectionHandler::handle);
+//    });
     pipeline.addLast("handler2", handler);
     var sess  = handler.getConnection();
-    hello.handle(sess);
+    sessOpts.getOnCreated().handle(sess);
     return sess;
   }
 }

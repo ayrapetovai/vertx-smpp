@@ -21,7 +21,9 @@ public class SmppSessionPduEncoder extends MessageToMessageEncoder<Pdu> {
   @Override
   protected void encode(ChannelHandlerContext ctx, Pdu pdu, List<Object> out) throws Exception {
     ByteBuf buf = transcoder.encode(pdu);
-    logger.debug("Encoded PDU: {}", pdu);
+    if (logger.isDebugEnabled()) {
+      logger.debug("Encoded PDU: {}", pdu);
+    }
 
     if (buf != null) {
       out.add(buf);

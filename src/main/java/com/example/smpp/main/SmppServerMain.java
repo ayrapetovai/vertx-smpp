@@ -9,7 +9,6 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.net.JksOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,30 +31,37 @@ public class SmppServerMain extends AbstractVerticle {
 //      );
     server = Smpp.server(vertx, opts);
     server
-      .onSessionCreated(sess -> {
-        log.info("created session#{}", sess.getId());
-      })
-      .onRequest(reqCtx -> {
-          var sess = reqCtx.getSession();
-          sess
-              .reply(reqCtx.getRequest().createResponse())
-              .onSuccess(nothing -> {
-                if (reqCtx.getRequest() instanceof SubmitSm) {
-                  sess.send(new DeliverSm())
-                      .onSuccess(resp -> {
-                      })
-                      .onFailure(Throwable::printStackTrace);
-                }
-              })
-              .onFailure(Throwable::printStackTrace);
-      })
-      .start("localhost", 2776)
-//      .start("localhost", 2777)
-      .onSuccess(done -> {
-        log.info("Server online");
-        startPromise.complete();
-      })
-      .onFailure(startPromise::fail);
+        .configure(conf -> {
+          conf.setWindowSize(600);
+          conf.onCreated(sess -> {
+            log.info("created session#{}", sess.getId());
+          });
+          conf.onRequest(reqCtx -> {
+            var sess = reqCtx.getSession();
+            sess
+                .reply(reqCtx.getRequest().createResponse())
+                .onSuccess(nothing -> {
+                  if (reqCtx.getRequest() instanceof SubmitSm) {
+                    sess.send(new DeliverSm())
+                        .onSuccess(resp -> {
+                        })
+                        .onFailure(Throwable::printStackTrace);
+                  }
+                })
+                .onFailure(Throwable::printStackTrace);
+          });
+          conf.onClose(sess -> {
+            log.info("closed session#{}", sess.getId());
+          });
+          return true;
+        })
+        .start("localhost", 2776)
+//        .start("localhost", 2777)
+        .onSuccess(done -> {
+          log.info("Server online");
+          startPromise.complete();
+        })
+        .onFailure(startPromise::fail);
 
     onShutdown(vertx, server);
   }

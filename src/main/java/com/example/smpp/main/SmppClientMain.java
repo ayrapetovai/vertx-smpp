@@ -6,6 +6,7 @@ import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.cloudhopper.smpp.type.SmppInvalidArgumentException;
 import com.example.smpp.Smpp;
 import com.example.smpp.client.SmppClient;
+import com.example.smpp.model.SmppBindType;
 import com.example.smpp.util.smpp.Gsm7BitCharset;
 import com.example.smpp.util.vertx.CountDownLatch;
 import com.example.smpp.util.vertx.Loop;
@@ -24,10 +25,12 @@ import java.util.concurrent.TimeUnit;
 public class SmppClientMain extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(SmppClientMain.class);
 
+  private static final int SESSIONS = 1;
+
 //  private static final int SUBMIT_SM_NUMBER = 50_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000_000;
-//  private static final int SUBMIT_SM_NUMBER = 2_000_000;
-  private static final int SUBMIT_SM_NUMBER = 1_000_000;
+  private static final int SUBMIT_SM_NUMBER = 2_000_000;
+//  private static final int SUBMIT_SM_NUMBER = 1_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 100_000;
 //  private static final int SUBMIT_SM_NUMBER = 20_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000;
@@ -56,80 +59,84 @@ public class SmppClientMain extends AbstractVerticle {
 
     client = Smpp.client(vertx);
     client
-      .onRequest(reqCtx -> {
-        // FIXME some reqCtx.getRequest() are null
-        if (reqCtx.getRequest() instanceof DeliverSm) {
-          deliverSmCount[0]++;
-          var sendDeliverSmRespStart = new long[]{System.nanoTime()};
-          reqCtx.getSession()
-              .reply(reqCtx.getRequest().createResponse())
-              .onSuccess(nothing -> {
-                deliverSmRespLatencySumNano[0] += (System.nanoTime() - sendDeliverSmRespStart[0]);
-                deliverSmRespCount[0]++;
-                deliverSmRespLatch.countDown(1);
-              });
-        }
-      })
-      .bind("localhost", 2776)
-      .onSuccess(sess -> {
-//        startPromise.complete();
-        start[0] = System.currentTimeMillis();
-        log.info("client bound");
-        new Loop(vertx)
-            .forLoopInt(0, SUBMIT_SM_NUMBER, i -> {
-              var throttled = Promise.<Boolean>promise();
-              submitSmCount[0]++;
-              var ssm = new SubmitSm();
-//              addShortMessage(ssm);
-              var sendSubmitSmStart = new long[]{System.nanoTime()};
-              sess.send(ssm)
-                  .onSuccess(submitSmResp -> {
-                    submitSmLatencySumNano[0] += (System.nanoTime() - sendSubmitSmStart[0]);
-                    submitSmRespCount[0]++;
-                    submitSmLatch.countDown(1);
-                    throttled.complete(false);
-                  })
-                  .onFailure(e -> {
-                    e.printStackTrace();
-                    throttled.complete(true);
+        .configure(cfg -> {
+          cfg.setSystemId("test");
+          cfg.setPassword("test");
+          cfg.setBindType(SmppBindType.TRANSCEIVER);
+          cfg.setWindowSize(600);
+          cfg.onRequest(reqCtx -> {
+            if (reqCtx.getRequest() instanceof DeliverSm) {
+              deliverSmCount[0]++;
+              var sendDeliverSmRespStart = new long[]{System.nanoTime()};
+              reqCtx.getSession()
+                  .reply(reqCtx.getRequest().createResponse())
+                  .onSuccess(nothing -> {
+                    deliverSmRespLatencySumNano[0] += (System.nanoTime() - sendDeliverSmRespStart[0]);
+                    deliverSmRespCount[0]++;
+                    deliverSmRespLatch.countDown(1);
                   });
-              return throttled.future();
-            })
-            .compose(v -> submitSmLatch.await(90, TimeUnit.SECONDS))
-            .compose(v -> {
-              submitEnd[0] = System.currentTimeMillis();
-              return deliverSmRespLatch.await(90, TimeUnit.SECONDS);
-            })
-            .compose(v -> {
-              deliverEnd[0] = System.currentTimeMillis();
-              var closePromise = Promise.<Void>promise();
-              sess.close(closePromise);
-              return closePromise.future();
-            })
-            .onComplete(ar -> {
-              log.info("done");
-              var submitSmThroughput = ((double)submitSmRespCount[0]/((double)(submitEnd[0] - start[0])/1000.0));
-              log.info(
-                  "submitSm=" + submitSmCount[0] +
-                  ", submitSmResp=" + submitSmRespCount[0] +
-                      ", throughput=" + submitSmThroughput);
-              log.info("submitSm latency=" + (0.000_001 * (double)submitSmLatencySumNano[0]/(double)submitSmRespCount[0]));
-              log.info("submit_sm time=" + (submitEnd[0] - start[0]) + "ms");
+            }
+          });
+        })
+        .bind("localhost", 2776)
+        .onSuccess(sess -> {
+          start[0] = System.currentTimeMillis();
+          log.info("client bound");
+          new Loop(vertx)
+              .forLoopInt(0, SUBMIT_SM_NUMBER, i -> {
+                var throttled = Promise.<Boolean>promise();
+                submitSmCount[0]++;
+                var ssm = new SubmitSm();
+  //              addShortMessage(ssm);
+                var sendSubmitSmStart = new long[]{System.nanoTime()};
+                sess.send(ssm)
+                    .onSuccess(submitSmResp -> {
+                      submitSmLatencySumNano[0] += (System.nanoTime() - sendSubmitSmStart[0]);
+                      submitSmRespCount[0]++;
+                      submitSmLatch.countDown(1);
+                      throttled.complete(false);
+                    })
+                    .onFailure(e -> {
+                      e.printStackTrace();
+                      throttled.complete(true);
+                    });
+                return throttled.future();
+              })
+              .compose(v -> submitSmLatch.await(20, TimeUnit.SECONDS))
+              .compose(v -> {
+                submitEnd[0] = System.currentTimeMillis();
+                return deliverSmRespLatch.await(20, TimeUnit.SECONDS);
+              })
+              .compose(v -> {
+                deliverEnd[0] = System.currentTimeMillis();
+                var closePromise = Promise.<Void>promise();
+                sess.close(closePromise);
+                return closePromise.future();
+              })
+              .onComplete(ar -> {
+                log.info("done, sessions={}", SESSIONS);
+                var submitSmThroughput = ((double)submitSmRespCount[0]/((double)(submitEnd[0] - start[0])/1000.0));
+                log.info(
+                    "submitSm=" + submitSmCount[0] +
+                    ", submitSmResp=" + submitSmRespCount[0] +
+                        ", throughput=" + submitSmThroughput);
+                log.info("submitSm latency=" + (0.000_001 * (double)submitSmLatencySumNano[0]/(double)submitSmRespCount[0]));
+                log.info("submit_sm time=" + (submitEnd[0] - start[0]) + "ms");
 
-              var deliverSmThroughput = ((double)deliverSmRespCount[0]/((double)(deliverEnd[0] - start[0])/1000.0));
-              log.info(
-                  "deliverSm=" + deliverSmCount[0] +
-                  ", deliverSmResp=" + deliverSmRespCount[0] +
-                      ", throughput=" + deliverSmThroughput);
-              log.info("deliverSmResp latency=" + (0.000_001 * (double)deliverSmRespLatencySumNano[0]/(double)deliverSmRespCount[0]));
-              log.info("deliver_sm time=" + (deliverEnd[0] - start[0]) + "ms");
+                var deliverSmThroughput = ((double)deliverSmRespCount[0]/((double)(deliverEnd[0] - start[0])/1000.0));
+                log.info(
+                    "deliverSm=" + deliverSmCount[0] +
+                    ", deliverSmResp=" + deliverSmRespCount[0] +
+                        ", throughput=" + deliverSmThroughput);
+                log.info("deliverSmResp latency=" + (0.000_001 * (double)deliverSmRespLatencySumNano[0]/(double)deliverSmRespCount[0]));
+                log.info("deliver_sm time=" + (deliverEnd[0] - start[0]) + "ms");
 
-              log.info("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
-              startPromise.complete();
-//              vertx.close(); // не позволяет деплоить несколько верикалей
-            });
-      })
-      .onFailure(startPromise::fail);
+                log.info("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
+                startPromise.complete();
+  //              vertx.close(); // не позволяет деплоить несколько верикалей
+              });
+        })
+        .onFailure(startPromise::fail);
 
 
     // make second session
@@ -220,25 +227,27 @@ public class SmppClientMain extends AbstractVerticle {
 //==================================
 
 // vertx-smpp(1), no text
-//submitSm=1000000, submitSmResp=1000000, throughput=130174.43374121322
-//submitSm latency=0.34885200490900004
-//deliverSm=1000001, deliverSmResp=1000001, throughput=130157.6207210725
-//deliverSmResp latency=0.06413832364967635
-//Overall throughput=260332.0544622857
-//Time=7682ms
+//22:48:24.476 - submitSm=2000000, submitSmResp=2000000, throughput=136407.0386031919
+//22:48:24.477 - submitSm latency=0.2502508931195
+//22:48:24.478 - submit_sm time=14662ms
+//22:48:24.478 - deliverSm=2000000, deliverSmResp=2000000, throughput=136407.0386031919
+//22:48:24.478 - deliverSmResp latency=0.05146083862
+//22:48:24.478 - deliver_sm time=14662ms
+//22:48:24.478 - Overall throughput=272814.0772063838
 
 // cloudhopper(1), no text
-//submitSm=1000000, submitSmResp=1000000, throughput=139353.40022296543
-//submitSm latency=0.33387468261099995
-//deliverSm=113226, deliverSmResp=113226, throughput=15774.031763722485
-//deliverSmResp latency=0.03360748752053415
-//Overall throughput=155127.4319866879
-//Time=7176ms
+//22:52:08.558 - submitSm=2000000, submitSmResp=2000000, throughput=147775.97162701344
+//22:52:08.559 - submitSm latency=0.30968050239899997
+//22:52:08.560 - submit_sm time=13534ms
+//22:52:08.560 - deliverSm=234471, deliverSmResp=234471, throughput=-1.4238244491955677E-4
+//22:52:08.560 - deliverSmResp latency=0.02519616518887197
+//22:52:08.561 - deliver_sm time=-1646769025019ms
+//22:52:08.561 - Overall throughput=147775.97148463098
 
   public static void main(String[] args) {
     var vertex = Vertx.vertx();
     var depOpts = new DeploymentOptions()
-      .setInstances(1) // TODO scale to 2 and more
+      .setInstances(SESSIONS) // TODO scale to 2 and more
       .setWorkerPoolSize(1)
       ;
     vertex.deployVerticle(SmppClientMain.class.getCanonicalName(), depOpts);

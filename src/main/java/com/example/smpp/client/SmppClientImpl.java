@@ -1,9 +1,9 @@
 package com.example.smpp.client;
 
 import com.cloudhopper.smpp.pdu.BindTransceiver;
-import com.example.smpp.PduRequestContext;
 import com.example.smpp.SmppSession;
 import com.example.smpp.server.Pool;
+import com.example.smpp.session.ClientSessionConfigurator;
 import io.netty.channel.ChannelPipeline;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -18,8 +18,8 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
   private final Pool pool = new Pool();
   private final SmppClientOptions options;
 
+  private Handler<ClientSessionConfigurator> configurator;
   private SmppSession session;
-  private Handler<PduRequestContext<?>> requestHandler;
 
   public SmppClientImpl(VertxInternal vertx, SmppClientOptions options, CloseFuture closeFuture) {
     super(vertx, options, closeFuture);
@@ -35,7 +35,7 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
 
   @Override
   protected void initChannel(ChannelPipeline pipeline) {
-    var worker = new SmppClientWorker(vertx.createEventLoopContext(), requestHandler, pool);
+    var worker = new SmppClientWorker(vertx.createEventLoopContext(), configurator, pool);
     session = worker.handle(pipeline.channel());
   }
 
@@ -53,8 +53,12 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
   }
 
   @Override
-  public SmppClient onRequest(Handler<PduRequestContext<?>> pduRequestHandler) {
-    this.requestHandler = pduRequestHandler;
+  public SmppClient configure(Handler<ClientSessionConfigurator> configurator) {
+    if (this.configurator == null) {
+      this.configurator = configurator;
+    } else {
+      throw new IllegalStateException("configure once");
+    }
     return this;
   }
 }
