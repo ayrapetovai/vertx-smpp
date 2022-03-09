@@ -1,7 +1,7 @@
 package com.example.smpp.session;
 
-import com.cloudhopper.smpp.pdu.PduResponse;
 import com.example.smpp.PduRequestContext;
+import com.example.smpp.PduResponseContext;
 import com.example.smpp.SmppSession;
 import com.example.smpp.model.SmppBindType;
 import io.vertx.core.Handler;
@@ -46,13 +46,12 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   private long windowMonitorInterval = 10;
   private long writeTimeout = 2000;
   private boolean countersEnabled = false;
-  private boolean logPdu = false;
-  private boolean logBytes = false;
+  private boolean logPduBody = false;
 
   // TODO: check on null or call this stubs, what is more performant?
   Handler<SmppSession> createdHandler = __ -> {};
   Handler<PduRequestContext<?>> requestHandler = __ -> {};
-  Handler<PduResponse> unexpectedResponseHandler = __ -> {};
+  Handler<PduResponseContext> unexpectedResponseHandler = __ -> {};
   Handler<SmppSession> closeHandler = __ -> {};
   Handler<SmppSession> unexpectedCloseHandler = __ -> {};
 
@@ -146,14 +145,10 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
     this.countersEnabled = countersEnabled;
   }
 
-  @Override
-  public void setLogPdu(boolean logPdu) {
-    this.logPdu = logPdu;
-  }
 
   @Override
-  public void setLogBytes(boolean logBytes) {
-    this.logBytes = logBytes;
+  public void setLogPduBody(boolean logPduBody) {
+    this.logPduBody = logPduBody;
   }
 
   @Override
@@ -247,13 +242,8 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   @Override
-  public boolean getLogPdu() {
-    return logPdu;
-  }
-
-  @Override
-  public boolean getLogBytes() {
-    return logBytes;
+  public boolean getLogPduBody() {
+    return logPduBody;
   }
 
   @Override
@@ -267,7 +257,7 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   @Override
-  public void onUnexpectedResponse(Handler<PduResponse> unexpectedResponseHandler) {
+  public void onUnexpectedResponse(Handler<PduResponseContext> unexpectedResponseHandler) {
     this.unexpectedResponseHandler = unexpectedResponseHandler;
   }
 
@@ -292,7 +282,7 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   @Override
-  public Handler<PduResponse> getOnUnexpectedResponse() {
+  public Handler<PduResponseContext> getOnUnexpectedResponse() {
     return unexpectedResponseHandler;
   }
 

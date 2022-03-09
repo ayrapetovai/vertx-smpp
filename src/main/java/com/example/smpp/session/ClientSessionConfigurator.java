@@ -20,6 +20,5 @@ public interface ClientSessionConfigurator extends SessionOptionsView, SessionCa
   void setWindowMonitorInterval(long windowMonitorInterval);
   void setWriteTimeout(long writeTimeout);
   void setCountersEnabled(boolean countersEnabled);
-  void setLogPdu(boolean logPdu);
-  void setLogBytes(boolean logBytes);
+  void setLogPduBody(boolean logBytes);
 }

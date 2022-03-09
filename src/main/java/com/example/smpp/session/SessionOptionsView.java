@@ -22,6 +22,5 @@ public interface SessionOptionsView extends SessionCallbacksView {
   long getWindowMonitorInterval();
   long getWriteTimeout(); // TODO rename to sendTimeout
   boolean getCountersEnabled();
-  boolean getLogPdu();
-  boolean getLogBytes();
+  boolean getLogPduBody();
 }

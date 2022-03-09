@@ -42,6 +42,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
         var exRec = (Window.RequestRecord<?>) expiredRecord;
         if (exRec.responsePromise != null) {
           log.trace("pdu.sequence={} expired on send", exRec.sequenceNumber);
+          windowGuard.release(1);
           exRec.responsePromise.tryFail("Expired on send");
         }
       });
@@ -79,11 +80,11 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     } else {
       var pduResp = (PduResponse) msg;
       var respProm = window.complement(pduResp.getSequenceNumber());
-      if (respProm != null) { // TODO при протухании запроса, его надо не только удалить из окна но и вернуть ресурс в семафор
+      if (respProm != null) {
         windowGuard.release(1);
         respProm.tryComplete(pduResp);
       } else {
-        this.optionsView.getOnUnexpectedResponse().handle(pduResp); // TODO PduResponseContext(pduResp)
+        this.optionsView.getOnUnexpectedResponse().handle(new PduResponseContext(pduResp, this));
       }
     }
   }
@@ -99,7 +100,6 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       return windowGuard.acquire(1, optionsView.getWindowWaitTimeout())
           .compose(v -> {
             req.setSequenceNumber(sequenceCounter++);
-            // TODO sendTimeout не учитывается
             Promise<T> respProm = window.<T>offer(req.getSequenceNumber(), System.currentTimeMillis() + sendTimeout);
             if (respProm != null) {
               if (channel().isOpen()) {

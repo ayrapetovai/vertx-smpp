@@ -79,8 +79,8 @@ public class SmppClientMain extends AbstractVerticle {
                   });
             }
           });
-          cfg.onUnexpectedResponse(response -> {
-            log.warn("unexpected response received {}", response.getSequenceNumber());
+          cfg.onUnexpectedResponse(respCtx -> {
+            log.warn("unexpected response received {}", respCtx.getResponse());
           });
 
         })
