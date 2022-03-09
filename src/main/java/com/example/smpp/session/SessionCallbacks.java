@@ -5,6 +5,9 @@ import com.example.smpp.PduResponseContext;
 import com.example.smpp.SmppSession;
 import io.vertx.core.Handler;
 
+// TODO
+//  public boolean sniffInbound(Pdu pdu);
+//  public boolean sniffOutbound(Pdu pdu);
 public interface SessionCallbacks {
   void onCreated(Handler<SmppSession> createdHandler);
   void onRequest(Handler<PduRequestContext<?>> requestHandler);

@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 //  - blocking behavior for release and tryRelease
 //  - check in acquire and release values are not 0
 //  - debug tryAcquire, was not tested
-//  - release no more for valueCounter to became greater then initialValue
 public class Semaphore {
 
   public static Semaphore create(Vertx vertx, int initialValue) {

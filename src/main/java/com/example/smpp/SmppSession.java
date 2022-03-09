@@ -12,9 +12,6 @@ public interface SmppSession extends Closeable {
 //  SmppSessionState getState(); // INITIAL?, OUTBOUND, OPENED, BINDING, BOUND, UNBINDING, CLOSED
 //  [?] SessionState {SmppState state, boolean sendPaused, boolean replyPaused }
 //  SmppSessionSubState getSubState(); // SEND_PAUSED, REPLAY_PAUSED, SEND_REPLAY_PAUSED, PLAY.
-//  String getId(); // id = systemId + bind_type + serial_number
-//  public boolean sniffInbound(Pdu pdu);
-//  public boolean sniffOutbound(Pdu pdu);
 
   Long getId();
 

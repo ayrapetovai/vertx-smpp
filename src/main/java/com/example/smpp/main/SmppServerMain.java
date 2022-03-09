@@ -32,6 +32,7 @@ public class SmppServerMain extends AbstractVerticle {
     server = Smpp.server(vertx, opts);
     server
         .configure(cfg -> {
+          log.info("configuring new session#{}", cfg.getId());
           cfg.setWindowSize(600);
           cfg.onCreated(sess -> {
             log.info("created session#{}", sess.getId());

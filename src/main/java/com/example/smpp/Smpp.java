@@ -11,7 +11,7 @@ import io.vertx.core.impl.CloseFuture;
 import io.vertx.core.impl.VertxInternal;
 
 public class Smpp {
-  // VertxInternal vertx
+
   public static SmppServer server(Vertx vertx) {
     return new SmppServerImpl((VertxInternal) vertx, new SmppServerOptions());
   }

@@ -130,15 +130,19 @@ public class SmppServerWorker implements Handler<Channel> {
 //      sendServiceUnavailable(pipeline.channel());
 //      return;
 //    }
-    var sessOpts = new SmppSessionOptions();
-    var allowBind = configurator.apply(sessOpts); // TODO allowBind, wtf?
+
+    var sessOpts = new SmppSessionOptions[]{null};
     VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx -> {
-      var sess = pool.add(id -> new SmppSessionImpl(pool, id, context, chctx, sessOpts));
+      var sess = pool.add(id -> {
+        sessOpts[0] = new SmppSessionOptions(id);
+        var allowBind = configurator.apply(sessOpts[0]); // TODO allowBind, wtf?
+        return new SmppSessionImpl(pool, id, context, chctx, sessOpts[0]);
+      });
 //            context.emit(chctx.handler(), connectionHandler::handle);
       return sess;
     });
     handler.addHandler(conn -> {
-      context.emit(conn, sessOpts.getOnCreated()::handle);
+      context.emit(conn, sessOpts[0].getOnCreated()::handle);
     });
     pipeline.addLast("handler", handler);
     var sess  = handler.getConnection();

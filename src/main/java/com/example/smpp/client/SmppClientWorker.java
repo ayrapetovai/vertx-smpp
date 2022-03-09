@@ -33,17 +33,19 @@ public class SmppClientWorker {
     pipeline.addLast("smppDecoder", new SmppSessionPduDecoder(transcoder));
     pipeline.addLast("smppEncoder", new SmppSessionPduEncoder(transcoder));
 
-    var sessOpts = new SmppSessionOptions();
-    configurator.handle(sessOpts);
     VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx ->
-        pool.add(id -> new SmppSessionImpl(pool, id, context, chctx, sessOpts))
+        pool.add(id -> {
+          var sessOpts = new SmppSessionOptions(id);
+          configurator.handle(sessOpts);
+          return new SmppSessionImpl(pool, id, context, chctx, sessOpts);
+        })
     );
 //    handler.addHandler(conn -> {
 //      context.emit(conn, connectionHandler::handle);
 //    });
     pipeline.addLast("handler2", handler);
     var sess  = handler.getConnection();
-    sessOpts.getOnCreated().handle(sess);
+    sess.getOptions().getOnCreated().handle(sess);
     return sess;
   }
 }

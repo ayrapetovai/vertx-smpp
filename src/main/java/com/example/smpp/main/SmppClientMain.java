@@ -60,6 +60,7 @@ public class SmppClientMain extends AbstractVerticle {
     client = Smpp.client(vertx);
     client
         .configure(cfg -> {
+          log.info("configuring new session#{}", cfg.getId());
           cfg.setSystemId("test");
           cfg.setPassword("test");
           cfg.setBindType(SmppBindType.TRANSCEIVER);

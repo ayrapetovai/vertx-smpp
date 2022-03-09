@@ -3,7 +3,6 @@ package com.example.smpp.session;
 import com.example.smpp.model.SmppBindType;
 
 public interface ClientSessionConfigurator extends SessionOptionsView, SessionCallbacks {
-  void setId(Long id);
   void setBindType(SmppBindType bindType);
   void setSystemId(String systemId);
   void setPassword(String password);

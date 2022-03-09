@@ -27,7 +27,7 @@ import io.vertx.core.Handler;
 // R  private LoggingOptions loggingOptions; // per session: log_pdu, log_bytes or not
 public class SmppSessionOptions implements ServerSessionConfigurator, ClientSessionConfigurator {
 
-  private Long id;
+  private final Long id;
   private SmppBindType bindType = SmppBindType.TRANSCEIVER;
   private String systemId;
   private String password;
@@ -55,9 +55,8 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   Handler<SmppSession> closeHandler = __ -> {};
   Handler<SmppSession> unexpectedCloseHandler = __ -> {};
 
-  @Override
-  public void setId(Long id) {
-
+  public SmppSessionOptions(Long id) {
+    this.id = id;
   }
 
   @Override

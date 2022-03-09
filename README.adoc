@@ -5,7 +5,6 @@ image:https://img.shields.io/badge/vert.x-4.2.5-purple.svg[link="https://vertx.i
 This application was generated using http://start.vertx.io
 
 == TODO
-- Рефакторинг com.example.smpp.session.SessionCallbacksView.getOnUnexpectedResponse: PduResponse -> PduResponseContext
 - Сделать накрутку метрик в коде клиента и сервера. Перцентили?
 - В com/example/smpp/SmppSessionImpl.java:100 допилить acquire() с таймаутом
 - Сделать протухание по времени нахождения в очереди, так, чтобы данные в канале не портились. Сейчас хз, портятся они или нет.
