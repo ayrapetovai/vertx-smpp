@@ -2,10 +2,12 @@ package com.example.smpp.util.vertx;
 
 import io.vertx.core.*;
 
+import java.util.concurrent.TimeUnit;
+
 // TODO
 //  - blocking behavior for release and tryRelease
-//  - check in aquire and release values are not 0
-//  - debug tryAquire, was not tested
+//  - check in acquire and release values are not 0
+//  - debug tryAcquire, was not tested
 //  - release no more for valueCounter to became greater then initialValue
 public class Semaphore {
 
@@ -25,22 +27,22 @@ public class Semaphore {
 
   /**
    * "Nonblocking"
-   * @param value - amount of resource to aquire.
-   * @return true if value was aquired, false if it has not changed.
+   * @param value - amount of resource to acquire.
+   * @return true if value was acquired, false if it has not changed.
    */
-  public Future<Boolean> tryAquire(int value) {
-    var aquirePromise = Promise.<Boolean>promise();
+  public Future<Boolean> tryAcquire(int value) {
+    var acquirePromise = Promise.<Boolean>promise();
     if (valueCounter >= value) {
       valueCounter -= value;
-      aquirePromise.complete(true);
+      acquirePromise.complete(true);
     } else {
-      aquirePromise.complete(false);
+      acquirePromise.complete(false);
     }
-    return aquirePromise.future();
+    return acquirePromise.future();
   }
 
-  public Future<Void> aquire(int value) {
-    var aquirePromise = Promise.<Void>promise();
+  public Future<Void> acquire(int value) {
+    var acquirePromise = Promise.<Void>promise();
     if (valueCounter < value) {
       var taskRef = new Handler[]{null};
       var task = (Handler<Void>) v -> {
@@ -48,16 +50,42 @@ public class Semaphore {
           vertx.runOnContext(taskRef[0]);
         } else {
           valueCounter -= value;
-          aquirePromise.complete();
+          acquirePromise.complete();
         }
       };
       taskRef[0] = task;
       vertx.runOnContext(task);
     } else {
       valueCounter -= value;
-      aquirePromise.complete();
+      acquirePromise.complete();
     }
-    return aquirePromise.future();
+    return acquirePromise.future();
+  }
+
+  public Future<Void> acquire(int value, long timeout) {
+    var acquirePromise = Promise.<Void>promise();
+    var expiresAt = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
+    if (valueCounter < value) {
+      var taskRef = new Handler[]{null};
+      var task = (Handler<Void>) v -> {
+        if (System.nanoTime() < expiresAt) {
+          if (valueCounter < value) {
+            vertx.runOnContext(taskRef[0]);
+          } else {
+            valueCounter -= value;
+            acquirePromise.complete();
+          }
+        } else {
+          acquirePromise.fail("acquire expired");
+        }
+      };
+      taskRef[0] = task;
+      vertx.runOnContext(task);
+    } else {
+      valueCounter -= value;
+      acquirePromise.complete();
+    }
+    return acquirePromise.future();
   }
 
   public void release(int value) {

@@ -5,15 +5,14 @@ import io.vertx.core.Promise;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class Window<T extends PduResponse> {
-  private static class RequestRecord<T extends PduResponse> implements Delayed {
+  public static class RequestRecord<T extends PduResponse> implements Delayed {
     final Promise<T> responsePromise;
     final int sequenceNumber;
     final long expiresAt;
@@ -38,7 +37,7 @@ public class Window<T extends PduResponse> {
 
   private final Map<Integer, RequestRecord<T>> cache = new HashMap<>();
 
-  public<T extends PduResponse> Promise<T> offer(Integer seqNum, long expiresAt) {
+  public synchronized <T extends PduResponse> Promise<T> offer(Integer seqNum, long expiresAt) {
     var promise = Promise.<T>promise();
     var record = new RequestRecord(promise, seqNum, expiresAt);
     var sameSeqPromise = cache.put(seqNum, record);
@@ -49,7 +48,7 @@ public class Window<T extends PduResponse> {
     return promise;
   }
 
-  public Promise<T> complement(Integer seqNum) {
+  public synchronized Promise<T> complement(Integer seqNum) {
     var promiseOfRes = cache.remove(seqNum);
     if (promiseOfRes != null) {
       return promiseOfRes.responsePromise;
@@ -58,16 +57,12 @@ public class Window<T extends PduResponse> {
     }
   }
 
-
-  public Set<Integer> getExpired() {
+  public synchronized void forAllExpired(Consumer<RequestRecord<T>> promiseHandler) {
     var now = System.currentTimeMillis();
-    return cache.values().stream()
-      .filter(r -> r.expiresAt < now)
-      .map(r -> r.sequenceNumber)
-      .collect(Collectors.toSet());
-  }
-
-  public int size() {
-    return cache.size();
+    for (var record: cache.values()) {
+      if (record.expiresAt < now && record.responsePromise != null) {
+        promiseHandler.accept(record);
+      }
+    }
   }
 }

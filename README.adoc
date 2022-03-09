@@ -7,14 +7,14 @@ This application was generated using http://start.vertx.io
 == TODO
 - Рефакторинг com.example.smpp.session.SessionCallbacksView.getOnUnexpectedResponse: PduResponse -> PduResponseContext
 - Сделать накрутку метрик в коде клиента и сервера. Перцентили?
-- В com/example/smpp/SmppSessionImpl.java:100 допилить aquire() с таймаутом
+- В com/example/smpp/SmppSessionImpl.java:100 допилить acquire() с таймаутом
 - Сделать протухание по времени нахождения в очереди, так, чтобы данные в канале не портились. Сейчас хз, портятся они или нет.
 - Сделать возможность для пользователя реагировать на недоставку сообщений (+ `com.example.smpp.server.SmppSession.handleMessage` обрабатывать generick_nack - дописывать из него информацию в обвертку вокруг ответа)
 - Реализовывать Outbind?
 - Реализовывать JMX?
 - Заставить работать по SSL
 - Настройки сервера и клиента (кроме ssl) должны иметь возможность для обновления в рантайме (по ресту или еще как-то)
-- Обязательно удалить `com.example.smpp.util.smpp.Gsm7BitCharset.Gsm7BitCharset`, он распространяется под BSD лицензией
+- Обязательно удалить `com.example.smpp.util.smpp.Gsm7BitCharset.Gsm7BitCharset`, он распространяется под BSD лицензией. Так же удалить все классы cloudhopper'а.
 
 == Features
 

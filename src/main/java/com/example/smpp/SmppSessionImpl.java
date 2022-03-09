@@ -38,13 +38,13 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     this.windowGuard = Semaphore.create(context.owner(), optionsView.getWindowSize());
     this.optionsView = optionsView;
     this.expireTimerId = vertx.setPeriodic(optionsView.getWindowMonitorInterval(), timerId -> {
-      for (var sequence: window.getExpired()) {
-        var respPromise = window.complement((Integer) sequence);
-        if (respPromise != null) {
-          log.trace("pdu.sequence={} expired on send", sequence);
-          respPromise.tryFail("Expired on send");
+      window.forAllExpired(expiredRecord -> {
+        var exRec = (Window.RequestRecord<?>) expiredRecord;
+        if (exRec.responsePromise != null) {
+          log.trace("pdu.sequence={} expired on send", exRec.sequenceNumber);
+          exRec.responsePromise.tryFail("Expired on send");
         }
-      }
+      });
     });
   }
 
@@ -94,9 +94,9 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   }
 
   @Override
-  public <T extends PduResponse> Future<T> send(PduRequest<T> req, long sendTimeout) { // TODO TimeUnit
+  public <T extends PduResponse> Future<T> send(PduRequest<T> req, long sendTimeout) {
     if (channel().isOpen()) {
-      return windowGuard.aquire(1) // TODO windowGuard.aquire(1, optionsView.getWindowWaitTimeout(), TimeUnit.MILLIS)
+      return windowGuard.acquire(1, optionsView.getWindowWaitTimeout())
           .compose(v -> {
             req.setSequenceNumber(sequenceCounter++);
             // TODO sendTimeout не учитывается
@@ -109,7 +109,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
                 writeToChannel(req, written);
               } else {
                 windowGuard.release(1);
-                respProm.tryFail("aquired; channel is closed");
+                respProm.tryFail("acquired; channel is closed");
               }
               return respProm.future();
             } else {
@@ -117,7 +117,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
             }
           });
     } else {
-      return Future.failedFuture("not aquired; channel is closed");
+      return Future.failedFuture("not acquired; channel is closed");
     }
   }
 
