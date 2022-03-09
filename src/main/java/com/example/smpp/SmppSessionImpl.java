@@ -4,7 +4,6 @@ import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.cloudhopper.smpp.pdu.Unbind;
-import com.example.smpp.server.Pool;
 import com.example.smpp.session.SessionOptionsView;
 import com.example.smpp.util.vertx.Semaphore;
 import io.netty.channel.ChannelHandlerContext;
@@ -26,6 +25,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private final Window window = new Window();
   private final Semaphore windowGuard;
   private final SessionOptionsView optionsView;
+  private final long expireTimerId;
   private int sequenceCounter = 0;
 
   public SmppSessionImpl(Pool pool, Long id, ContextInternal context, ChannelHandlerContext chctx, SessionOptionsView optionsView) {
@@ -37,6 +37,15 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     this.id = id;
     this.windowGuard = Semaphore.create(context.owner(), optionsView.getWindowSize());
     this.optionsView = optionsView;
+    this.expireTimerId = vertx.setPeriodic(optionsView.getWindowMonitorInterval(), timerId -> {
+      for (var sequence: window.getExpired()) {
+        var respPromise = window.complement((Integer) sequence);
+        if (respPromise != null) {
+          log.trace("pdu.sequence={} expired on send", sequence);
+          respPromise.tryFail("Expired on send");
+        }
+      }
+    });
   }
 
   @Override
@@ -62,10 +71,6 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
             .compose(ar -> {
               var closePromise = Promise.<Void>promise();
               close(closePromise, false);
-              closePromise.future().onComplete(a -> {
-                //  fireSessionClosed
-                log.debug("closed");
-              });
               return closePromise.future();
             });
       } else {
@@ -75,29 +80,41 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       var pduResp = (PduResponse) msg;
       var respProm = window.complement(pduResp.getSequenceNumber());
       if (respProm != null) { // TODO при протухании запроса, его надо не только удалить из окна но и вернуть ресурс в семафор
-        respProm.tryComplete(pduResp);
         windowGuard.release(1);
+        respProm.tryComplete(pduResp);
+      } else {
+        this.optionsView.getOnUnexpectedResponse().handle(pduResp); // TODO PduResponseContext(pduResp)
       }
     }
   }
 
   @Override
-  public<T extends PduResponse> Future<T> send(PduRequest<T> req) {
+  public <T extends PduResponse> Future<T> send(PduRequest<T> req) {
+    return send(req, optionsView.getWriteTimeout());
+  }
+
+  @Override
+  public <T extends PduResponse> Future<T> send(PduRequest<T> req, long sendTimeout) { // TODO TimeUnit
     if (channel().isOpen()) {
-      return windowGuard.aquire(1)
+      return windowGuard.aquire(1) // TODO windowGuard.aquire(1, optionsView.getWindowWaitTimeout(), TimeUnit.MILLIS)
           .compose(v -> {
             req.setSequenceNumber(sequenceCounter++);
-            Promise<T> respProm = window.<T>offer(req.getSequenceNumber(), System.currentTimeMillis() + optionsView.getWindowWaitTimeout());
-            if (channel().isOpen()) {
-              var written = context.<Void>promise();
-              written.future()
-                  .onFailure(respProm::tryFail);
-              writeToChannel(req, written);
+            // TODO sendTimeout не учитывается
+            Promise<T> respProm = window.<T>offer(req.getSequenceNumber(), System.currentTimeMillis() + sendTimeout);
+            if (respProm != null) {
+              if (channel().isOpen()) {
+                var written = context.<Void>promise();
+                written.future()
+                    .onFailure(respProm::tryFail);
+                writeToChannel(req, written);
+              } else {
+                windowGuard.release(1);
+                respProm.tryFail("aquired; channel is closed");
+              }
+              return respProm.future();
             } else {
-              windowGuard.release(1);
-              respProm.tryFail("aquired; channel is closed");
+              return Future.failedFuture("unexpected pdu response");
             }
-            return respProm.future();
           });
     } else {
       return Future.failedFuture("not aquired; channel is closed");
@@ -124,6 +141,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     this.close(completion, optionsView.isSendUnbindOnClose());
   }
 
+  @Override
   public void close(Promise<Void> completion, boolean sendUnbindRequired) {
     log.debug("session#{} closing", getId());
     if (sendUnbindRequired) {
@@ -136,22 +154,31 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       if (optionsView.isAwaitUnbindResp()) {
         unbindRespFuture
           .compose(unbindResp -> {
-            log.debug("session#{} did unbindResp close", getId());
+            if (log.isDebugEnabled()) {
+              log.debug("session#{} did unbindResp({}) close", getId(), unbindRespFuture.succeeded() ? "success" : "failure");
+            }
+            vertx.cancelTimer(this.expireTimerId);
             pool.remove(id);
             super.close(completion);
             optionsView.getOnClose().handle(this);
             return completion.future();
           });
       } else {
+        vertx.cancelTimer(this.expireTimerId);
         pool.remove(id);
         super.close(completion);
         optionsView.getOnClose().handle(this);
       }
     } else {
+      vertx.cancelTimer(this.expireTimerId);
       pool.remove(id);
       super.close(completion);
       optionsView.getOnClose().handle(this);
     }
+  }
+
+  public SessionOptionsView getOptions() {
+    return this.optionsView;
   }
 
   @Override

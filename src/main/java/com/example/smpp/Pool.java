@@ -1,6 +1,5 @@
-package com.example.smpp.server;
+package com.example.smpp;
 
-import com.example.smpp.SmppSession;
 import io.vertx.core.Handler;
 
 import java.util.HashMap;

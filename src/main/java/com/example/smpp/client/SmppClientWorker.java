@@ -7,7 +7,7 @@ import com.example.smpp.SmppSession;
 import com.example.smpp.SmppSessionImpl;
 import com.example.smpp.SmppSessionPduDecoder;
 import com.example.smpp.SmppSessionPduEncoder;
-import com.example.smpp.server.Pool;
+import com.example.smpp.Pool;
 import com.example.smpp.session.ClientSessionConfigurator;
 import com.example.smpp.session.SmppSessionOptions;
 import io.netty.channel.Channel;

@@ -43,7 +43,7 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   private long requestExpiryTimeout = 10000;
   private int windowSize = 50;
   private long windowWaitTimeout = 5000;
-  private long windowMonitorInterval = 2000;
+  private long windowMonitorInterval = 10;
   private long writeTimeout = 2000;
   private boolean countersEnabled = false;
   private boolean logPdu = false;

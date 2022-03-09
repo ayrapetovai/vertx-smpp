@@ -64,6 +64,8 @@ public class SmppClientMain extends AbstractVerticle {
           cfg.setPassword("test");
           cfg.setBindType(SmppBindType.TRANSCEIVER);
           cfg.setWindowSize(600);
+          cfg.setBindTimeout(1000);
+          cfg.setWriteTimeout(1000);
           cfg.onRequest(reqCtx -> {
             if (reqCtx.getRequest() instanceof DeliverSm) {
               deliverSmCount[0]++;
@@ -77,6 +79,10 @@ public class SmppClientMain extends AbstractVerticle {
                   });
             }
           });
+          cfg.onUnexpectedResponse(response -> {
+            log.warn("unexpected response received {}", response.getSequenceNumber());
+          });
+
         })
         .bind("localhost", 2776)
         .onSuccess(sess -> {
@@ -87,7 +93,7 @@ public class SmppClientMain extends AbstractVerticle {
                 var throttled = Promise.<Boolean>promise();
                 submitSmCount[0]++;
                 var ssm = new SubmitSm();
-  //              addShortMessage(ssm);
+//                addShortMessage(ssm);
                 var sendSubmitSmStart = new long[]{System.nanoTime()};
                 sess.send(ssm)
                     .onSuccess(submitSmResp -> {
@@ -114,6 +120,7 @@ public class SmppClientMain extends AbstractVerticle {
                 return closePromise.future();
               })
               .onComplete(ar -> {
+                sess.close(Promise.promise());
                 log.info("done, sessions={}", SESSIONS);
                 var submitSmThroughput = ((double)submitSmRespCount[0]/((double)(submitEnd[0] - start[0])/1000.0));
                 log.info(
@@ -136,7 +143,10 @@ public class SmppClientMain extends AbstractVerticle {
   //              vertx.close(); // не позволяет деплоить несколько верикалей
               });
         })
-        .onFailure(startPromise::fail);
+        .onFailure(e -> {
+          log.error("could not bind", e);
+          startPromise.fail(e);
+        });
 
 
     // make second session
@@ -150,6 +160,8 @@ public class SmppClientMain extends AbstractVerticle {
     String text160 = "\u20AC Lorem [ipsum] dolor sit amet, consectetur adipiscing elit. Proin feugiat, leo id commodo tincidunt, nibh diam ornare est, vitae accumsan risus lacus sed sem metus.";
 //    String text160 = "txId:" + java.util.UUID.randomUUID() + ";";
     byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_GSM);
+//    byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_GSM7);
+//    byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_UCS_2);
 //    byte[] textBytes = text160.getBytes(StandardCharsets.UTF_8);
 
 //    byte[] textBytes = new byte[0];
@@ -208,7 +220,7 @@ public class SmppClientMain extends AbstractVerticle {
 
 //==================================
 
-// vertx-smpp(1), text
+// vertx-smpp(1), text(cloudhopper.CHARSET_GSM)
 //submitSm=1000000, submitSmResp=1000000, throughput=47947.83275795934
 //submitSm latency=0.7100937028389999
 //deliverSm=1000001, deliverSmResp=1000001, throughput=47945.58181905356
@@ -216,7 +228,7 @@ public class SmppClientMain extends AbstractVerticle {
 //Overall throughput=95893.4145770129
 //Time=20856ms
 
-// cloudhopper(1), text
+// cloudhopper(1), text(cloudhopper.CHARSET_GSM)
 //submitSm=1000000, submitSmResp=1000000, throughput=47959.330487746396
 //submitSm latency=0.692746395918
 //deliverSm=788751, deliverSmResp=788751, throughput=37822.528052172245

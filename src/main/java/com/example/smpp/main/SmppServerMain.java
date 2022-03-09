@@ -31,12 +31,20 @@ public class SmppServerMain extends AbstractVerticle {
 //      );
     server = Smpp.server(vertx, opts);
     server
-        .configure(conf -> {
-          conf.setWindowSize(600);
-          conf.onCreated(sess -> {
+        .configure(cfg -> {
+          cfg.setWindowSize(600);
+          cfg.onCreated(sess -> {
             log.info("created session#{}", sess.getId());
           });
-          conf.onRequest(reqCtx -> {
+          cfg.onRequest(reqCtx -> {
+//            if (reqCtx.getRequest() instanceof SubmitSm) {
+//              try {
+//                Thread.sleep(10000);
+//              } catch (InterruptedException e) {
+//                e.printStackTrace();
+//              }
+//            }
+
             var sess = reqCtx.getSession();
             sess
                 .reply(reqCtx.getRequest().createResponse())
@@ -50,7 +58,7 @@ public class SmppServerMain extends AbstractVerticle {
                 })
                 .onFailure(Throwable::printStackTrace);
           });
-          conf.onClose(sess -> {
+          cfg.onClose(sess -> {
             log.info("closed session#{}", sess.getId());
           });
           return true;

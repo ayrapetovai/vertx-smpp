@@ -2,8 +2,10 @@ package com.example.smpp;
 
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
+import com.example.smpp.session.SessionOptionsView;
 import io.vertx.core.Closeable;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 
 public interface SmppSession extends Closeable {
 //  SmppSessionBindType getBindType(); // TRANCEIVER, TRANSMITTER, RECEIVER, TRANCEIVER(smpp-v5?)
@@ -24,7 +26,9 @@ public interface SmppSession extends Closeable {
    * @param <T>
    * @return
    */
-  <T extends PduResponse> Future<T>  send(PduRequest<T> req);
+  <T extends PduResponse> Future<T> send(PduRequest<T> req);
+
+  <T extends PduResponse> Future<T> send(PduRequest<T> req, long sendTimeout);
 
   /**
    * TODO возвращенный future должен получать не Void, а обвертку в которой будет инфа
@@ -39,4 +43,7 @@ public interface SmppSession extends Closeable {
   // void pauseSend();
   // void pauseReply();
   // void failAllUnsentRequests();
+
+  SessionOptionsView getOptions();
+  void close(Promise<Void> completion, boolean sendUnbindRequired);
 }

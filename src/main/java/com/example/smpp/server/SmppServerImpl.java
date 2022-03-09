@@ -1,5 +1,6 @@
 package com.example.smpp.server;
 
+import com.example.smpp.Pool;
 import com.example.smpp.session.ServerSessionConfigurator;
 import com.example.smpp.util.vertx.CountDownLatch;
 import io.netty.channel.Channel;
@@ -19,7 +20,6 @@ import java.util.function.Function;
 public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServer {
   private static final Logger log = LoggerFactory.getLogger(SmppServerImpl.class);
 
-  private final SmppServerConnectionHandler handler = new SmppServerConnectionHandler(this);
   private final Pool pool = new Pool();
 
   private Function<ServerSessionConfigurator, Boolean> configurator;
@@ -60,6 +60,7 @@ public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServ
   public void close(Promise<Void> completion) {
     log.debug("closing sessions {}", pool.size());
     var latch = new CountDownLatch(vertx, pool.size());
+    // TODO introduce CompositeFuture
     pool.forEach(sess -> {
       var closeSessionPromise = vertx.<Void>promise();
       sess.close(closeSessionPromise);
@@ -75,4 +76,28 @@ public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServ
           super.close(completion);
         });
   }
+
+  //  public void stop(Future<Void> future) throws Exception {
+  //    // In current design, the publisher is responsible for removing the service
+  //    List<Future> futures = new ArrayList<>();
+  //    registeredRecords.forEach(record -> {
+  //      Future<Void> cleanupFuture = Future.future();
+  //      futures.add(cleanupFuture);
+  //      discovery.unpublish(record.getRegistration(), cleanupFuture.completer());
+  //    });
+  //
+  //    if (futures.isEmpty()) {
+  //      discovery.close();
+  //      future.complete();
+  //    } else {
+  //      CompositeFuture.all(futures)
+  //        .setHandler(ar -> {
+  //          discovery.close();
+  //          if (ar.failed()) {
+  //            future.fail(ar.cause());
+  //          } else {
+  //            future.complete();
+  //          }
+  //        });
+  //    }
 }

@@ -15,7 +15,8 @@ repositories {
 }
 
 val vertxVersion = "4.2.5"
-val junitJupiterVersion = "5.7.0"
+val logbackVersion = "1.2.10"
+val junitJupiterVersion = "5.8.2"
 
 val mainVerticleName = "com.example.vertex_hello_world.MainVerticle"
 val launcherClassName = "io.vertx.core.Launcher"
@@ -29,8 +30,8 @@ application {
 
 dependencies {
   // logs
-  implementation("ch.qos.logback:logback-core:1.1.6")
-  implementation("ch.qos.logback:logback-classic:1.1.6")
+  implementation("ch.qos.logback:logback-core:$logbackVersion")
+  implementation("ch.qos.logback:logback-classic:$logbackVersion")
 
   implementation("com.fizzed:ch-smpp:6.0.0-netty4-beta-3")
   implementation(platform("io.vertx:vertx-stack-depchain:$vertxVersion"))

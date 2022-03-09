@@ -2,7 +2,7 @@ package com.example.smpp.client;
 
 import com.cloudhopper.smpp.pdu.BindTransceiver;
 import com.example.smpp.SmppSession;
-import com.example.smpp.server.Pool;
+import com.example.smpp.Pool;
 import com.example.smpp.session.ClientSessionConfigurator;
 import io.netty.channel.ChannelPipeline;
 import io.vertx.core.Future;
@@ -43,13 +43,18 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
   public Future<SmppSession> bind(String host, int port) {
     var sessionPromise = Promise.<SmppSession>promise();
     return connect(port, host)
-        .compose(socket -> {
-          return session.send(new BindTransceiver())
-              .compose(bindTransceiverResp -> {
-                sessionPromise.complete(session);
-                return sessionPromise.future();
-              });
-        });
+        .compose(socket ->
+            session.send(new BindTransceiver(), session.getOptions().getBindTimeout())
+                .onFailure(e -> {
+                  session.close(Promise.promise(), false);
+                  sessionPromise.tryFail(e);
+                })
+                .compose(bindResp -> {
+                  // TODO if (bindResp.status)
+                  sessionPromise.complete(session);
+                  return sessionPromise.future();
+                })
+        );
   }
 
   @Override
