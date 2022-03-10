@@ -1,5 +1,6 @@
 package com.example.smpp.main;
 
+import com.cloudhopper.smpp.pdu.BindTransceiver;
 import com.cloudhopper.smpp.pdu.DeliverSm;
 import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.example.smpp.Smpp;
@@ -21,6 +22,7 @@ public class SmppServerMain extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> startPromise) {
+    var clientName = new String[]{null};
     var opts = new SmppServerOptions();
 //    opts
 //      .setSsl(true)
@@ -33,9 +35,17 @@ public class SmppServerMain extends AbstractVerticle {
     server
         .configure(cfg -> {
           log.info("configuring new session#{}", cfg.getId());
+          cfg.setSystemId("vertx-smpp-server");
           cfg.setWindowSize(600);
+//          cfg.setWriteTimeout(2000);
+          cfg.setRequestExpiryTimeout(1000); // Время на отправку запроса и получение ответа
           cfg.onCreated(sess -> {
-            log.info("created session#{}", sess.getId());
+            log.info("session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId());
+          });
+          cfg.onBindReceived(bind -> {
+            var systemId = ((BindTransceiver) bind.getRequest()).getSystemId();
+            log.info("inbound bind from " + systemId);
+            clientName[0] = systemId;
           });
           cfg.onRequest(reqCtx -> {
 //            if (reqCtx.getRequest() instanceof SubmitSm) {

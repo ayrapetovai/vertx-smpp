@@ -25,8 +25,9 @@ import java.util.concurrent.TimeUnit;
 public class SmppClientMain extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(SmppClientMain.class);
 
+  private static final String SYSTEM_ID = "vertx-smpp-client";
   private static final int SESSIONS = 1;
-
+  private static final boolean LOADED = false;
 //  private static final int SUBMIT_SM_NUMBER = 50_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000_000;
   private static final int SUBMIT_SM_NUMBER = 2_000_000;
@@ -61,12 +62,13 @@ public class SmppClientMain extends AbstractVerticle {
     client
         .configure(cfg -> {
           log.info("configuring new session#{}", cfg.getId());
-          cfg.setSystemId("test");
+          cfg.setSystemId(SYSTEM_ID);
           cfg.setPassword("test");
           cfg.setBindType(SmppBindType.TRANSCEIVER);
           cfg.setWindowSize(600);
           cfg.setBindTimeout(1000);
-          cfg.setWriteTimeout(1000);
+//          cfg.setWriteTimeout(1000);
+          cfg.setWindowWaitTimeout(1000);
           cfg.onRequest(reqCtx -> {
             if (reqCtx.getRequest() instanceof DeliverSm) {
               deliverSmCount[0]++;
@@ -83,7 +85,9 @@ public class SmppClientMain extends AbstractVerticle {
           cfg.onUnexpectedResponse(respCtx -> {
             log.warn("unexpected response received {}", respCtx.getResponse());
           });
-
+          cfg.onCreated(sess -> {
+            log.info("session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId());
+          });
         })
         .bind("localhost", 2776)
         .onSuccess(sess -> {
@@ -94,7 +98,9 @@ public class SmppClientMain extends AbstractVerticle {
                 var throttled = Promise.<Boolean>promise();
                 submitSmCount[0]++;
                 var ssm = new SubmitSm();
-//                addShortMessage(ssm);
+                if (LOADED) {
+                  addShortMessage(ssm);
+                }
                 var sendSubmitSmStart = new long[]{System.nanoTime()};
                 sess.send(ssm)
                     .onSuccess(submitSmResp -> {
@@ -122,7 +128,7 @@ public class SmppClientMain extends AbstractVerticle {
               })
               .onComplete(ar -> {
                 sess.close(Promise.promise());
-                log.info("done, sessions={}", SESSIONS);
+                log.info("done, sessions={}, {}, this={}, that={}", SESSIONS, (LOADED? "text": "no text"), SYSTEM_ID, sess.getBoundToSystemId());
                 var submitSmThroughput = ((double)submitSmRespCount[0]/((double)(submitEnd[0] - start[0])/1000.0));
                 log.info(
                     "submitSm=" + submitSmCount[0] +

@@ -67,7 +67,7 @@ public class Semaphore {
     if (valueCounter < value) {
       var taskRef = new Handler[]{null};
       var task = (Handler<Void>) v -> {
-        if (System.nanoTime() < expiresAt) {
+        if (System.nanoTime() < expiresAt || timeout <= 0) {
           if (valueCounter < value) {
             vertx.runOnContext(taskRef[0]);
           } else {
@@ -75,7 +75,7 @@ public class Semaphore {
             acquirePromise.complete();
           }
         } else {
-          acquirePromise.fail("acquire expired");
+          acquirePromise.fail("acquire expired by timeout " + timeout);
         }
       };
       taskRef[0] = task;

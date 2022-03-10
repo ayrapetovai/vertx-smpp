@@ -14,4 +14,5 @@ public interface SessionCallbacks {
   void onUnexpectedResponse(Handler<PduResponseContext> unexpectedResponseHandler);
   void onClose(Handler<SmppSession> closeHandler);
   void onUnexpectedClose(Handler<SmppSession> unexpectedCloseHandler);
+  void onBindReceived(Handler<PduRequestContext<?>> bindReceived);
 }

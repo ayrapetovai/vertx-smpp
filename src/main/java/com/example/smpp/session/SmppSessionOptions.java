@@ -54,6 +54,7 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   Handler<PduResponseContext> unexpectedResponseHandler = __ -> {};
   Handler<SmppSession> closeHandler = __ -> {};
   Handler<SmppSession> unexpectedCloseHandler = __ -> {};
+  Handler<PduRequestContext<?>> onBindReceived = __ -> {};
 
   public SmppSessionOptions(Long id) {
     this.id = id;
@@ -247,6 +248,7 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
 
   @Override
   public void onCreated(Handler<SmppSession> createdHandler) {
+    // TODO if createdHandler != null then throw new IllegalStateException
     this.createdHandler = createdHandler;
   }
 
@@ -268,6 +270,11 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   @Override
   public void onUnexpectedClose(Handler<SmppSession> unexpectedCloseHandler) {
     this.unexpectedCloseHandler = unexpectedCloseHandler;
+  }
+
+  @Override
+  public void onBindReceived(Handler<PduRequestContext<?>> bindReceived) {
+    this.onBindReceived = bindReceived;
   }
 
   @Override
@@ -293,5 +300,10 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   @Override
   public Handler<SmppSession> getOnUnexpectedClose() {
     return unexpectedCloseHandler;
+  }
+
+  @Override
+  public Handler<PduRequestContext<?>> getOnBindReceived() {
+    return this.onBindReceived;
   }
 }

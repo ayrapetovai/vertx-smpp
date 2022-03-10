@@ -27,7 +27,7 @@ public class SmppClientWorker {
     this.pool = pool;
   }
 
-  public SmppSession handle(Channel ch) {
+  public SmppSessionImpl handle(Channel ch) {
     ChannelPipeline pipeline = ch.pipeline();
     PduTranscoder transcoder = new DefaultPduTranscoder(new DefaultPduTranscoderContext());
     pipeline.addLast("smppDecoder", new SmppSessionPduDecoder(transcoder));
@@ -44,8 +44,6 @@ public class SmppClientWorker {
 //      context.emit(conn, connectionHandler::handle);
 //    });
     pipeline.addLast("handler2", handler);
-    var sess  = handler.getConnection();
-    sess.getOptions().getOnCreated().handle(sess);
-    return sess;
+    return handler.getConnection();
   }
 }

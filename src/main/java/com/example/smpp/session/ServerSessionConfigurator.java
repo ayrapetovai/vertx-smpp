@@ -1,10 +1,11 @@
 package com.example.smpp.session;
 
 public interface ServerSessionConfigurator extends SessionOptionsView, SessionCallbacks {
+  void setSystemId(String systemId);
   void setDropAllOnUnbind(boolean dropAllOnUnbind);
   void setReplyToUnbind(boolean replyToUnbind);
-  void isSendUnbindOnClose(boolean sendUnbindOnClose);
-  void isAwaitUnbindResp(boolean awaitUnbindResp);
+  void isSendUnbindOnClose(boolean sendUnbindOnClose); //TODO 'is' in setter?
+  void isAwaitUnbindResp(boolean awaitUnbindResp);     // TODO 'is' in setter?
   void setBindTimeout(long bindTimeout);
   void setUnbindTimeout(long unbindTimeout);
   void setRequestExpiryTimeout(long requestExpiryTimeout);

@@ -1,9 +1,6 @@
 package com.example.smpp;
 
-import com.cloudhopper.smpp.pdu.Pdu;
-import com.cloudhopper.smpp.pdu.PduRequest;
-import com.cloudhopper.smpp.pdu.PduResponse;
-import com.cloudhopper.smpp.pdu.Unbind;
+import com.cloudhopper.smpp.pdu.*;
 import com.example.smpp.session.SessionOptionsView;
 import com.example.smpp.util.vertx.Semaphore;
 import io.netty.channel.ChannelHandlerContext;
@@ -27,6 +24,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private final SessionOptionsView optionsView;
   private final long expireTimerId;
   private int sequenceCounter = 0;
+  private String boundToSystemId;
 
   public SmppSessionImpl(Pool pool, Long id, ContextInternal context, ChannelHandlerContext chctx, SessionOptionsView optionsView) {
     super(context, chctx);
@@ -43,7 +41,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
         if (exRec.responsePromise != null) {
           log.trace("pdu.sequence={} expired on send", exRec.sequenceNumber);
           windowGuard.release(1);
-          exRec.responsePromise.tryFail("Expired on send");
+          exRec.responsePromise.tryFail("no response on time, request expired");
         }
       });
     });
@@ -74,6 +72,17 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
               close(closePromise, false);
               return closePromise.future();
             });
+      } else if (pdu instanceof BaseBind<?>) {
+        var bindRequest = (BindTransceiver) pdu;
+        optionsView.getOnBindReceived().handle(new PduRequestContext<>(bindRequest, this));
+        setBoundToSystemId(bindRequest.getSystemId());
+        this.optionsView.getOnCreated().handle(this);
+        var bindResp = bindRequest.createResponse();
+        bindResp.setSystemId(optionsView.getSystemId());
+        this.reply(bindResp)
+            .onFailure(ex -> {
+              SmppSessionImpl.this.close(Promise.promise(), false);
+            });
       } else {
         optionsView.getOnRequest().handle(new PduRequestContext<>((PduRequest<?>) msg, this));
       }
@@ -91,21 +100,32 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
 
   @Override
   public <T extends PduResponse> Future<T> send(PduRequest<T> req) {
-    return send(req, optionsView.getWriteTimeout());
+    return send(req, 0);
   }
 
   @Override
-  public <T extends PduResponse> Future<T> send(PduRequest<T> req, long sendTimeout) {
+  public <T extends PduResponse> Future<T> send(PduRequest<T> req, long offerTimeout) {
     if (channel().isOpen()) {
-      return windowGuard.acquire(1, optionsView.getWindowWaitTimeout())
+      return windowGuard.acquire(1, offerTimeout)
           .compose(v -> {
             req.setSequenceNumber(sequenceCounter++);
-            Promise<T> respProm = window.<T>offer(req.getSequenceNumber(), System.currentTimeMillis() + sendTimeout);
+            Promise<T> respProm = window.<T>offer(req.getSequenceNumber(), System.currentTimeMillis() + optionsView.getRequestExpiryTimeout());
             if (respProm != null) {
               if (channel().isOpen()) {
                 var written = context.<Void>promise();
                 written.future()
                     .onFailure(respProm::tryFail);
+
+                // TODO разобраться и оптмимизировать, таймеры отъедают минимум 20% производительности и нивелируют приемущества перед cloudhopper
+//                  может быть истечение времени на запись вообще не нужно и хвати только окна и ответа.
+//                var writeTimeout = optionsView.getWriteTimeout();
+//                if (writeTimeout > 0) {
+//                  var timerId = vertx.setTimer(optionsView.getWriteTimeout(), id -> {
+//                    written.tryFail("timeout write failed");
+//                  });
+//                  written.future()
+//                      .onComplete(nothing -> vertx.cancelTimer(timerId));
+//                }
                 writeToChannel(req, written);
               } else {
                 windowGuard.release(1);
@@ -184,5 +204,14 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   @Override
   public Long getId() {
     return id;
+  }
+
+  public void setBoundToSystemId(String boundToSystemId) {
+    this.boundToSystemId = boundToSystemId;
+  }
+
+  @Override
+  public String getBoundToSystemId() {
+    return this.boundToSystemId;
   }
 }

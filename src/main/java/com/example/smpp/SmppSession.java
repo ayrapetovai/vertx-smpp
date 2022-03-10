@@ -16,6 +16,12 @@ public interface SmppSession extends Closeable {
   Long getId();
 
   /**
+   * Id систем к которой создано сетевое подключение и прошел успешный bind
+   * @return
+   */
+  String getBoundToSystemId();
+
+  /**
    * Запрос помещается в окно (очередь на отправку) и отправляется, котогда до него додет черед.
    * TODO возвращенный future должен получать не PduResponse, а обвертку в которой будет инфа
    *  о том, какая именно произошла ошибка: запись в канал, ошибка формата, запрос протух в окне и т. п.
@@ -25,7 +31,7 @@ public interface SmppSession extends Closeable {
    */
   <T extends PduResponse> Future<T> send(PduRequest<T> req);
 
-  <T extends PduResponse> Future<T> send(PduRequest<T> req, long sendTimeout);
+  <T extends PduResponse> Future<T> send(PduRequest<T> req, long offerTimeout);
 
   /**
    * TODO возвращенный future должен получать не Void, а обвертку в которой будет инфа
