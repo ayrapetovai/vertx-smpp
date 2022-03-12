@@ -7,8 +7,9 @@ import com.example.smpp.session.SessionOptionsView;
 import io.vertx.core.Closeable;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.spi.metrics.MetricsProvider;
 
-public interface SmppSession extends Closeable {
+public interface SmppSession extends Closeable, MetricsProvider {
 //  SmppSessionBindType getBindType(); // TRANCEIVER, TRANSMITTER, RECEIVER, TRANCEIVER(smpp-v5?)
 //  [?] SessionState {SmppState state, boolean sendPaused, boolean replyPaused }
   SmppSessionState getState();// INITIAL?, OUTBOUND, OPENED, BINDING, BOUND, UNBINDING, CLOSED

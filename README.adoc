@@ -14,6 +14,7 @@ This application was generated using http://start.vertx.io
 - Заставить работать по SSL
 - Настройки сервера и клиента (кроме ssl) должны иметь возможность для обновления в рантайме (по ресту или еще как-то)
 - Обязательно удалить `com.example.smpp.util.smpp.Gsm7BitCharset.Gsm7BitCharset`, он распространяется под BSD лицензией. Так же удалить все классы cloudhopper'а.
+- Добавить лицензию https://www.apache.org/licenses/LICENSE-2.0 в LICENSE
 - Демонстрационные реализации:
     * email gateway, smpp -> EG -> smtp
     * smpp multiplexer, {smpp_1, smpp_2, ..., smpp_n} -> smpp-mux -> smpp-server

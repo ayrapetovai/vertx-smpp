@@ -1,13 +1,13 @@
-package com.example.smpp.main;
+package com.example.smpp.demo;
 
 import com.cloudhopper.commons.charset.CharsetUtil;
 import com.cloudhopper.smpp.pdu.DeliverSm;
 import com.cloudhopper.smpp.pdu.SubmitSm;
+import com.cloudhopper.smpp.type.Address;
 import com.cloudhopper.smpp.type.SmppInvalidArgumentException;
 import com.example.smpp.Smpp;
 import com.example.smpp.client.SmppClient;
 import com.example.smpp.model.SmppBindType;
-import com.example.smpp.util.smpp.Gsm7BitCharset;
 import com.example.smpp.util.vertx.CountDownLatch;
 import com.example.smpp.util.vertx.Loop;
 import io.vertx.core.AbstractVerticle;
@@ -20,6 +20,8 @@ import org.slf4j.LoggerFactory;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class SmppClientMain extends AbstractVerticle {
@@ -107,6 +109,7 @@ public class SmppClientMain extends AbstractVerticle {
                 var throttled = Promise.<Boolean>promise();
                 submitSmCount[0]++;
                 var ssm = new SubmitSm();
+//                setSourceAndDestAddress(ssm);
                 if (LOADED) {
                   addShortMessage(ssm);
                 }
@@ -172,6 +175,14 @@ public class SmppClientMain extends AbstractVerticle {
 //        });
   }
 
+  private void setSourceAndDestAddress(SubmitSm ssm) {
+    var rng = new Random();
+    var from = String.valueOf(rng.nextInt(100000));
+    var to = String.valueOf(rng.nextInt(100000));
+    ssm.setSourceAddress(new Address((byte) 2, (byte) 2, from));
+    ssm.setDestAddress(new Address((byte) 2, (byte) 2, to));
+  }
+
   private double if1stNegGet2nd(long l, double d) {
     return l < 0? d: l;
   }
@@ -179,10 +190,10 @@ public class SmppClientMain extends AbstractVerticle {
   private void addShortMessage(SubmitSm ssm) {
     String text160 = "\u20AC Lorem [ipsum] dolor sit amet, consectetur adipiscing elit. Proin feugiat, leo id commodo tincidunt, nibh diam ornare est, vitae accumsan risus lacus sed sem metus.";
 //    String text160 = "txId:" + java.util.UUID.randomUUID() + ";";
-    byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_GSM);
+//    byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_GSM);
 //    byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_GSM7);
 //    byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_UCS_2);
-//    byte[] textBytes = text160.getBytes(StandardCharsets.UTF_8);
+    byte[] textBytes = text160.getBytes(StandardCharsets.UTF_8);
 
 //    byte[] textBytes = new byte[0];
 //    try {

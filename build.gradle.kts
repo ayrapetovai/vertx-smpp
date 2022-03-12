@@ -29,13 +29,17 @@ application {
 }
 
 dependencies {
-  // logs
-  implementation("ch.qos.logback:logback-core:$logbackVersion")
-  implementation("ch.qos.logback:logback-classic:$logbackVersion")
-
   implementation("com.fizzed:ch-smpp:6.0.0-netty4-beta-3")
   implementation(platform("io.vertx:vertx-stack-depchain:$vertxVersion"))
   implementation("io.vertx:vertx-core")
+
+  // logs
+  testImplementation("ch.qos.logback:logback-core:$logbackVersion")
+  testImplementation("ch.qos.logback:logback-classic:$logbackVersion")
+
+  // demo
+  testImplementation("io.vertx:vertx-mail-client:$vertxVersion")
+  testImplementation("org.subethamail:subethasmtp:3.1.7")
 
   testImplementation("io.vertx:vertx-junit5")
   testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")

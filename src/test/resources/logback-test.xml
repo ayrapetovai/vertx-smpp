@@ -13,8 +13,7 @@
 <!--  <logger name="com.example.smpp" level="debug"/>-->
 <!--  <logger name="com.example.smpp" level="trace"/>-->
 <!--  <logger name="com.example.smpp" level="warn"/>-->
-  <logger name="com.example.smppServer.main.SmppServerMain" level="info"/>
-  <logger name="com.example.smppServer.main.SmppClientMain" level="info"/>
+  <logger name="com.example.smpp.demo" level="info"/>
 
 <!--  <root level="trace">-->
   <root level="info">

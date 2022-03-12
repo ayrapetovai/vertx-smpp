@@ -1,4 +1,4 @@
-package com.example.smpp.main;
+package com.example.smpp.demo;
 
 import com.cloudhopper.smpp.pdu.BindTransceiver;
 import com.cloudhopper.smpp.pdu.DeliverSm;
@@ -10,6 +10,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.net.JksOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,7 @@ public class SmppServerMain extends AbstractVerticle {
   private static final int INSTANCES = 1;
   private static final int THREADS = 1;
 
-  SmppServer server;
+  private SmppServer server;
 
   @Override
   public void start(Promise<Void> startPromise) {
@@ -31,7 +32,7 @@ public class SmppServerMain extends AbstractVerticle {
 //      .setSsl(true)
 //      .setKeyStoreOptions(
 //        new JksOptions()
-//          .setPath("server-keystore.jks")
+//          .setPath("./src/test/resources/server-keystore.jks")
 //          .setPassword("wibble")
 //      );
     server = Smpp.server(vertx, opts);
