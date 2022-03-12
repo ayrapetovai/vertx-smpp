@@ -18,6 +18,9 @@ import java.util.concurrent.CountDownLatch;
 public class SmppServerMain extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(SmppServerMain.class);
 
+  private static final int INSTANCES = 1;
+  private static final int THREADS = 1;
+
   SmppServer server;
 
   @Override
@@ -94,8 +97,8 @@ public class SmppServerMain extends AbstractVerticle {
   public static void main(String[] args) {
     var vertex = Vertx.vertx();
     var depOpts = new DeploymentOptions()
-      .setInstances(1) // TODO scale to 2 and more
-      .setWorkerPoolSize(1)
+      .setInstances(INSTANCES) // TODO scale to 2 and more
+      .setWorkerPoolSize(THREADS)
       ;
     vertex.deployVerticle(SmppServerMain.class.getCanonicalName(), depOpts);
   }

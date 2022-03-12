@@ -27,6 +27,7 @@ public class SmppClientMain extends AbstractVerticle {
 
   private static final String SYSTEM_ID = "vertx-smpp-client";
   private static final int SESSIONS = 1;
+  private static final int THREADS = 1;
   private static final boolean LOADED = false;
 //  private static final int SUBMIT_SM_NUMBER = 50_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000_000;
@@ -136,7 +137,7 @@ public class SmppClientMain extends AbstractVerticle {
               })
               .onComplete(ar -> {
                 sess.close(Promise.promise());
-                log.info("done, sessions={}, {}, this={}, that={}", SESSIONS, (LOADED? "text": "no text"), SYSTEM_ID, sess.getBoundToSystemId());
+                log.info("done threads={}, sessions={}, {}, this={}, that={}", THREADS, SESSIONS, (LOADED? "text": "no text"), SYSTEM_ID, sess.getBoundToSystemId());
                 var submitSmThroughput = ((double)submitSmRespCount[0]/((double)(submitEnd[0] - start[0])/1000.0));
                 log.info(
                     "submitSm=" + submitSmCount[0] +
@@ -279,7 +280,7 @@ public class SmppClientMain extends AbstractVerticle {
     var vertex = Vertx.vertx();
     var depOpts = new DeploymentOptions()
       .setInstances(SESSIONS) // TODO scale to 2 and more
-      .setWorkerPoolSize(1)
+      .setWorkerPoolSize(THREADS)
       ;
     vertex.deployVerticle(SmppClientMain.class.getCanonicalName(), depOpts);
   }
