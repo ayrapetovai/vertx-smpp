@@ -4,6 +4,7 @@ import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.DeliverSm;
 import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.example.smpp.Smpp;
+import com.example.smpp.SmppSession;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -23,6 +24,9 @@ import org.subethamail.smtp.server.SMTPServer;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
 class LocalSmtpServer {
   private static final Logger log = LoggerFactory.getLogger(EmailGateWayMain.class);
@@ -86,23 +90,41 @@ public class EmailGateWayMain extends AbstractVerticle {
         .setPassword("password");
 
     MailClient mailClient = MailClient.createShared(vertx, mailConfig);
+
+    Map<String, LinkedList<SmppSession>> smppClients = new HashMap<>();
+
     Smpp.server(vertx)
         .configure(configurator -> {
+          configurator.onCreated(session -> {
+            smppClients.computeIfAbsent(session.getBoundToSystemId(), systemId -> new LinkedList<>())
+                .add(session);
+          });
           configurator.onRequest(rqCtx -> {
+            var sess = rqCtx.getSession();
             if (rqCtx.getRequest() instanceof SubmitSm) {
-              rqCtx.getSession()
-                  .reply(rqCtx.getRequest().createResponse());
+              sess.reply(rqCtx.getRequest().createResponse());
               mailClient.sendMail(createEmail((SubmitSm) rqCtx.getRequest()))
-                  .onComplete(ar -> {
-                    var deliveryReport = new DeliverSm();
-                    deliveryReport.setCommandStatus(
-                        ar.succeeded()? SmppConstants.STATUS_OK: SmppConstants.STATUS_DELIVERYFAILURE
-                    );
-                    rqCtx.getSession()
-                        .send(deliveryReport)
-                        .onComplete(deliveryResult -> {
-                          log.info("delivery {}", deliveryResult.succeeded()? "success": "fail");
-                        });
+                  .onComplete(sendMailStatus -> {
+                    SmppSession targetSession = null;
+                    // TODO isReceiver()?
+                    if (sess.getState().canReceive(false, SmppConstants.CMD_ID_DELIVER_SM)) {
+                      targetSession = sess;
+                    } else {
+                      var sessions = smppClients.get(sess.getBoundToSystemId());
+                      if (sessions != null && !sessions.isEmpty()) {
+                        targetSession = sessions.pollFirst();
+                      }
+                    }
+                    if (targetSession != null) {
+                      var deliveryReport = new DeliverSm();
+                      deliveryReport.setCommandStatus(
+                          sendMailStatus.succeeded() ? SmppConstants.STATUS_OK : SmppConstants.STATUS_DELIVERYFAILURE
+                      );
+                      targetSession.send(deliveryReport)
+                          .onComplete(deliveryResult -> {
+                            log.info("delivery {}", deliveryResult.succeeded() ? "success" : "fail");
+                          });
+                    }
                   });
             }
           });

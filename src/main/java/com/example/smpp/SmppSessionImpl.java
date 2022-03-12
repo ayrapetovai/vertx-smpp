@@ -134,7 +134,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
 
   @Override
   public <T extends PduResponse> Future<T> send(PduRequest<T> req, long offerTimeout) {
-    if (!this.state.cantSend(isServer, req.getCommandId())) {
+    if (!this.state.canSend(isServer, req.getCommandId())) {
       return Future.failedFuture(state + " forbidden for send, pdu " + req.getName());
     }
     if (channel().isOpen()) {
@@ -177,7 +177,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
 
   @Override
   public Future<Void> reply(PduResponse pduResponse) {
-    if (!this.state.cantSend(isServer, pduResponse.getCommandId())) {
+    if (!this.state.canSend(isServer, pduResponse.getCommandId())) {
       return Future.failedFuture(state + " forbidden for reply, pdu " + pduResponse.getName());
     }
     var written = context.<Void>promise();

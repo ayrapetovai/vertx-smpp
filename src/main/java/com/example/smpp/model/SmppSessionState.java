@@ -11,7 +11,7 @@ import com.cloudhopper.smpp.SmppConstants;
 public enum SmppSessionState {
   OPEN {  // пдо получения или отправки bind_*(resp)
     @Override
-    public boolean cantSend(boolean isServer, int commandId) {
+    public boolean canSend(boolean isServer, int commandId) {
       if (isServer) {
         switch (commandId) {
           case SmppConstants.CMD_ID_BIND_TRANSCEIVER_RESP:
@@ -71,7 +71,7 @@ public enum SmppSessionState {
   },
   BOUND_TX {
     @Override
-    public boolean cantSend(boolean isServer, int commandId) {
+    public boolean canSend(boolean isServer, int commandId) {
       if (isServer) {
         switch (commandId) {
           case SmppConstants.CMD_ID_BROADCAST_SM_RESP:
@@ -154,7 +154,7 @@ public enum SmppSessionState {
   },
   BOUND_RX {
     @Override
-    public boolean cantSend(boolean isServer, int commandId) {
+    public boolean canSend(boolean isServer, int commandId) {
       if (isServer) {
         switch (commandId) {
           case SmppConstants.CMD_ID_ALERT_NOTIFICATION:
@@ -221,7 +221,7 @@ public enum SmppSessionState {
   },
   BOUND_TRX {
     @Override
-    public boolean cantSend(boolean isServer, int commandId) {
+    public boolean canSend(boolean isServer, int commandId) {
       if (isServer) {
         switch (commandId) {
           case SmppConstants.CMD_ID_ALERT_NOTIFICATION:
@@ -318,7 +318,7 @@ public enum SmppSessionState {
   },
   UNBOUND { // после получения unbind
     @Override
-    public boolean cantSend(boolean isServer, int commandId) {
+    public boolean canSend(boolean isServer, int commandId) {
       switch (commandId) {
         case SmppConstants.CMD_ID_ENQUIRE_LINK:
         case SmppConstants.CMD_ID_ENQUIRE_LINK_RESP:
@@ -343,7 +343,7 @@ public enum SmppSessionState {
   },
   CLOSED { // после UNBIND
     @Override
-    public boolean cantSend(boolean isServer, int commandId) {
+    public boolean canSend(boolean isServer, int commandId) {
       return false;
     }
 
@@ -354,7 +354,7 @@ public enum SmppSessionState {
   },
   OUTBOUND { // то же что и OPEN, но когда соединение установил MC.
     @Override
-    public boolean cantSend(boolean isServer, int commandId) {
+    public boolean canSend(boolean isServer, int commandId) {
       return false;
     }
 
@@ -365,7 +365,7 @@ public enum SmppSessionState {
   }
   ;
 
-  public abstract boolean cantSend(boolean isServer, int commandId);
+  public abstract boolean canSend(boolean isServer, int commandId);
 
   public abstract boolean canReceive(boolean isServer, int commandId);
 }
