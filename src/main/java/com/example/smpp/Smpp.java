@@ -24,4 +24,8 @@ public class Smpp {
     return new SmppClientImpl((VertxInternal) vertx,  new SmppClientOptions(), new CloseFuture());
   }
 
+  public static SmppClient client(Vertx vertx, SmppClientOptions options) {
+    return new SmppClientImpl((VertxInternal) vertx,  options, new CloseFuture());
+  }
+
 }

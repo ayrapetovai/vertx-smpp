@@ -21,6 +21,7 @@ public class SmppServerMain extends AbstractVerticle {
 
   private static final int INSTANCES = 1;
   private static final int THREADS = 1;
+  private static final boolean SSL = false;
 
   private SmppServer server;
 
@@ -28,13 +29,13 @@ public class SmppServerMain extends AbstractVerticle {
   public void start(Promise<Void> startPromise) {
     var clientName = new String[]{null};
     var opts = new SmppServerOptions();
-//    opts
-//      .setSsl(true)
-//      .setKeyStoreOptions(
-//        new JksOptions()
-//          .setPath("./src/test/resources/server-keystore.jks")
-//          .setPassword("wibble")
-//      );
+    if (SSL) {
+      opts.setSsl(true)
+          .setKeyStoreOptions(
+              new JksOptions()
+                  .setPath("src/test/resources/keystore")
+                  .setPassword("changeit"));
+    }
     server = Smpp.server(vertx, opts);
     server
         .configure(cfg -> {
@@ -84,8 +85,7 @@ public class SmppServerMain extends AbstractVerticle {
           });
           return true;
         })
-        .start("localhost", 2776)
-//        .start("localhost", 2777)
+        .start("localhost", SSL? 2777: 2776)
         .onSuccess(done -> {
           log.info("Server online");
           startPromise.complete();

@@ -11,9 +11,7 @@ import com.example.smpp.session.ServerSessionConfigurator;
 import com.example.smpp.session.SmppSessionOptions;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
-import io.netty.handler.ssl.SniHandler;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.vertx.core.Handler;
 import io.vertx.core.impl.ContextInternal;
@@ -61,34 +59,19 @@ public class SmppServerWorker implements Handler<Channel> {
   public void handle(Channel ch) {
     ChannelPipeline pipeline = ch.pipeline();
     if (sslHelper.isSSL()) {
+      SslHandler handler = new SslHandler(sslHelper.createEngine(vertx));
+      handler.setHandshakeTimeout(sslHelper.getSslHandshakeTimeout(), sslHelper.getSslHandshakeTimeoutUnit());
+      pipeline.addLast("ssl", handler);
       ChannelPromise p = ch.newPromise();
       pipeline.addLast("handshaker", new SslHandshakeCompletionHandler(p));
       p.addListener(future -> {
         if (future.isSuccess()) {
-          if (options.isUseAlpn()) {
-            SslHandler sslHandler = pipeline.get(SslHandler.class);
-            String protocol = sslHandler.applicationProtocol();
-            configureSmpp(ch.pipeline());
-          } else {
-            configureSmpp(ch.pipeline());
-          }
-          if (options.isSni()) {
-            SniHandler sniHandler = new SniHandler(sslHelper.serverNameMapper(vertx));
-            ch.pipeline().addLast("ssl", sniHandler);
-          } else {
-            SslHandler sslHandler = new SslHandler(sslHelper.createEngine(vertx));
-            sslHandler.setHandshakeTimeout(sslHelper.getSslHandshakeTimeout(), sslHelper.getSslHandshakeTimeoutUnit());
-            ch.pipeline().addLast("ssl", sslHandler);
-          }
-
-//          configureSmpp(ch.pipeline());
+          configureSmpp(pipeline);
         } else {
           handleException(future.cause());
         }
       });
-//      configureSmpp(ch.pipeline());
     } else {
-
       configureSmpp(pipeline);
     }
   }
@@ -114,10 +97,10 @@ public class SmppServerWorker implements Handler<Channel> {
 //        pipeline.addLast("deflater", new HttpChunkContentCompressor(options.getCompressionLevel()));
 //      }
 
-    if (sslHelper.isSSL()) {
-      // only add ChunkedWriteHandler when SSL is enabled otherwise it is not needed as FileRegion is used.
-      pipeline.addLast("chunkedWriter", new ChunkedWriteHandler());       // For large file / sendfile support
-    }
+//    if (sslHelper.isSSL()) {
+//      // only add ChunkedWriteHandler when SSL is enabled otherwise it is not needed as FileRegion is used.
+//      pipeline.addLast("chunkedWriter", new ChunkedWriteHandler());       // For large file / sendfile support
+//    }
     int idleTimeout = options.getIdleTimeout();
     int readIdleTimeout = options.getReadIdleTimeout();
     int writeIdleTimeout = options.getWriteIdleTimeout();

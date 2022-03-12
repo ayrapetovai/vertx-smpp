@@ -7,6 +7,7 @@ import com.cloudhopper.smpp.type.Address;
 import com.cloudhopper.smpp.type.SmppInvalidArgumentException;
 import com.example.smpp.Smpp;
 import com.example.smpp.client.SmppClient;
+import com.example.smpp.client.SmppClientOptions;
 import com.example.smpp.model.SmppBindType;
 import com.example.smpp.util.vertx.CountDownLatch;
 import com.example.smpp.util.vertx.Loop;
@@ -31,17 +32,18 @@ public class SmppClientMain extends AbstractVerticle {
   private static final int SESSIONS = 1;
   private static final int THREADS = 1;
   private static final boolean LOADED = false;
+  private static final boolean SSL = false;
 //  private static final int SUBMIT_SM_NUMBER = 50_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 5_000_000;
-  private static final int SUBMIT_SM_NUMBER = 2_000_000;
+//  private static final int SUBMIT_SM_NUMBER = 2_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 1_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 100_000;
 //  private static final int SUBMIT_SM_NUMBER = 20_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000;
 //  private static final int SUBMIT_SM_NUMBER = 7_000;
 //  private static final int SUBMIT_SM_NUMBER = 1_000;
-//  private static final int SUBMIT_SM_NUMBER = 10;
+  private static final int SUBMIT_SM_NUMBER = 10;
 //  private static final int SUBMIT_SM_NUMBER = 4;
 //  private static final int SUBMIT_SM_NUMBER = 1;
   SmppClient client;
@@ -62,7 +64,14 @@ public class SmppClientMain extends AbstractVerticle {
     var submitSmLatch = new CountDownLatch(vertx, SUBMIT_SM_NUMBER);
     var deliverSmRespLatch = new CountDownLatch(vertx, SUBMIT_SM_NUMBER);
 
-    client = Smpp.client(vertx);
+    var options = new SmppClientOptions();
+    if (SSL) {
+      options.setSsl(true);
+      options.setTrustAll(true);
+    }
+
+//    client = Smpp.client(vertx);
+    client = Smpp.client(vertx, options);
     client
         .configure(cfg -> {
           log.info("user code: configuring new session#{}", cfg.getId());
@@ -100,7 +109,7 @@ public class SmppClientMain extends AbstractVerticle {
             log.info("user code: reacts to forbidden request pdu {}", reqCtx.getRequest());
           });
         })
-        .bind("localhost", 2776)
+        .bind("localhost", SSL? 2777: 2776)
         .onSuccess(sess -> {
           start[0] = System.currentTimeMillis();
           log.info("user code: client bound");
@@ -140,7 +149,7 @@ public class SmppClientMain extends AbstractVerticle {
               })
               .onComplete(ar -> {
                 sess.close(Promise.promise());
-                log.info("done threads={}, sessions={}, {}, this={}, that={}", THREADS, SESSIONS, (LOADED? "text": "no text"), SYSTEM_ID, sess.getBoundToSystemId());
+                log.info("done threads={}, sessions={}, {}, this={}, that={}, ssl={}", THREADS, SESSIONS, (LOADED? "text": "no text"), SYSTEM_ID, sess.getBoundToSystemId(), SSL);
                 var submitSmThroughput = ((double)submitSmRespCount[0]/((double)(submitEnd[0] - start[0])/1000.0));
                 log.info(
                     "submitSm=" + submitSmCount[0] +
