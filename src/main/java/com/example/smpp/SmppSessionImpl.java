@@ -4,6 +4,7 @@ import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.*;
 import com.example.smpp.model.SmppSessionState;
 import com.example.smpp.session.SessionOptionsView;
+import com.example.smpp.util.SequenceCounter;
 import com.example.smpp.util.vertx.Semaphore;
 import io.netty.channel.ChannelHandlerContext;
 import io.vertx.core.Future;
@@ -27,8 +28,9 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private final SessionOptionsView options;
   private final boolean isServer;
   private final long expireTimerId;
+  private final SequenceCounter sequenceCounter = new SequenceCounter();
+
   private SmppSessionState state = SmppSessionState.OPEN;
-  private int sequenceCounter = 0;
   private String boundToSystemId;
 
   public SmppSessionImpl(Pool pool, Long id, ContextInternal context, ChannelHandlerContext chctx, SessionOptionsView options, boolean isServer) {
@@ -138,7 +140,9 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     if (channel().isOpen()) {
       return windowGuard.acquire(1, offerTimeout)
           .compose(v -> {
-            req.setSequenceNumber(sequenceCounter++);
+            if (!req.hasSequenceNumberAssigned()) {
+              req.setSequenceNumber(sequenceCounter.getAndInc());
+            }
             Promise<T> respProm = window.<T>offer(req.getSequenceNumber(), System.currentTimeMillis() + options.getRequestExpiryTimeout());
             if (respProm != null) {
               if (channel().isOpen()) {

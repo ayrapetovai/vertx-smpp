@@ -36,14 +36,14 @@ public class SmppClientMain extends AbstractVerticle {
 //  private static final int SUBMIT_SM_NUMBER = 50_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 5_000_000;
-//  private static final int SUBMIT_SM_NUMBER = 2_000_000;
+  private static final int SUBMIT_SM_NUMBER = 2_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 1_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 100_000;
 //  private static final int SUBMIT_SM_NUMBER = 20_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000;
 //  private static final int SUBMIT_SM_NUMBER = 7_000;
 //  private static final int SUBMIT_SM_NUMBER = 1_000;
-  private static final int SUBMIT_SM_NUMBER = 10;
+//  private static final int SUBMIT_SM_NUMBER = 10;
 //  private static final int SUBMIT_SM_NUMBER = 4;
 //  private static final int SUBMIT_SM_NUMBER = 1;
   SmppClient client;

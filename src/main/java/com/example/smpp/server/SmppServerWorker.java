@@ -26,14 +26,14 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class SmppServerWorker implements Handler<Channel> {
-  final EventLoopContext context;
-  private Function<ServerSessionConfigurator, Boolean> configurator;
-  Supplier<ContextInternal> streamContextSupplier;
-  SmppServerImpl smppServer;
-  VertxInternal vertx;
-  SSLHelper sslHelper;
-  NetServerOptions options;
-  final Pool pool;
+  private final EventLoopContext context;
+  private final Function<ServerSessionConfigurator, Boolean> configurator;
+  private final Supplier<ContextInternal> streamContextSupplier;
+  private final SmppServerImpl smppServer;
+  private final VertxInternal vertx;
+  private final SSLHelper sslHelper;
+  private final NetServerOptions options;
+  private final Pool pool;
 
   public SmppServerWorker(
       EventLoopContext context,
