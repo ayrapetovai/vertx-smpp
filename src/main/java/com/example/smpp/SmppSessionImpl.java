@@ -1,6 +1,8 @@
 package com.example.smpp;
 
+import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.*;
+import com.example.smpp.model.SmppSessionState;
 import com.example.smpp.session.SessionOptionsView;
 import com.example.smpp.util.vertx.Semaphore;
 import io.netty.channel.ChannelHandlerContext;
@@ -22,11 +24,13 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private final Window window = new Window();
   private final Semaphore windowGuard;
   private final SessionOptionsView optionsView;
+  private final boolean isServer;
   private final long expireTimerId;
+  private SmppSessionState state = SmppSessionState.OPEN;
   private int sequenceCounter = 0;
   private String boundToSystemId;
 
-  public SmppSessionImpl(Pool pool, Long id, ContextInternal context, ChannelHandlerContext chctx, SessionOptionsView optionsView) {
+  public SmppSessionImpl(Pool pool, Long id, ContextInternal context, ChannelHandlerContext chctx, SessionOptionsView optionsView, boolean isServer) {
     super(context, chctx);
     Objects.requireNonNull(pool);
     Objects.requireNonNull(id);
@@ -35,6 +39,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     this.id = id;
     this.windowGuard = Semaphore.create(context.owner(), optionsView.getWindowSize());
     this.optionsView = optionsView;
+    this.isServer = isServer;
     this.expireTimerId = vertx.setPeriodic(optionsView.getWindowMonitorInterval(), timerId -> {
       window.forAllExpired(expiredRecord -> {
         var exRec = (Window.RequestRecord<?>) expiredRecord;
@@ -64,6 +69,11 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   public void handleMessage(Object msg) {
     var pdu = (Pdu) msg;
     if (pdu.isRequest()) {
+      if (!this.state.canReceive(isServer, pdu.getCommandId())) {
+        this.optionsView.getOnForbiddenRequest()
+            .handle(new PduRequestContext<>((PduRequest<?>) pdu, this));
+        return;
+      }
       if (pdu instanceof Unbind) {
         doPause();
         reply(((Unbind) pdu).createResponse())
@@ -72,14 +82,25 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
               close(closePromise, false);
               return closePromise.future();
             });
+        this.state = SmppSessionState.UNBOUND;
       } else if (pdu instanceof BaseBind<?>) {
-        var bindRequest = (BindTransceiver) pdu;
+        var bindRequest = (BaseBind<? extends BaseBindResp>) pdu;
         optionsView.getOnBindReceived().handle(new PduRequestContext<>(bindRequest, this));
-        setBoundToSystemId(bindRequest.getSystemId());
-        this.optionsView.getOnCreated().handle(this);
         var bindResp = bindRequest.createResponse();
         bindResp.setSystemId(optionsView.getSystemId());
         this.reply(bindResp)
+            .onSuccess(vd -> {
+              // TODO здесь должны вызываться setBoundToSystemId, onCreated и все такое, если успешная отправка bind_resp обязательна (она обязательна)?
+              setBoundToSystemId(bindRequest.getSystemId());
+              this.optionsView.getOnCreated().handle(this);
+              switch (bindRequest.getCommandId()) {
+                case SmppConstants.CMD_ID_BIND_RECEIVER: this.setState(SmppSessionState.BOUND_RX); break;
+                case SmppConstants.CMD_ID_BIND_TRANSMITTER: this.setState(SmppSessionState.BOUND_TX); break;
+                case SmppConstants.CMD_ID_BIND_TRANSCEIVER: this.setState(SmppSessionState.BOUND_TRX); break;
+                default:
+                  // TODO ошибка, неожиданный тип pdu
+              }
+            })
             .onFailure(ex -> {
               SmppSessionImpl.this.close(Promise.promise(), false);
             });
@@ -88,6 +109,11 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       }
     } else {
       var pduResp = (PduResponse) msg;
+      if (!this.state.canReceive(isServer, pdu.getCommandId())) {
+        this.optionsView.getOnForbiddenResponse()
+            .handle(new PduResponseContext(pduResp, this));
+        return;
+      }
       var respProm = window.complement(pduResp.getSequenceNumber());
       if (respProm != null) {
         windowGuard.release(1);
@@ -105,6 +131,9 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
 
   @Override
   public <T extends PduResponse> Future<T> send(PduRequest<T> req, long offerTimeout) {
+    if (!this.state.cantSend(isServer, req.getCommandId())) {
+      return Future.failedFuture(state + " forbidden for send, pdu " + req.getName());
+    }
     if (channel().isOpen()) {
       return windowGuard.acquire(1, offerTimeout)
           .compose(v -> {
@@ -143,6 +172,9 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
 
   @Override
   public Future<Void> reply(PduResponse pduResponse) {
+    if (!this.state.cantSend(isServer, pduResponse.getCommandId())) {
+      return Future.failedFuture(state + " forbidden for reply, pdu " + pduResponse.getName());
+    }
     var written = context.<Void>promise();
 // TODO consider checks
 //    this.channel().isWritable(); {this.channel().bytesBeforeWritable();}
@@ -177,21 +209,24 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
             if (log.isDebugEnabled()) {
               log.debug("session#{} did unbindResp({}) close", getId(), unbindRespFuture.succeeded() ? "success" : "failure");
             }
-            vertx.cancelTimer(this.expireTimerId);
+            vertx.cancelTimer(expireTimerId);
             pool.remove(id);
+            state = SmppSessionState.CLOSED;
             super.close(completion);
             optionsView.getOnClose().handle(this);
             return completion.future();
           });
       } else {
-        vertx.cancelTimer(this.expireTimerId);
+        vertx.cancelTimer(expireTimerId);
         pool.remove(id);
+        state = SmppSessionState.CLOSED;
         super.close(completion);
         optionsView.getOnClose().handle(this);
       }
     } else {
-      vertx.cancelTimer(this.expireTimerId);
+      vertx.cancelTimer(expireTimerId);
       pool.remove(id);
+      state = SmppSessionState.CLOSED;
       super.close(completion);
       optionsView.getOnClose().handle(this);
     }
@@ -202,8 +237,18 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   }
 
   @Override
+  public SmppSessionState getState() {
+    return this.state;
+  }
+
+  public void setState(SmppSessionState state) {
+    log.debug("session{} moved to state {}", this, state);
+    this.state = state;
+  }
+
+  @Override
   public Long getId() {
-    return id;
+    return this.id;
   }
 
   public void setBoundToSystemId(String boundToSystemId) {
@@ -213,5 +258,10 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   @Override
   public String getBoundToSystemId() {
     return this.boundToSystemId;
+  }
+
+  @Override
+  public String toString() {
+    return "Session(" + id + (isServer? ":server": ":client") + "->" + boundToSystemId + ')';
   }
 }

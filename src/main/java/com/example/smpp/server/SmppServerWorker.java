@@ -136,12 +136,13 @@ public class SmppServerWorker implements Handler<Channel> {
       var sess = pool.add(id -> {
         sessOpts[0] = new SmppSessionOptions(id);
         var allowBind = configurator.apply(sessOpts[0]); // TODO allowBind, wtf?
-        return new SmppSessionImpl(pool, id, context, chctx, sessOpts[0]);
+        return new SmppSessionImpl(pool, id, context, chctx, sessOpts[0], true);
       });
 //            context.emit(chctx.handler(), connectionHandler::handle);
       return sess;
     });
     handler.addHandler(conn -> {
+      // FIXME сессия еще не связана, boundTo == null
       context.emit(conn, sessOpts[0].getOnCreated()::handle);
     });
     pipeline.addLast("handler", handler);

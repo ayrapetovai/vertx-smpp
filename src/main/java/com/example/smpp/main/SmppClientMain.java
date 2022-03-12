@@ -30,6 +30,7 @@ public class SmppClientMain extends AbstractVerticle {
   private static final boolean LOADED = false;
 //  private static final int SUBMIT_SM_NUMBER = 50_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000_000;
+//  private static final int SUBMIT_SM_NUMBER = 5_000_000;
   private static final int SUBMIT_SM_NUMBER = 2_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 1_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 100_000;
@@ -61,10 +62,10 @@ public class SmppClientMain extends AbstractVerticle {
     client = Smpp.client(vertx);
     client
         .configure(cfg -> {
-          log.info("configuring new session#{}", cfg.getId());
+          log.info("user code: configuring new session#{}", cfg.getId());
           cfg.setSystemId(SYSTEM_ID);
           cfg.setPassword("test");
-          cfg.setBindType(SmppBindType.TRANSCEIVER);
+          cfg.setBindType(SmppBindType.TRANSCEIVER); // TODO так лучше, чем в bind?
           cfg.setWindowSize(600);
           cfg.setBindTimeout(1000);
 //          cfg.setWriteTimeout(1000);
@@ -73,26 +74,33 @@ public class SmppClientMain extends AbstractVerticle {
             if (reqCtx.getRequest() instanceof DeliverSm) {
               deliverSmCount[0]++;
               var sendDeliverSmRespStart = new long[]{System.nanoTime()};
+              var resp = reqCtx.getRequest().createResponse();
               reqCtx.getSession()
-                  .reply(reqCtx.getRequest().createResponse())
+                  .reply(resp)
                   .onSuccess(nothing -> {
                     deliverSmRespLatencySumNano[0] += (System.nanoTime() - sendDeliverSmRespStart[0]);
                     deliverSmRespCount[0]++;
                     deliverSmRespLatch.countDown(1);
+                  })
+                  .onFailure(e -> {
+                    log.trace("user code: could no reply with {}", resp.getName(), e);
                   });
             }
           });
           cfg.onUnexpectedResponse(respCtx -> {
-            log.warn("unexpected response received {}", respCtx.getResponse());
+            log.warn("user code: unexpected response received {}", respCtx.getResponse());
           });
           cfg.onCreated(sess -> {
-            log.info("session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId());
+            log.info("user code: session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId());
+          });
+          cfg.onForbiddenRequest(reqCtx -> {
+            log.info("user code: reacts to forbidden request pdu {}", reqCtx.getRequest());
           });
         })
         .bind("localhost", 2776)
         .onSuccess(sess -> {
           start[0] = System.currentTimeMillis();
-          log.info("client bound");
+          log.info("user code: client bound");
           new Loop(vertx)
               .forLoopInt(0, SUBMIT_SM_NUMBER, i -> {
                 var throttled = Promise.<Boolean>promise();
@@ -143,7 +151,7 @@ public class SmppClientMain extends AbstractVerticle {
                     ", deliverSmResp=" + deliverSmRespCount[0] +
                         ", throughput=" + deliverSmThroughput);
                 log.info("deliverSmResp latency=" + (0.000_001 * (double)deliverSmRespLatencySumNano[0]/(double)deliverSmRespCount[0]));
-                log.info("deliver_sm time=" + (deliverEnd[0] - start[0]) + "ms");
+                log.info("deliver_sm time=" + if1stNegGet2nd(deliverEnd[0] - start[0], Double.NaN) + "ms");
 
                 log.info("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
                 startPromise.complete();
@@ -161,6 +169,10 @@ public class SmppClientMain extends AbstractVerticle {
 //        .bind("localhost", 2776)
 //        .onSuccess(sess -> {
 //        });
+  }
+
+  private double if1stNegGet2nd(long l, double d) {
+    return l < 0? d: l;
   }
 
   private void addShortMessage(SubmitSm ssm) {

@@ -34,17 +34,18 @@ public class SmppServerMain extends AbstractVerticle {
     server = Smpp.server(vertx, opts);
     server
         .configure(cfg -> {
-          log.info("configuring new session#{}", cfg.getId());
+          log.info("user code: configuring new session#{}", cfg.getId());
           cfg.setSystemId("vertx-smpp-server");
           cfg.setWindowSize(600);
 //          cfg.setWriteTimeout(2000);
           cfg.setRequestExpiryTimeout(1000); // Время на отправку запроса и получение ответа
           cfg.onCreated(sess -> {
-            log.info("session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId());
+            // FIXME сессия еще не связана, boundToSystemId == null
+            log.info("user code: session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId());
           });
           cfg.onBindReceived(bind -> {
             var systemId = ((BindTransceiver) bind.getRequest()).getSystemId();
-            log.info("inbound bind from " + systemId);
+            log.info("user code: inbound bind from " + systemId);
             clientName[0] = systemId;
           });
           cfg.onRequest(reqCtx -> {
@@ -62,15 +63,20 @@ public class SmppServerMain extends AbstractVerticle {
                 .onSuccess(nothing -> {
                   if (reqCtx.getRequest() instanceof SubmitSm) {
                     sess.send(new DeliverSm())
-                        .onSuccess(resp -> {
-                        })
+                        .onSuccess(resp -> {})
                         .onFailure(Throwable::printStackTrace);
                   }
                 })
                 .onFailure(Throwable::printStackTrace);
           });
           cfg.onClose(sess -> {
-            log.info("closed session#{}", sess.getId());
+            log.info("user code: closed session#{}", sess.getId());
+          });
+          cfg.onForbiddenRequest(reqCtx -> {
+            log.info("user code: forbidden req {}", reqCtx.getRequest().getName());
+          });
+          cfg.onForbiddenResponse(rspCtx -> {
+            log.info("user code: forbidden rsp {}", rspCtx.getResponse().getName());
           });
           return true;
         })

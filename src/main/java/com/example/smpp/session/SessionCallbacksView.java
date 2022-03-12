@@ -12,4 +12,6 @@ public interface SessionCallbacksView {
   Handler<PduResponseContext> getOnUnexpectedResponse();
   Handler<SmppSession> getOnUnexpectedClose();
   Handler<PduRequestContext<?>> getOnBindReceived();
+  Handler<PduRequestContext<?>> getOnForbiddenRequest();
+  Handler<PduResponseContext> getOnForbiddenResponse();
 }

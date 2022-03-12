@@ -54,7 +54,10 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   Handler<PduResponseContext> unexpectedResponseHandler = __ -> {};
   Handler<SmppSession> closeHandler = __ -> {};
   Handler<SmppSession> unexpectedCloseHandler = __ -> {};
+  // TODO Function<BindInfo, RespReturnCode> onBindReceived
   Handler<PduRequestContext<?>> onBindReceived = __ -> {};
+  Handler<PduRequestContext<?>> onForbiddenRequest = __ -> {};
+  Handler<PduResponseContext> onForbiddenResponse = __ -> {};
 
   public SmppSessionOptions(Long id) {
     this.id = id;
@@ -278,6 +281,16 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   @Override
+  public void onForbiddenRequest(Handler<PduRequestContext<?>> onForbiddenRequest) {
+    this.onForbiddenRequest = onForbiddenRequest;
+  }
+
+  @Override
+  public void onForbiddenResponse(Handler<PduResponseContext> onForbiddenResponse) {
+    this.onForbiddenResponse = onForbiddenResponse;
+  }
+
+  @Override
   public Handler<SmppSession> getOnCreated() {
     return createdHandler;
   }
@@ -305,5 +318,15 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   @Override
   public Handler<PduRequestContext<?>> getOnBindReceived() {
     return this.onBindReceived;
+  }
+
+  @Override
+  public Handler<PduRequestContext<?>> getOnForbiddenRequest() {
+    return this.onForbiddenRequest;
+  }
+
+  @Override
+  public Handler<PduResponseContext> getOnForbiddenResponse() {
+    return this.onForbiddenResponse;
   }
 }

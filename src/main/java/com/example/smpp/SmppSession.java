@@ -2,6 +2,7 @@ package com.example.smpp;
 
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
+import com.example.smpp.model.SmppSessionState;
 import com.example.smpp.session.SessionOptionsView;
 import io.vertx.core.Closeable;
 import io.vertx.core.Future;
@@ -9,8 +10,8 @@ import io.vertx.core.Promise;
 
 public interface SmppSession extends Closeable {
 //  SmppSessionBindType getBindType(); // TRANCEIVER, TRANSMITTER, RECEIVER, TRANCEIVER(smpp-v5?)
-//  SmppSessionState getState(); // INITIAL?, OUTBOUND, OPENED, BINDING, BOUND, UNBINDING, CLOSED
 //  [?] SessionState {SmppState state, boolean sendPaused, boolean replyPaused }
+  SmppSessionState getState();// INITIAL?, OUTBOUND, OPENED, BINDING, BOUND, UNBINDING, CLOSED
 //  SmppSessionSubState getSubState(); // SEND_PAUSED, REPLAY_PAUSED, SEND_REPLAY_PAUSED, PLAY.
 
   Long getId();

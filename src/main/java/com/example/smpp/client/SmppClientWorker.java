@@ -3,7 +3,6 @@ package com.example.smpp.client;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoder;
 import com.cloudhopper.smpp.transcoder.DefaultPduTranscoderContext;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
-import com.example.smpp.SmppSession;
 import com.example.smpp.SmppSessionImpl;
 import com.example.smpp.SmppSessionPduDecoder;
 import com.example.smpp.SmppSessionPduEncoder;
@@ -37,7 +36,7 @@ public class SmppClientWorker {
         pool.add(id -> {
           var sessOpts = new SmppSessionOptions(id);
           configurator.handle(sessOpts);
-          return new SmppSessionImpl(pool, id, context, chctx, sessOpts);
+          return new SmppSessionImpl(pool, id, context, chctx, sessOpts, false);
         })
     );
 //    handler.addHandler(conn -> {

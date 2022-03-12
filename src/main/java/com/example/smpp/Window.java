@@ -44,8 +44,11 @@ public class Window<T extends PduResponse> {
 
   public synchronized void forAllExpired(Consumer<RequestRecord<T>> promiseHandler) {
     var now = System.currentTimeMillis();
-    for (var record: cache.values()) {
+    var it = cache.values().iterator();
+    while (it.hasNext()) {
+      var record = it.next();
       if (record.expiresAt < now && record.responsePromise != null) {
+        it.remove();
         promiseHandler.accept(record);
       }
     }

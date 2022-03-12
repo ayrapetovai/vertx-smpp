@@ -1,9 +1,11 @@
 package com.example.smpp.client;
 
-import com.cloudhopper.smpp.pdu.BindTransceiver;
+import com.cloudhopper.smpp.SmppConstants;
+import com.cloudhopper.smpp.pdu.*;
 import com.example.smpp.SmppSession;
 import com.example.smpp.Pool;
 import com.example.smpp.SmppSessionImpl;
+import com.example.smpp.model.SmppSessionState;
 import com.example.smpp.session.ClientSessionConfigurator;
 import io.netty.channel.ChannelPipeline;
 import io.vertx.core.Future;
@@ -24,7 +26,7 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
   private final SmppClientOptions options;
 
   private Handler<ClientSessionConfigurator> configurator;
-  private SmppSessionImpl session;
+  private SmppSessionImpl session; // -> lastOpenedSession
 
   public SmppClientImpl(VertxInternal vertx, SmppClientOptions options, CloseFuture closeFuture) {
     super(vertx, options, closeFuture);
@@ -49,7 +51,15 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
     var sessionPromise = Promise.<SmppSession>promise();
     return connect(port, host)
         .compose(socket -> {
-          var bindRequest = new BindTransceiver();
+          BaseBind<? extends BaseBindResp> bindRequest = null;
+          switch (session.getOptions().getBindType()) {
+            case TRANSMITTER:
+              bindRequest = new BindTransmitter(); break;
+            case RECEIVER:
+              bindRequest = new BindReceiver(); break;
+            case TRANSCEIVER:
+              bindRequest = new BindTransceiver();
+          }
           bindRequest.setSystemId(session.getOptions().getSystemId());
           return session.send(bindRequest, session.getOptions().getBindTimeout())
               .onFailure(e -> {
@@ -57,11 +67,25 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
                 sessionPromise.tryFail(e);
               })
               .compose(bindResp -> {
-                // TODO if (bindResp.status)
-                var systemId = bindResp.getSystemId(); // TODO systemId надо отдать коду пользователя
-                log.trace("bound to client: {}", systemId);
-                session.setBoundToSystemId(systemId);
-                sessionPromise.complete(session);
+                if (bindResp.getCommandStatus() == SmppConstants.STATUS_OK) {
+                  var systemId = bindResp.getSystemId(); // TODO systemId надо отдать коду пользователя
+                  log.trace("bound to client: {}", systemId);
+                  session.setBoundToSystemId(systemId);
+                  switch (session.getOptions().getBindType()) {
+                    case TRANSMITTER:
+                      session.setState(SmppSessionState.BOUND_TX); break;
+                    case RECEIVER:
+                      session.setState(SmppSessionState.BOUND_RX); break;
+                    case TRANSCEIVER:
+                      session.setState(SmppSessionState.BOUND_TRX);
+                  }
+                  sessionPromise.complete(session);
+                } else {
+                  var closePromise = Promise.<Void>promise();
+                  closePromise.future()
+                          .onComplete(nothing -> sessionPromise.fail("did not receive bind acknowledge"));
+                  session.close(closePromise, false);
+                }
                 return sessionPromise.future();
               });
         });
