@@ -2,6 +2,7 @@ package com.example.smpp;
 
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.*;
+import com.example.smpp.model.BindInfo;
 import com.example.smpp.model.SmppSessionState;
 import com.example.smpp.session.SessionOptionsView;
 import com.example.smpp.util.SequenceCounter;
@@ -88,24 +89,25 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
         this.state = SmppSessionState.UNBOUND;
       } else if (pdu instanceof BaseBind<?>) {
         var bindRequest = (BaseBind<? extends BaseBindResp>) pdu;
-        options.getOnBindReceived().handle(new PduRequestContext<>(bindRequest, this));
+        var respCmdStatus = options.getOnBindReceived().apply(new BindInfo(bindRequest));
         var bindResp = bindRequest.createResponse();
         bindResp.setSystemId(options.getSystemId());
+        bindResp.setCommandStatus(respCmdStatus);
         this.reply(bindResp)
-            .onSuccess(vd -> {
-              // TODO здесь должны вызываться setBoundToSystemId, onCreated и все такое, если успешная отправка bind_resp обязательна (она обязательна)?
-              setBoundToSystemId(bindRequest.getSystemId());
-              this.options.getOnCreated().handle(this);
-              switch (bindRequest.getCommandId()) {
-                case SmppConstants.CMD_ID_BIND_RECEIVER: this.setState(SmppSessionState.BOUND_RX); break;
-                case SmppConstants.CMD_ID_BIND_TRANSMITTER: this.setState(SmppSessionState.BOUND_TX); break;
-                case SmppConstants.CMD_ID_BIND_TRANSCEIVER: this.setState(SmppSessionState.BOUND_TRX); break;
-                default:
-                  // TODO ошибка, неожиданный тип pdu
+            .onComplete(respResult -> {
+              if (respResult.failed() || respCmdStatus != SmppConstants.STATUS_OK) {
+                SmppSessionImpl.this.close(Promise.promise(), false);
+              } else {
+                setBoundToSystemId(bindRequest.getSystemId());
+                switch (bindRequest.getCommandId()) {
+                  case SmppConstants.CMD_ID_BIND_RECEIVER: this.setState(SmppSessionState.BOUND_RX); break;
+                  case SmppConstants.CMD_ID_BIND_TRANSMITTER: this.setState(SmppSessionState.BOUND_TX); break;
+                  case SmppConstants.CMD_ID_BIND_TRANSCEIVER: this.setState(SmppSessionState.BOUND_TRX); break;
+                  default:
+                    // TODO ошибка, неожиданный тип pdu
+                }
+                this.options.getOnCreated().handle(this);
               }
-            })
-            .onFailure(ex -> {
-              SmppSessionImpl.this.close(Promise.promise(), false);
             });
       } else {
         options.getOnRequest().handle(new PduRequestContext<>((PduRequest<?>) msg, this));

@@ -82,9 +82,9 @@ public class SmppServerWorker implements Handler<Channel> {
 
   private void configureSmpp(ChannelPipeline pipeline) {
     var sessOpts = new SmppSessionOptions();
-//    configurator.handle(sessOpts);
+    configurator.apply(sessOpts);
 
-    //      if (logEnabled) {
+//      if (logEnabled) {
 //        pipeline.addLast("logging", new LoggingHandler(options.getActivityLogDataFormat()));
 //      }
 
@@ -116,7 +116,6 @@ public class SmppServerWorker implements Handler<Channel> {
 
     VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx -> {
       var sess = pool.add(id -> {
-        var allowBind = configurator.apply(sessOpts); // TODO allowBind, wtf?
         return new SmppSessionImpl(pool, id, context, chctx, sessOpts, true);
       });
 //            context.emit(chctx.handler(), connectionHandler::handle);

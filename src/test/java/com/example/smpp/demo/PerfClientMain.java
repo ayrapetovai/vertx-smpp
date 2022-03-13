@@ -106,7 +106,6 @@ public class PerfClientMain extends AbstractVerticle {
         })
         .bind("localhost", SSL? 2777: 2776)
         .onSuccess(sess -> {
-          startPromise.complete();
           start[0] = System.currentTimeMillis();
           log.info("user code: client bound");
           new Loop(vertx)
@@ -159,7 +158,7 @@ public class PerfClientMain extends AbstractVerticle {
                 log.info("deliver_sm time=" + if1stNegGet2nd(deliverEnd[0] - start[0], Double.NaN) + "ms");
 
                 log.info("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
-  //              vertx.close(); // не позволяет деплоить несколько верикалей
+                startPromise.complete();
               });
         })
         .onFailure(e -> {
@@ -288,11 +287,15 @@ public class PerfClientMain extends AbstractVerticle {
 //22:52:08.561 - Overall throughput=147775.97148463098
 
   public static void main(String[] args) {
-    var vertex = Vertx.vertx();
+    var vertx = Vertx.vertx();
     var depOpts = new DeploymentOptions()
       .setInstances(SESSIONS) // TODO scale to 2 and more
       .setWorkerPoolSize(THREADS)
       ;
-    vertex.deployVerticle(PerfClientMain.class.getCanonicalName(), depOpts);
+    vertx.deployVerticle(PerfClientMain.class.getCanonicalName(), depOpts)
+        .onComplete(arId -> {
+          log.info("cosing vertx {}", arId.result());
+          vertx.close();
+        });
   }
 }

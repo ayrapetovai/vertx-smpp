@@ -1,30 +1,15 @@
 package com.example.smpp.session;
 
+import com.cloudhopper.smpp.SmppConstants;
 import com.example.smpp.PduRequestContext;
 import com.example.smpp.PduResponseContext;
 import com.example.smpp.SmppSession;
+import com.example.smpp.model.BindInfo;
 import com.example.smpp.model.SmppBindType;
 import io.vertx.core.Handler;
 
-// blueprint
-//+S  private Long id; // per session
-//+S  private SmppBindType type;  // per session
-//+S  private String systemId;  // per session
-//+S  private String password;  // per session
-//+S  private String systemType;  // per session
-//+S  private Address addressRange;  // per session: ton, npi, address
+import java.util.function.Function;
 
-// R  boolean dropAllOnUnbind = false; // per session? При получении unbind, не досылать resp и другие pdu, сразу убить сессию
-// R  boolean replyToUnbind = true; //per session? В ответ на unbind посылать unbind_resp
-// R  long bindTimeout; // per session? Время, за которое сервер выдаст bind_resp
-// R  long unbindTimeout; // per session? Время, которе дается клиенту на отправку unbind_resp, по истечении все pdu в окне дропаются и соединение закрывается
-// R  private long requestExpiryTimeout; // per session
-// R  private int windowSize; // per session
-// R  private long windowWaitTimeout; // per session
-// R  private long windowMonitorInterval;// per session (request expire check interval)
-// R  private long writeTimeout; // per session
-// R  private boolean countersEnabled; // per session (metrics enabled)
-// R  private LoggingOptions loggingOptions; // per session: log_pdu, log_bytes or not
 public class SmppSessionOptions implements ServerSessionConfigurator, ClientSessionConfigurator {
 
   private SmppBindType bindType = SmppBindType.TRANSCEIVER;
@@ -54,7 +39,7 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   Handler<SmppSession> closeHandler = __ -> {};
   Handler<SmppSession> unexpectedCloseHandler = __ -> {};
   // TODO Function<BindInfo, RespReturnCode> onBindReceived
-  Handler<PduRequestContext<?>> onBindReceived = __ -> {};
+  Function<BindInfo, Integer> onBindReceived = __ -> SmppConstants.STATUS_OK;
   Handler<PduRequestContext<?>> onForbiddenRequest = __ -> {};
   Handler<PduResponseContext> onForbiddenResponse = __ -> {};
 
@@ -266,8 +251,8 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   @Override
-  public void onBindReceived(Handler<PduRequestContext<?>> bindReceived) {
-    this.onBindReceived = bindReceived;
+  public void onBindReceived(Function<BindInfo, Integer> onBindReceived) {
+    this.onBindReceived = onBindReceived;
   }
 
   @Override
@@ -306,7 +291,7 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   @Override
-  public Handler<PduRequestContext<?>> getOnBindReceived() {
+  public Function<BindInfo, Integer> getOnBindReceived() {
     return this.onBindReceived;
   }
 

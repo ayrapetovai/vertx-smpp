@@ -1,6 +1,6 @@
 package com.example.smpp.demo;
 
-import com.cloudhopper.smpp.pdu.BindTransceiver;
+import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.DeliverSm;
 import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.example.smpp.Smpp;
@@ -44,19 +44,24 @@ public class EchoServerMain extends AbstractVerticle {
           cfg.setWindowSize(600);
           cfg.setWriteTimeout(2000);
           cfg.setRequestExpiryTimeout(1000); // Время на отправку запроса и получение ответа
-          cfg.onCreated(sess -> {
-            // FIXME сессия еще не связана, boundToSystemId == null
-            log.info("user code: session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId());
+          cfg.onBindReceived(bindInfo -> {
+            var systemId = bindInfo.getBindRequest().getSystemId();
+            var password = bindInfo.getBindRequest().getPassword();
+            if (check(systemId, password)) {
+              log.info("user code: inbound bind from " + systemId);
+              clientName[0] = systemId;
+              return SmppConstants.STATUS_OK;
+            } else {
+              return SmppConstants.STATUS_BINDFAIL;
+            }
           });
-          cfg.onBindReceived(bind -> {
-            var systemId = ((BindTransceiver) bind.getRequest()).getSystemId();
-            log.info("user code: inbound bind from " + systemId);
-            clientName[0] = systemId;
+          cfg.onCreated(sess -> {
+            log.info("user code: session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId());
           });
           cfg.onRequest(reqCtx -> {
 //            if (reqCtx.getRequest() instanceof SubmitSm) {
 //              try {
-//                Thread.sleep(5000);
+//                Thread.sleep(5);
 //              } catch (InterruptedException e) {
 //                e.printStackTrace();
 //              }
@@ -92,6 +97,10 @@ public class EchoServerMain extends AbstractVerticle {
         .onFailure(startPromise::fail);
 
     onShutdown(vertx, server);
+  }
+
+  private boolean check(String systemId, String password) {
+    return true;
   }
 
   public static void main(String[] args) {
