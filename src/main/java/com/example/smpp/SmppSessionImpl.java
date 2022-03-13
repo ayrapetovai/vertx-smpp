@@ -20,6 +20,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
+import static com.example.smpp.util.Helper.sessionStateByCommandId;
+
 public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private static final Logger log = LoggerFactory.getLogger(SmppSessionImpl.class);
 
@@ -106,13 +108,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
                 SmppSessionImpl.this.close(Promise.promise(), false);
               } else {
                 setBoundToSystemId(bindRequest.getSystemId());
-                switch (bindRequest.getCommandId()) {
-                  case SmppConstants.CMD_ID_BIND_RECEIVER: this.setState(SmppSessionState.BOUND_RX); break;
-                  case SmppConstants.CMD_ID_BIND_TRANSMITTER: this.setState(SmppSessionState.BOUND_TX); break;
-                  case SmppConstants.CMD_ID_BIND_TRANSCEIVER: this.setState(SmppSessionState.BOUND_TRX); break;
-                  default:
-                    // TODO ошибка, неожиданный тип pdu
-                }
+                this.setState(sessionStateByCommandId(bindRequest.getCommandId()));
                 this.options.getOnCreated().handle(this);
               }
             });
@@ -212,27 +208,20 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
             if (log.isDebugEnabled()) {
               log.debug("session#{} did unbindResp({}) close", getId(), unbindRespFuture.succeeded() ? "success" : "failure");
             }
-            vertx.cancelTimer(expireTimerId);
-            pool.remove(id);
-            state = SmppSessionState.CLOSED;
-            super.close(completion);
-            options.getOnClose().handle(this);
+            dispose(completion);
             return completion.future();
           });
-      } else {
-        vertx.cancelTimer(expireTimerId);
-        pool.remove(id);
-        state = SmppSessionState.CLOSED;
-        super.close(completion);
-        options.getOnClose().handle(this);
       }
-    } else {
-      vertx.cancelTimer(expireTimerId);
-      pool.remove(id);
-      state = SmppSessionState.CLOSED;
-      super.close(completion);
-      options.getOnClose().handle(this);
     }
+    dispose(completion);
+  }
+
+  private void dispose(Promise<Void> completion) {
+    vertx.cancelTimer(expireTimerId);
+    pool.remove(id);
+    state = SmppSessionState.CLOSED;
+    super.close(completion);
+    options.getOnClose().handle(this);
   }
 
   public SessionOptionsView getOptions() {

@@ -1,14 +1,15 @@
 package com.example.smpp.util.smpp;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.CharBuffer;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
-import java.util.HashMap;
 
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 /**
@@ -19,14 +20,9 @@ import java.util.stream.Stream;
  * @version $Id: Gsm7BitCharset.java 90 2011-04-19 22:07:52Z sverkera $
  */
 public class Gsm7BitCharset extends Charset {
+  private static final Logger logger = LoggerFactory.getLogger(Gsm7BitCharset.class.getName());
 
   private boolean debug = false;
-
-  // HashMap's used for encoding and decoding
-  protected static HashMap<String, Byte> defaultEncodeMap = new HashMap<String, Byte>();
-  protected static HashMap<Byte, String> defaultDecodeMap = new HashMap<Byte, String>();
-  protected static HashMap<String, Byte> extEncodeMap = new HashMap<String, Byte>();
-  protected static HashMap<Byte, String> extDecodeMap = new HashMap<Byte, String>();
 
   protected static int[] defaultEncodeArray;
   protected static int[] extEncodeArray;
@@ -174,6 +170,7 @@ public class Gsm7BitCharset extends Charset {
       defaultEncodeArray[intValueOfBytes((String)strAndCode[0])] = (Integer) strAndCode[1];
     }
   }
+
   static {
     int maxCode = Stream.of(gsmCharacters).mapToInt(a -> (Integer)a[1]).max().getAsInt() + 1;
     defaultDecodeArray = new int[maxCode];
@@ -210,26 +207,6 @@ public class Gsm7BitCharset extends Charset {
       extEncodeArray[(Integer) strAndCode[1]] = intValueOfBytes((String)strAndCode[0]);
     }
   }
-  private static Logger logger = Logger.getLogger(Gsm7BitCharset.class.getName());
-
-  // static section that populates the encode and decode HashMap objects
-//  static {
-//    // default alphabet
-//    int len = gsmCharacters.length;
-//    for (int i = 0; i < len; i++) {
-//      Object[] map = gsmCharacters[i];
-//      defaultEncodeMap.put((String) map[0], (Byte) map[1]);
-//      defaultDecodeMap.put((Integer) map[1], (String) map[0]);
-//    }
-//
-//    // extended alphabet
-//    len = gsmExtensionCharacters.length;
-//    for (int i = 0; i < len; i++) {
-//      Object[] map = gsmExtensionCharacters[i];
-//      extEncodeMap.put((String) map[0], (Byte) map[1]);
-//      extDecodeMap.put((Integer) map[1], (String) map[0]);
-//    }
-//  }
 
   /**
    * Constructor for the Gsm7Bit charset.  Call the superclass
@@ -306,7 +283,7 @@ public class Gsm7BitCharset extends Charset {
           b = defaultEncodeArray[ch];
         }
         if(debug)
-          logger.finest("Encoding ch " + ch + " to byte " + b);
+          logger.debug("Encoding ch " + ch + " to byte " + b);
         if (b != 0) {
           bb.put((byte) b);
         } else {
@@ -315,7 +292,7 @@ public class Gsm7BitCharset extends Charset {
             b = extEncodeArray[ch];
           }
           if(debug)
-            logger.finest("Trying extended map to encode ch " + ch + " to byte " + b);
+            logger.debug("Trying extended map to encode ch " + ch + " to byte " + b);
           if (b != 0) {
             // since the extended character set takes two bytes
             // we have to check that there is enough space left
@@ -370,7 +347,7 @@ public class Gsm7BitCharset extends Charset {
 
         // first check the default alphabet
         if(debug)
-          logger.finest("Looking up byte " + b);
+          logger.debug("Looking up byte " + b);
         int s = 0;
         if (b < defaultDecodeArray.length) {
           s = defaultDecodeArray[b];
@@ -379,11 +356,11 @@ public class Gsm7BitCharset extends Charset {
           char ch = (char) s;
           if (ch != '\u001B') {
             if(debug)
-              logger.finest("Found string " + s);
+              logger.debug("Found string " + s);
             cb.put(ch);
           } else {
             if(debug)
-              logger.finest("Found escape character");
+              logger.debug("Found escape character");
             // check the extended alphabet
             if (bb.hasRemaining()) {
               b = bb.get();
@@ -393,7 +370,7 @@ public class Gsm7BitCharset extends Charset {
               }
               if (s != 0) {
                 if(debug)
-                  logger.finest("Found extended string " + s);
+                  logger.debug("Found extended string " + s);
                 ch = (char) s;
                 cb.put(ch);
               } else {

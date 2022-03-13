@@ -2,12 +2,9 @@ package com.example.smpp.client;
 
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.*;
-import com.cloudhopper.smpp.tlv.Tlv;
-import com.cloudhopper.smpp.tlv.TlvConvertException;
 import com.example.smpp.SmppSession;
 import com.example.smpp.Pool;
 import com.example.smpp.SmppSessionImpl;
-import com.example.smpp.model.SmppSessionState;
 import com.example.smpp.session.ClientSessionConfigurator;
 import io.netty.channel.ChannelPipeline;
 import io.vertx.core.Future;
@@ -19,6 +16,8 @@ import io.vertx.core.net.impl.NetClientImpl;
 import io.vertx.core.spi.metrics.TCPMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.example.smpp.util.Helper.*;
 
 public class SmppClientImpl extends NetClientImpl implements SmppClient {
   private static final Logger log = LoggerFactory.getLogger(SmppClientImpl.class);
@@ -53,15 +52,7 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
     var sessionPromise = Promise.<SmppSession>promise();
     return connect(port, host)
         .compose(socket -> {
-          BaseBind<? extends BaseBindResp> bindRequest = null;
-          switch (session.getOptions().getBindType()) {
-            case TRANSMITTER:
-              bindRequest = new BindTransmitter(); break;
-            case RECEIVER:
-              bindRequest = new BindReceiver(); break;
-            case TRANSCEIVER:
-              bindRequest = new BindTransceiver();
-          }
+          BaseBind<? extends BaseBindResp> bindRequest = bindRequesstByBinType(session.getOptions().getBindType());
           bindRequest.setSystemId(session.getOptions().getSystemId());
           return session.send(bindRequest, session.getOptions().getBindTimeout())
               .onFailure(e -> {
@@ -73,30 +64,8 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
                   var systemId = bindResp.getSystemId(); // TODO systemId надо отдать коду пользователя
                   log.trace("bound to client: {}", systemId);
                   session.setBoundToSystemId(systemId);
-                  switch (session.getOptions().getBindType()) {
-                    case TRANSMITTER:
-                      session.setState(SmppSessionState.BOUND_TX); break;
-                    case RECEIVER:
-                      session.setState(SmppSessionState.BOUND_RX); break;
-                    case TRANSCEIVER:
-                      session.setState(SmppSessionState.BOUND_TRX);
-                  }
-                  var intVer = SmppConstants.VERSION_3_3;
-                  Tlv scInterfaceVersion = bindResp.getOptionalParameter(SmppConstants.TAG_SC_INTERFACE_VERSION);
-                  if (scInterfaceVersion != null) {
-                    try {
-                      byte tempInterfaceVersion = scInterfaceVersion.getValueAsByte();
-                      if (tempInterfaceVersion >= SmppConstants.VERSION_3_4) {
-                        intVer = SmppConstants.VERSION_3_4;
-                      } else {
-                        intVer = SmppConstants.VERSION_3_3;
-                      }
-                    } catch (TlvConvertException e) {
-                      log.warn("Unable to convert sc_interface_version to a byte value: {}", e.getMessage());
-                      intVer = SmppConstants.VERSION_3_3;
-                    }
-                  }
-                  session.setTargetInterface(intVer);
+                  session.setState(sessionStateByBindType(session.getOptions().getBindType()));
+                  session.setTargetInterface(intVerFromTlv(bindResp));
                   sessionPromise.complete(session);
                 } else {
                   var closePromise = Promise.<Void>promise();

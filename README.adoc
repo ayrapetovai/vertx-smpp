@@ -33,6 +33,13 @@ This application was generated using http://start.vertx.io
 
 Настройка логов для jvm, чтобы дебажить ssl `-Djavax.net.debug=ssl`.
 
+Скорость записи в память
+[source,bash]
+----
+$ dd if=/dev/zero of=/dev/null count=10000000
+5120000000 bytes transferred in 9.106614 secs (562228720 bytes/sec)
+----
+
 == Building
 
 To launch your tests:

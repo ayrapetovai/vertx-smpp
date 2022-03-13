@@ -31,10 +31,12 @@ public class PerfClientMain extends AbstractVerticle {
   private static final int     THREADS = 1;
   private static final boolean SSL = false;
   private static final int     WINDOW = 600;
-  private static final boolean LOADED = false;
-  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_GSM;
+  private static final Encoder ENCODER = null;
+//  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_GSM;
 //  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_GSM7;
-//  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_GSM7;
+//  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_UCS_2;
+//  private static final Encoder ENCODER = Encoder.CUSTOM_GSM7;
+//  private static final Encoder ENCODER = Encoder.PLAIN_UTF8;
 //  private static final int SUBMIT_SM_NUMBER = 50_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 5_000_000;
@@ -49,6 +51,7 @@ public class PerfClientMain extends AbstractVerticle {
 //  private static final int SUBMIT_SM_NUMBER = 4;
 //  private static final int SUBMIT_SM_NUMBER = 1;
   SmppClient client;
+  Random rng = new Random();
 
   @Override
   public void start(Promise<Void> startPromise) {
@@ -119,7 +122,7 @@ public class PerfClientMain extends AbstractVerticle {
                 submitSmCount[0]++;
                 var ssm = new SubmitSm();
                 setSourceAndDestAddress(ssm);
-                if (LOADED) {
+                if (ENCODER != null) {
                   addShortMessage(ssm);
                 }
                 var sendSubmitSmStart = new long[]{System.nanoTime()};
@@ -146,7 +149,7 @@ public class PerfClientMain extends AbstractVerticle {
               })
               .onComplete(ar -> {
                 sess.close(Promise.promise());
-                log.info("done: threads={}, sessions={}, window={}, text({}), this={}, that={}, ssl={}", THREADS, SESSIONS, WINDOW, (LOADED? ENCODER.name(): "none"), SYSTEM_ID, sess.getBoundToSystemId(), SSL?"on":"off");
+                log.info("done: threads={}, sessions={}, window={}, text({}), this={}, that={}, ssl={}", THREADS, SESSIONS, WINDOW, (ENCODER != null? ENCODER.name(): "none"), SYSTEM_ID, sess.getBoundToSystemId(), SSL?"on":"off");
                 var submitSmThroughput = ((double)submitSmRespCount[0]/((double)(submitEnd[0] - start[0])/1000.0));
                 log.info(
                     "submitSm=" + submitSmCount[0] +
@@ -181,9 +184,8 @@ public class PerfClientMain extends AbstractVerticle {
   }
 
   private void setSourceAndDestAddress(SubmitSm ssm) {
-    var rng = new Random();
-    var from = String.valueOf(rng.nextInt(100000));
-    var to = String.valueOf(rng.nextInt(100000));
+    var from = "8916" + (rng.nextInt(9000000) + 1000000);
+    var to = "8916" + (rng.nextInt(9000000) + 1000000);
     ssm.setSourceAddress(new Address((byte) 2, (byte) 2, from));
     ssm.setDestAddress(new Address((byte) 2, (byte) 2, to));
   }
@@ -208,7 +210,7 @@ public class PerfClientMain extends AbstractVerticle {
     CLOUDHOPPER_UCS_2 {
       @Override
       public byte[] encode(String text) {
-        return CharsetUtil.encode(text, CharsetUtil.CHARSET_UCS_2);
+        return CharsetUtil.encode(text.substring(0, 255/2), CharsetUtil.CHARSET_UCS_2);
       }
     },
     PLAIN_UTF8 {
@@ -241,6 +243,27 @@ public class PerfClientMain extends AbstractVerticle {
       e.printStackTrace();
     }
   }
+//==================================
+//23:33:35.789 - done: threads=4, sessions=4, window=600, text(none), this=vertx-smpp-client, that=vertx-smpp-server, ssl=off
+//23:33:35.789 - submitSm=2000000, submitSmResp=2000000, throughput=94643.1951542684
+//23:33:35.789 - submitSm latency=0.7106796106344999
+//23:33:35.789 - submit_sm time=21132ms
+//23:33:35.789 - deliverSm=2000000, deliverSmResp=2000000, throughput=94643.1951542684
+//23:33:35.789 - deliverSmResp latency=0.0924942272955
+//23:33:35.789 - deliver_sm time=21132.0ms
+//23:33:35.789 - Overall throughput=189286.3903085368
+
+//==================================
+
+//23:17:30.585 - done: threads=1, sessions=1, window=600, text(none), this=vertx-smpp-client, that=vertx-smpp-server, ssl=off
+//23:17:30.589 - submitSm=2000000, submitSmResp=2000000, throughput=164460.15952635475
+//23:17:30.590 - submitSm latency=0.22241932045549997
+//23:17:30.591 - submit_sm time=12161ms
+//23:17:30.591 - deliverSm=2000000, deliverSmResp=2000000, throughput=164460.15952635475
+//23:17:30.591 - deliverSmResp latency=0.05109675399349999
+//23:17:30.591 - deliver_sm time=12161.0ms
+//23:17:30.591 - Overall throughput=328920.3190527095
+
 //==================================
 
 // vertx-smpp(4), no text, each
@@ -327,7 +350,8 @@ public class PerfClientMain extends AbstractVerticle {
     );
     var depOpts = new DeploymentOptions()
       .setInstances(SESSIONS)
-      .setWorkerPoolSize(THREADS)
+//      .setWorkerPoolSize(THREADS)
+//        .setWorker(true)
       ;
     vertx.deployVerticle(PerfClientMain.class.getCanonicalName(), depOpts)
         .onComplete(arId -> {

@@ -32,13 +32,13 @@ public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServ
 
   @Override
   protected Handler<Channel> childHandler(ContextInternal context, SocketAddress socketAddress, SSLHelper sslHelper) {
-//    EventLoopContext connContext;
-//    if (context instanceof EventLoopContext) {
-//      connContext = (EventLoopContext) context;
-//    } else {
-//      connContext = vertx.createEventLoopContext(context.nettyEventLoop(), context.workerPool(), context.classLoader());
-//    }
-    return new SmppServerWorker((EventLoopContext) context, context::duplicate, this, vertx, sslHelper, options, configurator, pool);
+    EventLoopContext connContext;
+    if (context instanceof EventLoopContext) {
+      connContext = (EventLoopContext) context;
+    } else {
+      connContext = vertx.createEventLoopContext(context.nettyEventLoop(), context.workerPool(), context.classLoader());
+    }
+    return new SmppServerWorker(connContext, context::duplicate, this, vertx, sslHelper, options, configurator, pool);
   }
 
   @Override

@@ -91,7 +91,10 @@ public class EchoServerMain extends AbstractVerticle {
           log.info("Server online, ssl {}", (SSL?"on": "off"));
           startPromise.complete();
         })
-        .onFailure(startPromise::fail);
+        .onFailure(e -> {
+          log.error("cannot start server", e);
+          vertx.close();
+        });
 
     onShutdown(vertx, server);
   }
@@ -107,7 +110,8 @@ public class EchoServerMain extends AbstractVerticle {
     );
     var depOpts = new DeploymentOptions()
       .setInstances(INSTANCES)
-      .setWorkerPoolSize(THREADS)
+//      .setWorkerPoolSize(THREADS)
+//        .setWorker(true)
       ;
     vertx.deployVerticle(EchoServerMain.class.getCanonicalName(), depOpts);
   }
