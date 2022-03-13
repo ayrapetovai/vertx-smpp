@@ -27,7 +27,6 @@ import io.vertx.core.Handler;
 // R  private LoggingOptions loggingOptions; // per session: log_pdu, log_bytes or not
 public class SmppSessionOptions implements ServerSessionConfigurator, ClientSessionConfigurator {
 
-  private final Long id;
   private SmppBindType bindType = SmppBindType.TRANSCEIVER;
   private String systemId;
   private String password;
@@ -44,7 +43,7 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   private int windowSize = 50;
   private long windowWaitTimeout = 5000;
   private long windowMonitorInterval = 10;
-  private long writeTimeout = 2000;
+  private long writeTimeout = 0;
   private boolean countersEnabled = false;
   private boolean logPduBody = false;
 
@@ -58,10 +57,6 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   Handler<PduRequestContext<?>> onBindReceived = __ -> {};
   Handler<PduRequestContext<?>> onForbiddenRequest = __ -> {};
   Handler<PduResponseContext> onForbiddenResponse = __ -> {};
-
-  public SmppSessionOptions(Long id) {
-    this.id = id;
-  }
 
   @Override
   public void setBindType(SmppBindType bindType) {
@@ -152,11 +147,6 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   @Override
   public void setLogPduBody(boolean logPduBody) {
     this.logPduBody = logPduBody;
-  }
-
-  @Override
-  public Long getId() {
-    return id;
   }
 
   @Override

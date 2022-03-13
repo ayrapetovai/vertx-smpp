@@ -42,7 +42,7 @@ public class Window<T extends PduResponse> {
     }
   }
 
-  public synchronized void forAllExpired(Consumer<RequestRecord<T>> promiseHandler) {
+  public synchronized void purgeAllExpired(Consumer<RequestRecord<T>> promiseHandler) {
     var now = System.currentTimeMillis();
     var it = cache.values().iterator();
     while (it.hasNext()) {

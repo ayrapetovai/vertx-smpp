@@ -44,7 +44,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     this.options = options;
     this.isServer = isServer;
     this.expireTimerId = vertx.setPeriodic(options.getWindowMonitorInterval(), timerId -> {
-      window.forAllExpired(expiredRecord -> {
+      window.purgeAllExpired(expiredRecord -> {
         var exRec = (Window.RequestRecord<?>) expiredRecord;
         if (exRec.responsePromise != null) {
           log.trace("pdu.sequence={} expired on send", exRec.sequenceNumber);
@@ -149,17 +149,6 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
                 var written = context.<Void>promise();
                 written.future()
                     .onFailure(respProm::tryFail);
-
-                // TODO разобраться и оптмимизировать, таймеры отъедают минимум 20% производительности и нивелируют приемущества перед cloudhopper
-//                  может быть истечение времени на запись вообще не нужно и хвати только окна и ответа.
-//                var writeTimeout = optionsView.getWriteTimeout();
-//                if (writeTimeout > 0) {
-//                  var timerId = vertx.setTimer(optionsView.getWriteTimeout(), id -> {
-//                    written.tryFail("timeout write failed");
-//                  });
-//                  written.future()
-//                      .onComplete(nothing -> vertx.cancelTimer(timerId));
-//                }
                 writeToChannel(req, written);
               } else {
                 windowGuard.release(1);

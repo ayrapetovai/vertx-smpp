@@ -1,6 +1,5 @@
 package com.example.smpp.demo;
 
-import com.cloudhopper.commons.charset.CharsetUtil;
 import com.cloudhopper.smpp.pdu.DeliverSm;
 import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.cloudhopper.smpp.type.Address;
@@ -18,15 +17,12 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-public class SmppClientMain extends AbstractVerticle {
-  private static final Logger log = LoggerFactory.getLogger(SmppClientMain.class);
+public class PerfClientMain extends AbstractVerticle {
+  private static final Logger log = LoggerFactory.getLogger(PerfClientMain.class);
 
   private static final String SYSTEM_ID = "vertx-smpp-client";
   private static final int SESSIONS = 1;
@@ -70,17 +66,16 @@ public class SmppClientMain extends AbstractVerticle {
       options.setTrustAll(true);
     }
 
-//    client = Smpp.client(vertx);
     client = Smpp.client(vertx, options);
     client
         .configure(cfg -> {
-          log.info("user code: configuring new session#{}", cfg.getId());
+          log.info("user code: configuring new session");
           cfg.setSystemId(SYSTEM_ID);
           cfg.setPassword("test");
-          cfg.setBindType(SmppBindType.TRANSCEIVER); // TODO так лучше, чем в bind?
+          cfg.setBindType(SmppBindType.TRANSCEIVER);
           cfg.setWindowSize(600);
           cfg.setBindTimeout(1000);
-//          cfg.setWriteTimeout(1000);
+          cfg.setWriteTimeout(1000);
           cfg.setWindowWaitTimeout(1000);
           cfg.onRequest(reqCtx -> {
             if (reqCtx.getRequest() instanceof DeliverSm) {
@@ -111,14 +106,14 @@ public class SmppClientMain extends AbstractVerticle {
         })
         .bind("localhost", SSL? 2777: 2776)
         .onSuccess(sess -> {
+          startPromise.complete();
           start[0] = System.currentTimeMillis();
           log.info("user code: client bound");
           new Loop(vertx)
               .forLoopInt(0, SUBMIT_SM_NUMBER, i -> {
-                var throttled = Promise.<Boolean>promise();
                 submitSmCount[0]++;
                 var ssm = new SubmitSm();
-//                setSourceAndDestAddress(ssm);
+                setSourceAndDestAddress(ssm);
                 if (LOADED) {
                   addShortMessage(ssm);
                 }
@@ -128,13 +123,10 @@ public class SmppClientMain extends AbstractVerticle {
                       submitSmLatencySumNano[0] += (System.nanoTime() - sendSubmitSmStart[0]);
                       submitSmRespCount[0]++;
                       submitSmLatch.countDown(1);
-                      throttled.complete(false);
                     })
                     .onFailure(e -> {
-                      e.printStackTrace();
-                      throttled.complete(true);
+                      log.error("user code: cannot send", e);
                     });
-                return throttled.future();
               })
               .compose(v -> submitSmLatch.await(20, TimeUnit.SECONDS))
               .compose(v -> {
@@ -149,7 +141,7 @@ public class SmppClientMain extends AbstractVerticle {
               })
               .onComplete(ar -> {
                 sess.close(Promise.promise());
-                log.info("done threads={}, sessions={}, {}, this={}, that={}, ssl={}", THREADS, SESSIONS, (LOADED? "text": "no text"), SYSTEM_ID, sess.getBoundToSystemId(), SSL);
+                log.info("done threads={}, sessions={}, {}, this={}, that={}, ssl={}", THREADS, SESSIONS, (LOADED? "text": "no text"), SYSTEM_ID, sess.getBoundToSystemId(), SSL?"on":"off");
                 var submitSmThroughput = ((double)submitSmRespCount[0]/((double)(submitEnd[0] - start[0])/1000.0));
                 log.info(
                     "submitSm=" + submitSmCount[0] +
@@ -167,7 +159,6 @@ public class SmppClientMain extends AbstractVerticle {
                 log.info("deliver_sm time=" + if1stNegGet2nd(deliverEnd[0] - start[0], Double.NaN) + "ms");
 
                 log.info("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
-                startPromise.complete();
   //              vertx.close(); // не позволяет деплоить несколько верикалей
               });
         })
@@ -302,6 +293,6 @@ public class SmppClientMain extends AbstractVerticle {
       .setInstances(SESSIONS) // TODO scale to 2 and more
       .setWorkerPoolSize(THREADS)
       ;
-    vertex.deployVerticle(SmppClientMain.class.getCanonicalName(), depOpts);
+    vertex.deployVerticle(PerfClientMain.class.getCanonicalName(), depOpts);
   }
 }

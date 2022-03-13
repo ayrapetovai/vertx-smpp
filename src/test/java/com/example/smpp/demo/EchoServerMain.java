@@ -16,8 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CountDownLatch;
 
-public class SmppServerMain extends AbstractVerticle {
-  private static final Logger log = LoggerFactory.getLogger(SmppServerMain.class);
+public class EchoServerMain extends AbstractVerticle {
+  private static final Logger log = LoggerFactory.getLogger(EchoServerMain.class);
 
   private static final int INSTANCES = 1;
   private static final int THREADS = 1;
@@ -39,10 +39,10 @@ public class SmppServerMain extends AbstractVerticle {
     server = Smpp.server(vertx, opts);
     server
         .configure(cfg -> {
-          log.info("user code: configuring new session#{}", cfg.getId());
+          log.info("user code: configuring new session");
           cfg.setSystemId("vertx-smpp-server");
           cfg.setWindowSize(600);
-//          cfg.setWriteTimeout(2000);
+          cfg.setWriteTimeout(2000);
           cfg.setRequestExpiryTimeout(1000); // Время на отправку запроса и получение ответа
           cfg.onCreated(sess -> {
             // FIXME сессия еще не связана, boundToSystemId == null
@@ -56,15 +56,14 @@ public class SmppServerMain extends AbstractVerticle {
           cfg.onRequest(reqCtx -> {
 //            if (reqCtx.getRequest() instanceof SubmitSm) {
 //              try {
-//                Thread.sleep(10000);
+//                Thread.sleep(5000);
 //              } catch (InterruptedException e) {
 //                e.printStackTrace();
 //              }
 //            }
 
             var sess = reqCtx.getSession();
-            sess
-                .reply(reqCtx.getRequest().createResponse())
+            sess.reply(reqCtx.getRequest().createResponse())
                 .onSuccess(nothing -> {
                   if (reqCtx.getRequest() instanceof SubmitSm) {
                     sess.send(new DeliverSm())
@@ -87,7 +86,7 @@ public class SmppServerMain extends AbstractVerticle {
         })
         .start("localhost", SSL? 2777: 2776)
         .onSuccess(done -> {
-          log.info("Server online");
+          log.info("Server online, ssl {}", (SSL?"on": "off"));
           startPromise.complete();
         })
         .onFailure(startPromise::fail);
@@ -98,10 +97,10 @@ public class SmppServerMain extends AbstractVerticle {
   public static void main(String[] args) {
     var vertex = Vertx.vertx();
     var depOpts = new DeploymentOptions()
-      .setInstances(INSTANCES) // TODO scale to 2 and more
+      .setInstances(INSTANCES)
       .setWorkerPoolSize(THREADS)
       ;
-    vertex.deployVerticle(SmppServerMain.class.getCanonicalName(), depOpts);
+    vertex.deployVerticle(EchoServerMain.class.getCanonicalName(), depOpts);
   }
 
   private static void onShutdown(Vertx vertx, SmppServer server) {

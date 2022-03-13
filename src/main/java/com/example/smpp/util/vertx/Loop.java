@@ -89,7 +89,7 @@ public class Loop {
     }
   }
 
-  public Future<Void> forLoopInt(int initial, int upperBound, Function<Integer, Future<Boolean>> handler) {
+  public Future<Void> forLoopInt(int initial, int upperBound, Handler<Integer> handler) {
     var completed = Promise.<Void>promise();
     var counter = new AtomicInteger(initial);
 
@@ -99,7 +99,7 @@ public class Loop {
     var job = (Handler<Void>) doJob -> {
       var cnt = counter.getAndIncrement();
       if (running && cnt < upperBound) {
-        handler.apply(cnt);
+        handler.handle(cnt);
         ctx.runOnContext((Handler<Void>) jobRef[0]);
       } else {
         completed.complete();

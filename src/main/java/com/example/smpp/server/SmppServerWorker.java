@@ -9,10 +9,10 @@ import com.example.smpp.SmppSessionPduDecoder;
 import com.example.smpp.SmppSessionPduEncoder;
 import com.example.smpp.session.ServerSessionConfigurator;
 import com.example.smpp.session.SmppSessionOptions;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import io.vertx.core.Handler;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.EventLoopContext;
@@ -21,7 +21,7 @@ import io.vertx.core.net.NetServerOptions;
 import io.vertx.core.net.impl.*;
 import io.vertx.core.spi.metrics.TCPMetrics;
 
-import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -81,9 +81,19 @@ public class SmppServerWorker implements Handler<Channel> {
   }
 
   private void configureSmpp(ChannelPipeline pipeline) {
+    var sessOpts = new SmppSessionOptions();
+//    configurator.handle(sessOpts);
+
     //      if (logEnabled) {
 //        pipeline.addLast("logging", new LoggingHandler(options.getActivityLogDataFormat()));
 //      }
+
+    // FIXME sessOpts.writeTimeout is 0, before configurator.handle(sessOpts);
+    var writeTimeout = sessOpts.getWriteTimeout();
+    if (writeTimeout > 0) {
+      WriteTimeoutHandler writeTimeoutHandler = new WriteTimeoutHandler(writeTimeout, TimeUnit.MILLISECONDS);
+      pipeline.addLast("writeTimeout", writeTimeoutHandler);
+    }
 
     PduTranscoder transcoder = new DefaultPduTranscoder(new DefaultPduTranscoderContext());
     pipeline.addLast("smppDecoder", new SmppSessionPduDecoder(transcoder));
@@ -97,10 +107,6 @@ public class SmppServerWorker implements Handler<Channel> {
 //        pipeline.addLast("deflater", new HttpChunkContentCompressor(options.getCompressionLevel()));
 //      }
 
-//    if (sslHelper.isSSL()) {
-//      // only add ChunkedWriteHandler when SSL is enabled otherwise it is not needed as FileRegion is used.
-//      pipeline.addLast("chunkedWriter", new ChunkedWriteHandler());       // For large file / sendfile support
-//    }
     int idleTimeout = options.getIdleTimeout();
     int readIdleTimeout = options.getReadIdleTimeout();
     int writeIdleTimeout = options.getWriteIdleTimeout();
@@ -108,18 +114,10 @@ public class SmppServerWorker implements Handler<Channel> {
       pipeline.addLast("idle", new IdleStateHandler(readIdleTimeout, writeIdleTimeout, idleTimeout, options.getIdleTimeoutUnit()));
     }
 
-    // TODO uncomment and implement
-//    if (!smpp.requestAccept()) {
-//      sendServiceUnavailable(pipeline.channel());
-//      return;
-//    }
-
-    var sessOpts = new SmppSessionOptions[]{null};
     VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx -> {
       var sess = pool.add(id -> {
-        sessOpts[0] = new SmppSessionOptions(id);
-        var allowBind = configurator.apply(sessOpts[0]); // TODO allowBind, wtf?
-        return new SmppSessionImpl(pool, id, context, chctx, sessOpts[0], true);
+        var allowBind = configurator.apply(sessOpts); // TODO allowBind, wtf?
+        return new SmppSessionImpl(pool, id, context, chctx, sessOpts, true);
       });
 //            context.emit(chctx.handler(), connectionHandler::handle);
       return sess;
@@ -135,14 +133,5 @@ public class SmppServerWorker implements Handler<Channel> {
   private void handleException(Throwable e) {
     // TODO
     e.printStackTrace();
-  }
-
-  private void sendServiceUnavailable(Channel ch) {
-    // TODO copied AS IS, make TO BE
-    ch.writeAndFlush(
-        Unpooled.copiedBuffer("HTTP/1.1 503 Service Unavailable\r\n" +
-          "Content-Length:0\r\n" +
-          "\r\n", StandardCharsets.ISO_8859_1))
-      .addListener(ChannelFutureListener.CLOSE);
   }
 }
