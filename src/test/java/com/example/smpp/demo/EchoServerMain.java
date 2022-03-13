@@ -6,10 +6,7 @@ import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.example.smpp.Smpp;
 import com.example.smpp.server.SmppServer;
 import com.example.smpp.server.SmppServerOptions;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
 import io.vertx.core.net.JksOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,12 +101,15 @@ public class EchoServerMain extends AbstractVerticle {
   }
 
   public static void main(String[] args) {
-    var vertex = Vertx.vertx();
+    var vertx = Vertx.vertx(new VertxOptions()
+        .setWorkerPoolSize(THREADS)
+        .setEventLoopPoolSize(THREADS)
+    );
     var depOpts = new DeploymentOptions()
       .setInstances(INSTANCES)
       .setWorkerPoolSize(THREADS)
       ;
-    vertex.deployVerticle(EchoServerMain.class.getCanonicalName(), depOpts);
+    vertx.deployVerticle(EchoServerMain.class.getCanonicalName(), depOpts);
   }
 
   private static void onShutdown(Vertx vertx, SmppServer server) {

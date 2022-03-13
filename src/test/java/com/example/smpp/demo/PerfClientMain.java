@@ -1,5 +1,6 @@
 package com.example.smpp.demo;
 
+import com.cloudhopper.commons.charset.CharsetUtil;
 import com.cloudhopper.smpp.pdu.DeliverSm;
 import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.cloudhopper.smpp.type.Address;
@@ -8,15 +9,16 @@ import com.example.smpp.Smpp;
 import com.example.smpp.client.SmppClient;
 import com.example.smpp.client.SmppClientOptions;
 import com.example.smpp.model.SmppBindType;
+import com.example.smpp.util.smpp.Gsm7BitCharset;
 import com.example.smpp.util.vertx.CountDownLatch;
 import com.example.smpp.util.vertx.Loop;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -24,11 +26,14 @@ import java.util.concurrent.TimeUnit;
 public class PerfClientMain extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(PerfClientMain.class);
 
-  private static final String SYSTEM_ID = "vertx-smpp-client";
-  private static final int SESSIONS = 1;
-  private static final int THREADS = 1;
-  private static final boolean LOADED = false;
+  private static final String  SYSTEM_ID = "vertx-smpp-client";
+  private static final int     SESSIONS = 1;
+  private static final int     THREADS = 1;
   private static final boolean SSL = false;
+  private static final boolean LOADED = false;
+  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_GSM;
+//  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_GSM7;
+//  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_GSM7;
 //  private static final int SUBMIT_SM_NUMBER = 50_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 5_000_000;
@@ -140,7 +145,7 @@ public class PerfClientMain extends AbstractVerticle {
               })
               .onComplete(ar -> {
                 sess.close(Promise.promise());
-                log.info("done threads={}, sessions={}, {}, this={}, that={}, ssl={}", THREADS, SESSIONS, (LOADED? "text": "no text"), SYSTEM_ID, sess.getBoundToSystemId(), SSL?"on":"off");
+                log.info("done: threads={}, sessions={}, text({}), this={}, that={}, ssl={}", THREADS, SESSIONS, (LOADED? ENCODER.name(): "none"), SYSTEM_ID, sess.getBoundToSystemId(), SSL?"on":"off");
                 var submitSmThroughput = ((double)submitSmRespCount[0]/((double)(submitEnd[0] - start[0])/1000.0));
                 log.info(
                     "submitSm=" + submitSmCount[0] +
@@ -186,21 +191,49 @@ public class PerfClientMain extends AbstractVerticle {
     return l < 0? d: l;
   }
 
+  enum Encoder {
+    CLOUDHOPPER_GSM {
+      @Override
+      public byte[] encode(String text) {
+        return CharsetUtil.encode(text, CharsetUtil.CHARSET_GSM);
+      }
+    },
+    CLOUDHOPPER_GSM7 {
+      @Override
+      public byte[] encode(String text) {
+        return CharsetUtil.encode(text, CharsetUtil.CHARSET_GSM7);
+      }
+    },
+    CLOUDHOPPER_UCS_2 {
+      @Override
+      public byte[] encode(String text) {
+        return CharsetUtil.encode(text, CharsetUtil.CHARSET_UCS_2);
+      }
+    },
+    PLAIN_UTF8 {
+      @Override
+      public byte[] encode(String text) {
+        return text.getBytes(StandardCharsets.UTF_8);
+      }
+    },
+    CUSTOM_GSM7 {
+      @Override
+      public byte[] encode(String text) {
+        try {
+          CharsetEncoder gsmEncoder = new Gsm7BitCharset("UTF-8", new String[]{"gsm"}).newEncoder();
+          return gsmEncoder.encode(CharBuffer.wrap(text)).array();
+        } catch (CharacterCodingException e) {
+          e.printStackTrace();
+        }
+        return null;
+      }
+    };
+    public abstract byte[] encode(String text);
+  }
   private void addShortMessage(SubmitSm ssm) {
     String text160 = "\u20AC Lorem [ipsum] dolor sit amet, consectetur adipiscing elit. Proin feugiat, leo id commodo tincidunt, nibh diam ornare est, vitae accumsan risus lacus sed sem metus.";
 //    String text160 = "txId:" + java.util.UUID.randomUUID() + ";";
-//    byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_GSM);
-//    byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_GSM7);
-//    byte[] textBytes = CharsetUtil.encode(text160, CharsetUtil.CHARSET_UCS_2);
-    byte[] textBytes = text160.getBytes(StandardCharsets.UTF_8);
-
-//    byte[] textBytes = new byte[0];
-//    try {
-//      CharsetEncoder gsmEncoder = new Gsm7BitCharset("UTF-8", new String[]{"gsm"}).newEncoder();
-//      textBytes = gsmEncoder.encode(CharBuffer.wrap(text160)).array();
-//    } catch (CharacterCodingException e) {
-//      e.printStackTrace();
-//    }
+    var textBytes = ENCODER.encode(text160);
     try {
       ssm.setShortMessage(textBytes);
     } catch (SmppInvalidArgumentException e) {
@@ -287,9 +320,12 @@ public class PerfClientMain extends AbstractVerticle {
 //22:52:08.561 - Overall throughput=147775.97148463098
 
   public static void main(String[] args) {
-    var vertx = Vertx.vertx();
+    var vertx = Vertx.vertx(new VertxOptions()
+        .setWorkerPoolSize(THREADS)
+        .setEventLoopPoolSize(THREADS)
+    );
     var depOpts = new DeploymentOptions()
-      .setInstances(SESSIONS) // TODO scale to 2 and more
+      .setInstances(SESSIONS)
       .setWorkerPoolSize(THREADS)
       ;
     vertx.deployVerticle(PerfClientMain.class.getCanonicalName(), depOpts)
