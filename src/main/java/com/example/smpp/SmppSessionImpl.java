@@ -2,6 +2,7 @@ package com.example.smpp;
 
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.*;
+import com.cloudhopper.smpp.tlv.Tlv;
 import com.example.smpp.model.BindInfo;
 import com.example.smpp.model.SmppSessionState;
 import com.example.smpp.session.SessionOptionsView;
@@ -30,7 +31,9 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private final boolean isServer;
   private final long expireTimerId;
   private final SequenceCounter sequenceCounter = new SequenceCounter();
+  private final byte thisInterface = SmppConstants.VERSION_3_4;
 
+  private byte targetInterface;
   private SmppSessionState state = SmppSessionState.OPEN;
   private String boundToSystemId;
 
@@ -91,6 +94,10 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
         var bindRequest = (BaseBind<? extends BaseBindResp>) pdu;
         var respCmdStatus = options.getOnBindReceived().apply(new BindInfo(bindRequest));
         var bindResp = bindRequest.createResponse();
+        if (getThisInterface() >= SmppConstants.VERSION_3_4 && bindRequest.getInterfaceVersion() >= SmppConstants.VERSION_3_4) {
+          Tlv scInterfaceVersion = new Tlv(SmppConstants.TAG_SC_INTERFACE_VERSION, new byte[] { getThisInterface() });
+          bindResp.addOptionalParameter(scInterfaceVersion);
+        }
         bindResp.setSystemId(options.getSystemId());
         bindResp.setCommandStatus(respCmdStatus);
         this.reply(bindResp)
@@ -269,5 +276,17 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   @Override
   public boolean isMetricsEnabled() {
     return options.getCountersEnabled();
+  }
+
+  public byte getThisInterface() {
+    return thisInterface;
+  }
+
+  public byte getTargetInterface() {
+    return targetInterface;
+  }
+
+  public void setTargetInterface(byte targetInterface) {
+    this.targetInterface = targetInterface;
   }
 }

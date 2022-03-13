@@ -30,6 +30,7 @@ public class PerfClientMain extends AbstractVerticle {
   private static final int     SESSIONS = 1;
   private static final int     THREADS = 1;
   private static final boolean SSL = false;
+  private static final int     WINDOW = 600;
   private static final boolean LOADED = false;
   private static final Encoder ENCODER = Encoder.CLOUDHOPPER_GSM;
 //  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_GSM7;
@@ -78,7 +79,7 @@ public class PerfClientMain extends AbstractVerticle {
           cfg.setSystemId(SYSTEM_ID);
           cfg.setPassword("test");
           cfg.setBindType(SmppBindType.TRANSCEIVER);
-          cfg.setWindowSize(600);
+          cfg.setWindowSize(WINDOW);
           cfg.setBindTimeout(1000);
           cfg.setWriteTimeout(1000);
           cfg.setWindowWaitTimeout(1000);
@@ -145,7 +146,7 @@ public class PerfClientMain extends AbstractVerticle {
               })
               .onComplete(ar -> {
                 sess.close(Promise.promise());
-                log.info("done: threads={}, sessions={}, text({}), this={}, that={}, ssl={}", THREADS, SESSIONS, (LOADED? ENCODER.name(): "none"), SYSTEM_ID, sess.getBoundToSystemId(), SSL?"on":"off");
+                log.info("done: threads={}, sessions={}, window={}, text({}), this={}, that={}, ssl={}", THREADS, SESSIONS, WINDOW, (LOADED? ENCODER.name(): "none"), SYSTEM_ID, sess.getBoundToSystemId(), SSL?"on":"off");
                 var submitSmThroughput = ((double)submitSmRespCount[0]/((double)(submitEnd[0] - start[0])/1000.0));
                 log.info(
                     "submitSm=" + submitSmCount[0] +

@@ -2,6 +2,8 @@ package com.example.smpp.client;
 
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.*;
+import com.cloudhopper.smpp.tlv.Tlv;
+import com.cloudhopper.smpp.tlv.TlvConvertException;
 import com.example.smpp.SmppSession;
 import com.example.smpp.Pool;
 import com.example.smpp.SmppSessionImpl;
@@ -79,6 +81,22 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
                     case TRANSCEIVER:
                       session.setState(SmppSessionState.BOUND_TRX);
                   }
+                  var intVer = SmppConstants.VERSION_3_3;
+                  Tlv scInterfaceVersion = bindResp.getOptionalParameter(SmppConstants.TAG_SC_INTERFACE_VERSION);
+                  if (scInterfaceVersion != null) {
+                    try {
+                      byte tempInterfaceVersion = scInterfaceVersion.getValueAsByte();
+                      if (tempInterfaceVersion >= SmppConstants.VERSION_3_4) {
+                        intVer = SmppConstants.VERSION_3_4;
+                      } else {
+                        intVer = SmppConstants.VERSION_3_3;
+                      }
+                    } catch (TlvConvertException e) {
+                      log.warn("Unable to convert sc_interface_version to a byte value: {}", e.getMessage());
+                      intVer = SmppConstants.VERSION_3_3;
+                    }
+                  }
+                  session.setTargetInterface(intVer);
                   sessionPromise.complete(session);
                 } else {
                   var closePromise = Promise.<Void>promise();
