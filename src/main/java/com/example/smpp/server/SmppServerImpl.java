@@ -2,7 +2,6 @@ package com.example.smpp.server;
 
 import com.example.smpp.Pool;
 import com.example.smpp.session.ServerSessionConfigurator;
-import com.example.smpp.util.core.CountDownLatch;
 import io.netty.channel.Channel;
 import io.vertx.core.*;
 import io.vertx.core.impl.ContextInternal;
@@ -13,7 +12,7 @@ import io.vertx.core.net.impl.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
 
 // FIXME implement clone()
 public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServer {
@@ -58,19 +57,15 @@ public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServ
   @Override
   public void close(Promise<Void> completion) {
     log.debug("closing sessions {}", pool.size());
-    var latch = new CountDownLatch(vertx, pool.size());
-    // TODO introduce CompositeFuture
+    var closeSessionFutures = new ArrayList<Future>(pool.size());
     pool.forEach(sess -> {
       var closeSessionPromise = vertx.<Void>promise();
       sess.close(closeSessionPromise);
-      closeSessionPromise.future()
-          .onComplete(ar -> {
-            log.debug("close counted");
-            latch.countDown(1);
-          });
+      closeSessionFutures.add(closeSessionPromise.future());
     });
-    latch.await(10, TimeUnit.SECONDS)
-        .onComplete(nothing -> {
+
+    CompositeFuture.all(closeSessionFutures)
+        .onComplete(ar -> {
           log.debug("closing NetServer");
           super.close(completion);
         });

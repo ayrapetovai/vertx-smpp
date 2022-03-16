@@ -20,6 +20,7 @@ This application was generated using http://start.vertx.io
 - разобраться как масштабировать сервер и клиента
 - Добавить лицензию https://www.apache.org/licenses/LICENSE-2.0 в LICENSE
 - Демонстрационные реализации:
+    * сделать аналог testcontainers
     * smpp-клиент и сервер, которы используются потоками вне эвент-лупа.
     * ismpp интерактивный smpp-клиент, где можно задавать запросы.
     * simple-smpp-server который умеет посылать deliver_sm в принимающие сессии и клиент, который делает сессии TRANSMITTER и RECEIVER.
