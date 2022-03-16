@@ -1,13 +1,15 @@
 package com.example.smpp;
 
+import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
+import com.example.smpp.util.futures.SendPduFuture;
 import io.vertx.core.Promise;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class Window<T extends PduResponse> {
+public class Window {
   public static class RequestRecord<T extends PduResponse> {
     final Promise<T> responsePromise;
     final int sequenceNumber;
@@ -20,20 +22,19 @@ public class Window<T extends PduResponse> {
     }
   }
 
-  private final Map<Integer, RequestRecord<T>> cache = new HashMap<>();
+  private final Map<Integer, RequestRecord> cache = new HashMap<>();
 
-  public synchronized <T extends PduResponse> Promise<T> offer(Integer seqNum, long expiresAt) {
-    var promise = Promise.<T>promise();
+  public synchronized <T extends PduResponse> void offer(PduRequest<T> req, SendPduFuture<T> promise, long expiresAt) {
+    var seqNum = req.getSequenceNumber();
     var record = new RequestRecord(promise, seqNum, expiresAt);
     var sameSeqPromise = cache.put(seqNum, record);
     if (sameSeqPromise != null) {
       sameSeqPromise.responsePromise
         .fail("same sequence id was used for new request");
     }
-    return promise;
   }
 
-  public synchronized Promise<T> complement(Integer seqNum) {
+  public synchronized <T extends PduResponse> Promise<T> complement(Integer seqNum) {
     var promiseOfRes = cache.remove(seqNum);
     if (promiseOfRes != null) {
       return promiseOfRes.responsePromise;
@@ -42,7 +43,7 @@ public class Window<T extends PduResponse> {
     }
   }
 
-  public synchronized void purgeAllExpired(Consumer<RequestRecord<T>> promiseHandler) {
+  public synchronized void purgeAllExpired(Consumer<RequestRecord> promiseHandler) {
     var now = System.currentTimeMillis();
     var it = cache.values().iterator();
     while (it.hasNext()) {

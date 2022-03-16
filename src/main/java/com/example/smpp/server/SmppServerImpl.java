@@ -2,7 +2,7 @@ package com.example.smpp.server;
 
 import com.example.smpp.Pool;
 import com.example.smpp.session.ServerSessionConfigurator;
-import com.example.smpp.util.vertx.CountDownLatch;
+import com.example.smpp.util.core.CountDownLatch;
 import io.netty.channel.Channel;
 import io.vertx.core.*;
 import io.vertx.core.impl.ContextInternal;
@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 // FIXME implement clone()
 public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServer {
@@ -22,7 +21,7 @@ public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServ
 
   private final Pool pool = new Pool();
 
-  private Function<ServerSessionConfigurator, Boolean> configurator;
+  private Handler<ServerSessionConfigurator> configurator;
 
   public SmppServerImpl(VertxInternal vertx, SmppServerOptions options) {
     super(vertx, options);
@@ -47,7 +46,7 @@ public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServ
   }
 
   @Override
-  public SmppServer configure(Function<ServerSessionConfigurator, Boolean> configurator) {
+  public SmppServer configure(Handler<ServerSessionConfigurator> configurator) {
     if (this.configurator == null) {
       this.configurator = configurator;
     } else {

@@ -18,7 +18,7 @@ val vertxVersion = "4.2.5"
 val logbackVersion = "1.2.10"
 val junitJupiterVersion = "5.8.2"
 
-val mainVerticleName = "com.example.vertex_hello_world.MainVerticle"
+val mainVerticleName = "com.example.smpp.PerfClientMain"
 val launcherClassName = "io.vertx.core.Launcher"
 
 val watchForChange = "src/**/*"

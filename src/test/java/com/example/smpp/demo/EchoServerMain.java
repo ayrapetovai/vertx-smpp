@@ -18,7 +18,9 @@ public class EchoServerMain extends AbstractVerticle {
 
   private static final int INSTANCES = 1;
   private static final int THREADS = 1;
+  private static final int SUBMIT_SM_RESP_DELAY = 0;
   private static final boolean SSL = false;
+  private static final boolean REFUSE_ALL_BINDS = false;
 
   private SmppServer server;
 
@@ -44,8 +46,8 @@ public class EchoServerMain extends AbstractVerticle {
           cfg.onBindReceived(bindInfo -> {
             var systemId = bindInfo.getBindRequest().getSystemId();
             var password = bindInfo.getBindRequest().getPassword();
+            log.info("user code: inbound bind from " + systemId);
             if (check(systemId, password)) {
-              log.info("user code: inbound bind from " + systemId);
               clientName[0] = systemId;
               return SmppConstants.STATUS_OK;
             } else {
@@ -64,19 +66,29 @@ public class EchoServerMain extends AbstractVerticle {
 //              }
 //            }
 
-            var sess = reqCtx.getSession();
-            sess.reply(reqCtx.getRequest().createResponse())
-                .onSuccess(nothing -> {
-                  if (reqCtx.getRequest() instanceof SubmitSm) {
-                    sess.send(new DeliverSm())
-                        .onSuccess(resp -> {})
-                        .onFailure(Throwable::printStackTrace);
-                  }
-                })
-                .onFailure(Throwable::printStackTrace);
+            var answering = (Runnable) () -> {
+              var sess = reqCtx.getSession();
+              sess.reply(reqCtx.getRequest().createResponse())
+                  .onSuccess(nothing -> {
+                    if (reqCtx.getRequest() instanceof SubmitSm) {
+                      sess.send(new DeliverSm())
+                          .onSuccess(resp -> { })
+                          .onFailure(Throwable::printStackTrace);
+                    }
+                  })
+                  .onFailure(Throwable::printStackTrace);
+            };
+
+            if (SUBMIT_SM_RESP_DELAY > 0) {
+              vertx.setTimer(SUBMIT_SM_RESP_DELAY, id -> {
+                answering.run();
+              });
+            } else {
+              answering.run();
+            }
           });
           cfg.onClose(sess -> {
-            log.info("user code: closed session#{}", sess.getId());
+            log.info("user code: session#{} closed", sess.getId());
           });
           cfg.onForbiddenRequest(reqCtx -> {
             log.info("user code: forbidden req {}", reqCtx.getRequest().getName());
@@ -84,7 +96,6 @@ public class EchoServerMain extends AbstractVerticle {
           cfg.onForbiddenResponse(rspCtx -> {
             log.info("user code: forbidden rsp {}", rspCtx.getResponse().getName());
           });
-          return true;
         })
         .start("localhost", SSL? 2777: 2776)
         .onSuccess(done -> {
@@ -100,20 +111,12 @@ public class EchoServerMain extends AbstractVerticle {
   }
 
   private boolean check(String systemId, String password) {
-    return true;
+    return !REFUSE_ALL_BINDS;
   }
 
   public static void main(String[] args) {
-    var vertx = Vertx.vertx(new VertxOptions()
-        .setWorkerPoolSize(THREADS)
-        .setEventLoopPoolSize(THREADS)
-    );
-    var depOpts = new DeploymentOptions()
-      .setInstances(INSTANCES)
-//      .setWorkerPoolSize(THREADS)
-//        .setWorker(true)
-      ;
-    vertx.deployVerticle(EchoServerMain.class.getCanonicalName(), depOpts);
+    var vertx = Vertx.vertx(new VertxOptions().setEventLoopPoolSize(THREADS));
+    vertx.deployVerticle(EchoServerMain.class.getCanonicalName(), new DeploymentOptions().setInstances(INSTANCES));
   }
 
   private static void onShutdown(Vertx vertx, SmppServer server) {

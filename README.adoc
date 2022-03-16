@@ -5,7 +5,8 @@ image:https://img.shields.io/badge/vert.x-4.2.5-purple.svg[link="https://vertx.i
 This application was generated using http://start.vertx.io
 
 == TODO
-- Делать все, то связано в версией протокола interfaceVersion.
+- Рефакторить имена пакетов.
+- Делать все, то связано с версией протокола interfaceVersion.
 - Сделать ошибки на старте более явными дописать обработчики ошибок с логированием.
 - Сделать накрутку метрик в коде клиента и сервера. Перцентили?
 - Сделать протухание по времени нахождения в очереди, так, чтобы данные в канале не портились. Сейчас хз, портятся они или нет.
@@ -19,8 +20,9 @@ This application was generated using http://start.vertx.io
 - разобраться как масштабировать сервер и клиента
 - Добавить лицензию https://www.apache.org/licenses/LICENSE-2.0 в LICENSE
 - Демонстрационные реализации:
+    * smpp-клиент и сервер, которы используются потоками вне эвент-лупа.
     * ismpp интерактивный smpp-клиент, где можно задавать запросы.
-    * simple-smpp-server который умеет посылать deliver_sm в принимающие сессии.
+    * simple-smpp-server который умеет посылать deliver_sm в принимающие сессии и клиент, который делает сессии TRANSMITTER и RECEIVER.
     * email gateway, smpp -> EG -> smtp
     * smpp multiplexer, {smpp_1, smpp_2, ..., smpp_n} -> smpp-mux -> smpp-server
     * smpp-server-mock, может отрабатывать сценарии.

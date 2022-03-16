@@ -6,8 +6,9 @@ import com.example.smpp.SmppSession;
 import com.example.smpp.Pool;
 import com.example.smpp.SmppSessionImpl;
 import com.example.smpp.session.ClientSessionConfigurator;
+import com.example.smpp.util.futures.BindFuture;
+import com.example.smpp.util.SendBindRefusedException;
 import io.netty.channel.ChannelPipeline;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.impl.CloseFuture;
@@ -48,9 +49,9 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
   }
 
   @Override
-  public Future<SmppSession> bind(String host, int port) {
-    var sessionPromise = Promise.<SmppSession>promise();
-    return connect(port, host)
+  public BindFuture<SmppSession> bind(String host, int port) {
+    var sessionPromise = BindFuture.<SmppSession>promise(vertx.getOrCreateContext());
+    connect(port, host)
         .compose(socket -> {
           BaseBind<? extends BaseBindResp> bindRequest = bindRequesstByBinType(session.getOptions().getBindType());
           bindRequest.setSystemId(session.getOptions().getSystemId());
@@ -61,7 +62,7 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
               })
               .compose(bindResp -> {
                 if (bindResp.getCommandStatus() == SmppConstants.STATUS_OK) {
-                  var systemId = bindResp.getSystemId(); // TODO systemId надо отдать коду пользователя
+                  var systemId = bindResp.getSystemId();
                   log.trace("bound to client: {}", systemId);
                   session.setBoundToSystemId(systemId);
                   session.setState(sessionStateByBindType(session.getOptions().getBindType()));
@@ -69,13 +70,17 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
                   sessionPromise.complete(session);
                 } else {
                   var closePromise = Promise.<Void>promise();
+                  var bindStatus = bindResp.getCommandStatus();
                   closePromise.future()
-                          .onComplete(nothing -> sessionPromise.fail("did not receive bind acknowledge"));
+                      .onComplete(nothing ->
+                              sessionPromise.fail(new SendBindRefusedException("did not receive bind acknowledge, status=" + bindStatus, bindStatus))
+                      );
                   session.close(closePromise, false);
                 }
                 return sessionPromise.future();
               });
         });
+    return sessionPromise.future();
   }
 
   @Override

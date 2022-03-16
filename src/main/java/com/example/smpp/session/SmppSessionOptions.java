@@ -265,42 +265,34 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
     this.onForbiddenResponse = onForbiddenResponse;
   }
 
-  @Override
   public Handler<SmppSession> getOnCreated() {
     return createdHandler;
   }
 
-  @Override
   public Handler<PduRequestContext<?>> getOnRequest() {
     return requestHandler;
   }
 
-  @Override
   public Handler<PduResponseContext> getOnUnexpectedResponse() {
     return unexpectedResponseHandler;
   }
 
-  @Override
   public Handler<SmppSession> getOnClose() {
     return closeHandler;
   }
 
-  @Override
   public Handler<SmppSession> getOnUnexpectedClose() {
     return unexpectedCloseHandler;
   }
 
-  @Override
   public Function<BindInfo, Integer> getOnBindReceived() {
     return this.onBindReceived;
   }
 
-  @Override
   public Handler<PduRequestContext<?>> getOnForbiddenRequest() {
     return this.onForbiddenRequest;
   }
 
-  @Override
   public Handler<PduResponseContext> getOnForbiddenResponse() {
     return this.onForbiddenResponse;
   }

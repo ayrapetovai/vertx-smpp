@@ -4,15 +4,14 @@ import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
 import com.example.smpp.model.SmppSessionState;
 import com.example.smpp.session.SessionOptionsView;
+import com.example.smpp.util.futures.ReplayPduFuture;
+import com.example.smpp.util.futures.SendPduFuture;
 import io.vertx.core.Closeable;
-import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.spi.metrics.MetricsProvider;
 
 public interface SmppSession extends Closeable, MetricsProvider {
-//  SmppSessionBindType getBindType(); // TRANCEIVER, TRANSMITTER, RECEIVER, TRANCEIVER(smpp-v5?)
-//  [?] SessionState {SmppState state, boolean sendPaused, boolean replyPaused }
-  SmppSessionState getState();// INITIAL?, OUTBOUND, OPENED, BINDING, BOUND, UNBINDING, CLOSED
+  SmppSessionState getState();
 //  SmppSessionSubState getSubState(); // SEND_PAUSED, REPLAY_PAUSED, SEND_REPLAY_PAUSED, PLAY.
 
   Long getId();
@@ -31,9 +30,9 @@ public interface SmppSession extends Closeable, MetricsProvider {
    * @param <T>
    * @return
    */
-  <T extends PduResponse> Future<T> send(PduRequest<T> req);
+  <T extends PduResponse> SendPduFuture<T> send(PduRequest<T> req);
 
-  <T extends PduResponse> Future<T> send(PduRequest<T> req, long offerTimeout);
+  <T extends PduResponse> SendPduFuture<T> send(PduRequest<T> req, long offerTimeout);
 
   /**
    * TODO возвращенный future должен получать не Void, а обвертку в которой будет инфа
@@ -42,7 +41,7 @@ public interface SmppSession extends Closeable, MetricsProvider {
    * @param pduResponse
    * @return
    */
-  Future<Void> reply(PduResponse pduResponse);
+  ReplayPduFuture<Void> reply(PduResponse pduResponse);
 
   // void pauseAll();
   // void pauseSend();

@@ -2,7 +2,7 @@ package com.example.smpp.session;
 
 import com.example.smpp.model.SmppBindType;
 
-public interface SessionOptionsView extends SessionCallbacksView {
+public interface SessionOptionsView {
   SmppBindType getBindType();
   String getSystemId();
   String getPassword();

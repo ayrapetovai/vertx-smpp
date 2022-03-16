@@ -1,4 +1,4 @@
-package com.example.smpp.util.vertx;
+package com.example.smpp.util.core;
 
 import io.vertx.core.*;
 
@@ -91,5 +91,9 @@ public class Semaphore {
     if (valueCounter + value <= initialValue) {
       valueCounter += value;
     }
+  }
+
+  public int getCounter() {
+    return this.valueCounter;
   }
 }

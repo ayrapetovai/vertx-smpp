@@ -1,4 +1,4 @@
-package com.example.smpp.util.vertx;
+package com.example.smpp.util.core;
 
 import io.vertx.core.*;
 import org.slf4j.Logger;

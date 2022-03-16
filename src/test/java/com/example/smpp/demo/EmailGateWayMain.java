@@ -112,7 +112,18 @@ public class EmailGateWayMain extends AbstractVerticle {
                     } else {
                       var sessions = smppClients.get(sess.getBoundToSystemId());
                       if (sessions != null && !sessions.isEmpty()) {
+                        var counter = sessions.size();
                         targetSession = sessions.pollFirst();
+                        while (
+                            counter > 0 &&
+                                targetSession == sess &&
+                                !targetSession.getState().canReceive(false, SmppConstants.CMD_ID_DELIVER_SM)
+                        ) {
+                          sessions.addLast(targetSession);
+                          targetSession = sessions.pollFirst();
+                          counter--;
+                        }
+                        sessions.addLast(targetSession);
                       }
                     }
                     if (targetSession != null) {
@@ -128,7 +139,6 @@ public class EmailGateWayMain extends AbstractVerticle {
                   });
             }
           });
-          return true;
         })
         .start("localhost", 2776)
         .onSuccess(s -> {

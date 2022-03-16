@@ -62,4 +62,10 @@ public class Helper {
     return intVer;
   }
 
+  public static void addInterfaceVersionTlv(BaseBindResp bindResp, byte ourInterfaceVersion, byte theirInterfaceVersion) {
+    if (ourInterfaceVersion >= SmppConstants.VERSION_3_4 && theirInterfaceVersion >= SmppConstants.VERSION_3_4) {
+      Tlv scInterfaceVersion = new Tlv(SmppConstants.TAG_SC_INTERFACE_VERSION, new byte[] { ourInterfaceVersion });
+      bindResp.addOptionalParameter(scInterfaceVersion);
+    }
+  }
 }

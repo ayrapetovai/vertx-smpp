@@ -2,14 +2,15 @@ package com.example.smpp;
 
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.*;
-import com.cloudhopper.smpp.tlv.Tlv;
 import com.example.smpp.model.BindInfo;
 import com.example.smpp.model.SmppSessionState;
 import com.example.smpp.session.SessionOptionsView;
-import com.example.smpp.util.SequenceCounter;
-import com.example.smpp.util.vertx.Semaphore;
+import com.example.smpp.session.SmppSessionOptions;
+import com.example.smpp.util.*;
+import com.example.smpp.util.futures.ReplayPduFuture;
+import com.example.smpp.util.futures.SendPduFuture;
+import com.example.smpp.util.core.Semaphore;
 import io.netty.channel.ChannelHandlerContext;
-import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.net.impl.ConnectionBase;
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
+import static com.example.smpp.util.Helper.addInterfaceVersionTlv;
 import static com.example.smpp.util.Helper.sessionStateByCommandId;
 
 public class SmppSessionImpl extends ConnectionBase implements SmppSession {
@@ -29,7 +31,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private final Long id;
   private final Window window = new Window();
   private final Semaphore windowGuard;
-  private final SessionOptionsView options;
+  private final SmppSessionOptions options;
   private final boolean isServer;
   private final long expireTimerId;
   private final SequenceCounter sequenceCounter = new SequenceCounter();
@@ -39,7 +41,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private SmppSessionState state = SmppSessionState.OPEN;
   private String boundToSystemId;
 
-  public SmppSessionImpl(Pool pool, Long id, ContextInternal context, ChannelHandlerContext chctx, SessionOptionsView options, boolean isServer) {
+  public SmppSessionImpl(Pool pool, Long id, ContextInternal context, ChannelHandlerContext chctx, SmppSessionOptions options, boolean isServer) {
     super(context, chctx);
     Objects.requireNonNull(pool);
     Objects.requireNonNull(id);
@@ -94,12 +96,10 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
         this.state = SmppSessionState.UNBOUND;
       } else if (pdu instanceof BaseBind<?>) {
         var bindRequest = (BaseBind<? extends BaseBindResp>) pdu;
-        var respCmdStatus = options.getOnBindReceived().apply(new BindInfo(bindRequest));
+        var respCmdStatus = options.getOnBindReceived()
+            .apply(new BindInfo<>(bindRequest));
         var bindResp = bindRequest.createResponse();
-        if (getThisInterface() >= SmppConstants.VERSION_3_4 && bindRequest.getInterfaceVersion() >= SmppConstants.VERSION_3_4) {
-          Tlv scInterfaceVersion = new Tlv(SmppConstants.TAG_SC_INTERFACE_VERSION, new byte[] { getThisInterface() });
-          bindResp.addOptionalParameter(scInterfaceVersion);
-        }
+        addInterfaceVersionTlv(bindResp, getThisInterface(), bindRequest.getInterfaceVersion());
         bindResp.setSystemId(options.getSystemId());
         bindResp.setCommandStatus(respCmdStatus);
         this.reply(bindResp)
@@ -133,53 +133,60 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   }
 
   @Override
-  public <T extends PduResponse> Future<T> send(PduRequest<T> req) {
+  public <T extends PduResponse> SendPduFuture<T> send(PduRequest<T> req) {
     return send(req, 0);
   }
 
   @Override
-  public <T extends PduResponse> Future<T> send(PduRequest<T> req, long offerTimeout) {
+  public <T extends PduResponse> SendPduFuture<T> send(PduRequest<T> req, long offerTimeout) {
     if (!this.state.canSend(isServer, req.getCommandId())) {
-      return Future.failedFuture(state + " forbidden for send, pdu " + req.getName());
+      return SendPduFuture
+          .failedFuture(new SendPduWrongOperationException("For state " + state.name() + " operation " + req.getName() + " is wrong", state));
     }
     if (channel().isOpen()) {
-      return windowGuard.acquire(1, offerTimeout)
-          .compose(v -> {
+      var sendPromise = SendPduFuture.<T>promise(vertx.getOrCreateContext());
+      windowGuard.acquire(1, offerTimeout)
+          .onSuccess(v -> {
             if (!req.hasSequenceNumberAssigned()) {
               req.setSequenceNumber(sequenceCounter.getAndInc());
             }
-            Promise<T> respProm = window.<T>offer(req.getSequenceNumber(), System.currentTimeMillis() + options.getRequestExpiryTimeout());
-            if (respProm != null) {
-              if (channel().isOpen()) {
-                var written = context.<Void>promise();
-                written.future()
-                    .onFailure(respProm::tryFail);
-                writeToChannel(req, written);
-              } else {
-                windowGuard.release(1);
-                respProm.tryFail("acquired; channel is closed");
-              }
-              return respProm.future();
+            window.offer(req, sendPromise, System.currentTimeMillis() + options.getRequestExpiryTimeout());
+            if (channel().isOpen()) {
+              var written = context.<Void>promise();
+              written.future()
+                  .onFailure(e -> {
+                    windowGuard.release(1);
+                    sendPromise.tryFail(e);
+                  });
+              writeToChannel(req, written);
             } else {
-              return Future.failedFuture("unexpected pdu response");
+              windowGuard.release(1);
+              // TODO если задана стратегия очистки окна на закрытии (надо собрать все запросы и передать их в хендлер)
+              //  но делать это надо не здесь, а в адапторе канала, для этого адаптер должен знать о сессии, чтобы достать окно и очистить его.
+              sendPromise.tryFail(new SendPduChannelClosedException("channel is closed"));
             }
+          })
+          .onFailure(e -> {
+            var winSz = windowGuard.getCounter();
+            sendPromise.fail(new SendPduWindowTimeoutException("window acquired, but timeout window with size " + winSz, winSz));
           });
+      return sendPromise;
     } else {
-      return Future.failedFuture("not acquired; channel is closed");
+      return SendPduFuture.failedFuture(new SendPduChannelClosedException("channel is closed"));
     }
   }
 
   @Override
-  public Future<Void> reply(PduResponse pduResponse) {
+  public ReplayPduFuture<Void> reply(PduResponse pduResponse) {
     if (!this.state.canSend(isServer, pduResponse.getCommandId())) {
-      return Future.failedFuture(state + " forbidden for reply, pdu " + pduResponse.getName());
+      return ReplayPduFuture.failedFuture(new SendPduWrongOperationException(state + " forbidden for reply, pdu " + pduResponse.getName(), state));
     }
-    var written = context.<Void>promise();
+    var replyPromise = ReplayPduFuture.<Void>promise(context);
 // TODO consider checks
 //    this.channel().isWritable(); {this.channel().bytesBeforeWritable();}
 //    this.channel().isActive();
-    writeToChannel(pduResponse, written);
-    return written.future();
+    writeToChannel(pduResponse, replyPromise);
+    return replyPromise.future();
   }
 
   /**

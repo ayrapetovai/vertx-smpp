@@ -22,12 +22,11 @@ import io.vertx.core.net.impl.*;
 import io.vertx.core.spi.metrics.TCPMetrics;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class SmppServerWorker implements Handler<Channel> {
   private final EventLoopContext context;
-  private final Function<ServerSessionConfigurator, Boolean> configurator;
+  private final Handler<ServerSessionConfigurator> configurator;
   private final Supplier<ContextInternal> streamContextSupplier;
   private final SmppServerImpl smppServer;
   private final VertxInternal vertx;
@@ -42,7 +41,7 @@ public class SmppServerWorker implements Handler<Channel> {
       VertxInternal vertx,
       SSLHelper sslHelper,
       NetServerOptions options,
-      Function<ServerSessionConfigurator, Boolean> configurator,
+      Handler<ServerSessionConfigurator> configurator,
       Pool pool
   ) {
     this.context = context;
@@ -82,7 +81,7 @@ public class SmppServerWorker implements Handler<Channel> {
 
   private void configureSmpp(ChannelPipeline pipeline) {
     var sessOpts = new SmppSessionOptions();
-    configurator.apply(sessOpts);
+    configurator.handle(sessOpts);
 
 //      if (logEnabled) {
 //        pipeline.addLast("logging", new LoggingHandler(options.getActivityLogDataFormat()));

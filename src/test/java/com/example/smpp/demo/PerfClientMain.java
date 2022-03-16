@@ -10,8 +10,8 @@ import com.example.smpp.client.SmppClient;
 import com.example.smpp.client.SmppClientOptions;
 import com.example.smpp.model.SmppBindType;
 import com.example.smpp.util.smpp.Gsm7BitCharset;
-import com.example.smpp.util.vertx.CountDownLatch;
-import com.example.smpp.util.vertx.Loop;
+import com.example.smpp.util.core.CountDownLatch;
+import com.example.smpp.util.core.Loop;
 import io.vertx.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,13 +40,14 @@ public class PerfClientMain extends AbstractVerticle {
 //  private static final int SUBMIT_SM_NUMBER = 50_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 5_000_000;
-  private static final int SUBMIT_SM_NUMBER = 2_000_000;
-//  private static final int SUBMIT_SM_NUMBER = 1_000_000;
+//  private static final int SUBMIT_SM_NUMBER = 2_000_000;
+  private static final int SUBMIT_SM_NUMBER = 1_000_000;
 //  private static final int SUBMIT_SM_NUMBER = 100_000;
 //  private static final int SUBMIT_SM_NUMBER = 20_000;
 //  private static final int SUBMIT_SM_NUMBER = 10_000;
-//  private static final int SUBMIT_SM_NUMBER = 7_000;
+//  private static final int SUBMIT_SM_NUMBER = 5_000;
 //  private static final int SUBMIT_SM_NUMBER = 1_000;
+//  private static final int SUBMIT_SM_NUMBER = 100;
 //  private static final int SUBMIT_SM_NUMBER = 10;
 //  private static final int SUBMIT_SM_NUMBER = 4;
 //  private static final int SUBMIT_SM_NUMBER = 1;
@@ -114,6 +115,10 @@ public class PerfClientMain extends AbstractVerticle {
           });
         })
         .bind("localhost", SSL? 2777: 2776)
+        .onRefuse(e -> {
+          log.error("user code: server refused to bind", e);
+          startPromise.fail(e);
+        })
         .onSuccess(sess -> {
           start[0] = System.currentTimeMillis();
           log.info("user code: client bound");
@@ -131,9 +136,10 @@ public class PerfClientMain extends AbstractVerticle {
                       submitSmLatencySumNano[0] += (System.nanoTime() - sendSubmitSmStart[0]);
                       submitSmRespCount[0]++;
                       submitSmLatch.countDown(1);
-                    })
-                    .onFailure(e -> {
+                    }).onFailure(e -> {
                       log.error("user code: cannot send", e);
+                    }).onWindowTimeout(e -> {
+                      log.error("user code: window timeout", e);
                     });
               })
               .compose(v -> submitSmLatch.await(20, TimeUnit.SECONDS))
@@ -169,10 +175,6 @@ public class PerfClientMain extends AbstractVerticle {
                 log.info("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
                 startPromise.complete();
               });
-        })
-        .onFailure(e -> {
-          log.error("could not bind", e);
-          startPromise.fail(e);
         });
 
 
@@ -344,16 +346,8 @@ public class PerfClientMain extends AbstractVerticle {
 //22:52:08.561 - Overall throughput=147775.97148463098
 
   public static void main(String[] args) {
-    var vertx = Vertx.vertx(new VertxOptions()
-        .setWorkerPoolSize(THREADS)
-        .setEventLoopPoolSize(THREADS)
-    );
-    var depOpts = new DeploymentOptions()
-      .setInstances(SESSIONS)
-//      .setWorkerPoolSize(THREADS)
-//        .setWorker(true)
-      ;
-    vertx.deployVerticle(PerfClientMain.class.getCanonicalName(), depOpts)
+    var vertx = Vertx.vertx(new VertxOptions().setEventLoopPoolSize(THREADS));
+    vertx.deployVerticle(PerfClientMain.class.getCanonicalName(), new DeploymentOptions().setInstances(SESSIONS))
         .onComplete(arId -> {
           log.info("cosing vertx {}", arId.result());
           vertx.close();

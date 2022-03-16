@@ -3,8 +3,7 @@ package com.example.smpp.server;
 import com.example.smpp.session.ServerSessionConfigurator;
 import io.vertx.core.Closeable;
 import io.vertx.core.Future;
-
-import java.util.function.Function;
+import io.vertx.core.Handler;
 
 public interface SmppServer extends Closeable {
   // smpp builder's static API
@@ -25,6 +24,6 @@ public interface SmppServer extends Closeable {
    * @param configurator
    * @return true if client system is allowed to bind
    */
-  SmppServer configure(Function<ServerSessionConfigurator, Boolean> configurator);
+  SmppServer configure(Handler<ServerSessionConfigurator> configurator);
 //  ? getPool(); // get all connected (bound) client systems with their session pools
 }
