@@ -11,6 +11,9 @@ import io.vertx.core.Promise;
 import io.vertx.core.spi.metrics.MetricsProvider;
 
 public interface SmppSession extends Closeable, MetricsProvider {
+
+  void setReferenceObject(Object object);
+  <RefObj> RefObj getReferenceObject(Class<RefObj> clazz);
   SmppSessionState getState();
 //  SmppSessionSubState getSubState(); // SEND_PAUSED, REPLAY_PAUSED, SEND_REPLAY_PAUSED, PLAY.
 

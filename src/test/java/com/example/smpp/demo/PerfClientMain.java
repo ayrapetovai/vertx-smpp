@@ -23,6 +23,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+class Counters {
+  double start;
+  double submitEnd;
+  double submitSmLatencySumNano;
+  double submitSmRespCount;
+  long submitSmCount;
+  double deliverEnd;
+  double deliverSmRespCount;
+  long deliverSmCount;
+  double deliverSmRespLatencySumNano;
+}
+
 public class PerfClientMain extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(PerfClientMain.class);
 
@@ -57,16 +69,6 @@ public class PerfClientMain extends AbstractVerticle {
   @Override
   public void start(Promise<Void> startPromise) {
 
-    var start = new long[]{0};
-    var submitEnd = new long[]{0};
-    var submitSmLatencySumNano = new long[]{0};
-    var submitSmRespCount = new long[]{0};
-    var submitSmCount = new long[]{0};
-    var deliverEnd = new long[]{0};
-    var deliverSmRespCount = new long[]{0};
-    var deliverSmCount = new long[]{0};
-    var deliverSmRespLatencySumNano = new long[]{0};
-
     var submitSmLatch = new CountDownLatch(vertx, SUBMIT_SM_NUMBER);
     var deliverSmRespLatch = new CountDownLatch(vertx, SUBMIT_SM_NUMBER);
 
@@ -88,31 +90,24 @@ public class PerfClientMain extends AbstractVerticle {
           cfg.setWriteTimeout(1000);
           cfg.setWindowWaitTimeout(1000);
           cfg.onRequest(reqCtx -> {
+            var counters = reqCtx.getSession().getReferenceObject(Counters.class);
             if (reqCtx.getRequest() instanceof DeliverSm) {
-              deliverSmCount[0]++;
+              counters.deliverSmCount++;
               var sendDeliverSmRespStart = new long[]{System.nanoTime()};
               var resp = reqCtx.getRequest().createResponse();
               reqCtx.getSession()
                   .reply(resp)
                   .onSuccess(nothing -> {
-                    deliverSmRespLatencySumNano[0] += (System.nanoTime() - sendDeliverSmRespStart[0]);
-                    deliverSmRespCount[0]++;
+                    counters.deliverSmRespLatencySumNano += (System.nanoTime() - sendDeliverSmRespStart[0]);
+                    counters.deliverSmRespCount++;
                     deliverSmRespLatch.countDown(1);
                   })
-                  .onFailure(e -> {
-                    log.trace("user code: could no reply with {}", resp.getName(), e);
-                  });
+                  .onFailure(e -> log.trace("user code: could no reply with {}", resp.getName(), e));
             }
           });
-          cfg.onUnexpectedResponse(respCtx -> {
-            log.warn("user code: unexpected response received {}", respCtx.getResponse());
-          });
-          cfg.onCreated(sess -> {
-            log.info("user code: session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId());
-          });
-          cfg.onForbiddenRequest(reqCtx -> {
-            log.info("user code: reacts to forbidden request pdu {}", reqCtx.getRequest());
-          });
+          cfg.onUnexpectedResponse(respCtx -> log.warn("user code: unexpected response received {}", respCtx.getResponse()));
+          cfg.onCreated(sess -> log.info("user code: session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId()));
+          cfg.onForbiddenRequest(reqCtx -> log.info("user code: reacts to forbidden request pdu {}", reqCtx.getRequest()));
         })
         .bind("localhost", SSL? 2777: 2776)
         .onRefuse(e -> {
@@ -120,11 +115,13 @@ public class PerfClientMain extends AbstractVerticle {
           startPromise.fail(e);
         })
         .onSuccess(sess -> {
-          start[0] = System.currentTimeMillis();
+          var counters = new Counters();
+          sess.setReferenceObject(counters);
+          counters.start = System.currentTimeMillis();
           log.info("user code: client bound");
           new Loop(vertx)
               .forLoopInt(0, SUBMIT_SM_NUMBER, i -> {
-                submitSmCount[0]++;
+                counters.submitSmCount++;
                 var ssm = new SubmitSm();
                 setSourceAndDestAddress(ssm);
                 if (ENCODER != null) {
@@ -133,44 +130,46 @@ public class PerfClientMain extends AbstractVerticle {
                 var sendSubmitSmStart = new long[]{System.nanoTime()};
                 sess.send(ssm)
                     .onSuccess(submitSmResp -> {
-                      submitSmLatencySumNano[0] += (System.nanoTime() - sendSubmitSmStart[0]);
-                      submitSmRespCount[0]++;
+                      counters.submitSmLatencySumNano += (System.nanoTime() - sendSubmitSmStart[0]);
+                      counters.submitSmRespCount++;
                       submitSmLatch.countDown(1);
-                    }).onFailure(e -> {
-                      log.error("user code: cannot send", e);
-                    }).onWindowTimeout(e -> {
-                      log.error("user code: window timeout", e);
-                    });
+                    })
+                    .onFailure(e -> log.error("user code: cannot send", e))
+                    .onWindowTimeout(e -> log.error("user code: window timeout", e));
               })
               .compose(v -> submitSmLatch.await(20, TimeUnit.SECONDS))
               .compose(v -> {
-                submitEnd[0] = System.currentTimeMillis();
+                counters.submitEnd = System.currentTimeMillis();
                 return deliverSmRespLatch.await(20, TimeUnit.SECONDS);
               })
               .compose(v -> {
-                deliverEnd[0] = System.currentTimeMillis();
+                counters.deliverEnd = System.currentTimeMillis();
                 var closePromise = Promise.<Void>promise();
                 sess.close(closePromise);
                 return closePromise.future();
               })
               .onComplete(ar -> {
                 sess.close(Promise.promise());
-                log.info("done: threads={}, sessions={}, window={}, text({}), this={}, that={}, ssl={}", THREADS, SESSIONS, WINDOW, (ENCODER != null? ENCODER.name(): "none"), SYSTEM_ID, sess.getBoundToSystemId(), SSL?"on":"off");
-                var submitSmThroughput = ((double)submitSmRespCount[0]/((double)(submitEnd[0] - start[0])/1000.0));
+                var c = sess.getReferenceObject(Counters.class);
                 log.info(
-                    "submitSm=" + submitSmCount[0] +
-                    ", submitSmResp=" + submitSmRespCount[0] +
+                    "done: threads={}, sessions={}, window={}, text({}), this={}, that={}, ssl={}",
+                    THREADS, SESSIONS, WINDOW, (ENCODER != null? ENCODER.name(): "none"), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"
+                );
+                var submitSmThroughput = (c.submitSmRespCount/((c.submitEnd - c.start)/1000.0));
+                log.info(
+                    "submitSm=" + c.submitSmCount +
+                    ", submitSmResp=" + c.submitSmRespCount +
                         ", throughput=" + submitSmThroughput);
-                log.info("submitSm latency=" + (0.000_001 * (double)submitSmLatencySumNano[0]/(double)submitSmRespCount[0]));
-                log.info("submit_sm time=" + (submitEnd[0] - start[0]) + "ms");
+                log.info("submitSm latency=" + (0.000_001 * c.submitSmLatencySumNano/c.submitSmRespCount));
+                log.info("submit_sm time=" + (c.submitEnd - c.start) + "ms");
 
-                var deliverSmThroughput = ((double)deliverSmRespCount[0]/((double)(deliverEnd[0] - start[0])/1000.0));
+                var deliverSmThroughput = (c.deliverSmRespCount/((c.deliverEnd - c.start)/1000.0));
                 log.info(
-                    "deliverSm=" + deliverSmCount[0] +
-                    ", deliverSmResp=" + deliverSmRespCount[0] +
+                    "deliverSm=" + c.deliverSmCount +
+                    ", deliverSmResp=" + c.deliverSmRespCount +
                         ", throughput=" + deliverSmThroughput);
-                log.info("deliverSmResp latency=" + (0.000_001 * (double)deliverSmRespLatencySumNano[0]/(double)deliverSmRespCount[0]));
-                log.info("deliver_sm time=" + if1stNegGet2nd(deliverEnd[0] - start[0], Double.NaN) + "ms");
+                log.info("deliverSmResp latency=" + (0.000_001 * c.deliverSmRespLatencySumNano/c.deliverSmRespCount));
+                log.info("deliver_sm time=" + positiveOrNaN(c.deliverEnd - c.start) + "ms");
 
                 log.info("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
                 startPromise.complete();
@@ -192,8 +191,8 @@ public class PerfClientMain extends AbstractVerticle {
     ssm.setDestAddress(new Address((byte) 2, (byte) 2, to));
   }
 
-  private double if1stNegGet2nd(long l, double d) {
-    return l < 0? d: l;
+  private double positiveOrNaN(double l) {
+    return l < 0? Double.NaN: l;
   }
 
   enum Encoder {

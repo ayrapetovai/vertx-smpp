@@ -40,6 +40,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private byte targetInterface;
   private SmppSessionState state = SmppSessionState.OPEN;
   private String boundToSystemId;
+  private Object referenceObject;
 
   public SmppSessionImpl(Pool pool, Long id, ContextInternal context, ChannelHandlerContext chctx, SmppSessionOptions options, boolean isServer) {
     super(context, chctx);
@@ -233,6 +234,16 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
 
   public SessionOptionsView getOptions() {
     return this.options;
+  }
+
+  @Override
+  public void setReferenceObject(Object object) {
+    this.referenceObject = object;
+  }
+
+  @Override
+  public <RefObj> RefObj getReferenceObject(Class<RefObj> clazz) {
+    return clazz.cast(referenceObject);
   }
 
   @Override
