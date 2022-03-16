@@ -22,4 +22,19 @@ public interface SessionOptionsView {
   long getWriteTimeout(); // TODO rename to sendTimeout
   boolean getCountersEnabled();
   boolean getLogPduBody();
+
+  void setDropAllOnUnbind(boolean dropAllOnUnbind);
+  void setReplyToUnbind(boolean replyToUnbind);
+  void isSendUnbindOnClose(boolean sendUnbindOnClose);
+  void isAwaitUnbindResp(boolean awaitUnbindResp);
+//  void setBindTimeout(long bindTimeout); // нельзя изменить после подключения, бинд уже прошел
+  void setUnbindTimeout(long unbindTimeout);
+  void setRequestExpiryTimeout(long requestExpiryTimeout);
+//  void setWindowSize(int windowSize); // нельзя изменить после подключения, значение уже передано симафор
+  void setWindowWaitTimeout(long windowWaitTimeout);
+  void setWindowMonitorInterval(long windowMonitorInterval);
+//  void setWriteTimeout(long writeTimeout); // нельзя изменить после подключения, значение уже передано в слушатель канала
+  void setCountersEnabled(boolean countersEnabled);
+  void setLogPduBody(boolean logPduBody);
+
 }

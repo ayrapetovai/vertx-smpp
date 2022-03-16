@@ -1,6 +1,6 @@
 package com.example.smpp.session;
 
-public interface ServerSessionConfigurator extends SessionOptionsView, SessionCallbacks {
+public interface ServerSessionConfigurator extends SessionCallbacks {
   void setSystemId(String systemId);
   void setDropAllOnUnbind(boolean dropAllOnUnbind);
   void setReplyToUnbind(boolean replyToUnbind);

@@ -16,17 +16,15 @@ import java.util.concurrent.CountDownLatch;
 public class EchoServerMain extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(EchoServerMain.class);
 
-  private static final int INSTANCES = 1;
-  private static final int THREADS = 1;
-  private static final int SUBMIT_SM_RESP_DELAY = 0;
+  private static final int     INSTANCES = 1;
+  private static final int     THREADS = 1;
+  private static final long    SUBMIT_SM_RESP_DELAY = 0;
+  private static final long    DELIVER_SM_RESP_DELAY = 0;
   private static final boolean SSL = false;
   private static final boolean REFUSE_ALL_BINDS = false;
 
-  private SmppServer server;
-
   @Override
   public void start(Promise<Void> startPromise) {
-    var clientName = new String[]{null};
     var opts = new SmppServerOptions();
     if (SSL) {
       opts.setSsl(true)
@@ -35,7 +33,7 @@ public class EchoServerMain extends AbstractVerticle {
                   .setPath("src/test/resources/keystore")
                   .setPassword("changeit"));
     }
-    server = Smpp.server(vertx, opts);
+    var server = Smpp.server(vertx, opts);
     server
         .configure(cfg -> {
           log.info("user code: configuring new session");
@@ -48,54 +46,42 @@ public class EchoServerMain extends AbstractVerticle {
             var password = bindInfo.getBindRequest().getPassword();
             log.info("user code: inbound bind from " + systemId);
             if (check(systemId, password)) {
-              clientName[0] = systemId;
               return SmppConstants.STATUS_OK;
             } else {
               return SmppConstants.STATUS_BINDFAIL;
             }
           });
-          cfg.onCreated(sess -> {
-            log.info("user code: session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId());
-          });
+          cfg.onCreated(sess -> log.info("user code: session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId()));
           cfg.onRequest(reqCtx -> {
-//            if (reqCtx.getRequest() instanceof SubmitSm) {
-//              try {
-//                Thread.sleep(5);
-//              } catch (InterruptedException e) {
-//                e.printStackTrace();
-//              }
-//            }
-
-            var answering = (Runnable) () -> {
+            var sendSubmitSmRespTask = (Runnable) () -> {
               var sess = reqCtx.getSession();
               sess.reply(reqCtx.getRequest().createResponse())
                   .onSuccess(nothing -> {
                     if (reqCtx.getRequest() instanceof SubmitSm) {
-                      sess.send(new DeliverSm())
-                          .onSuccess(resp -> { })
-                          .onFailure(Throwable::printStackTrace);
+                      var sendDeliverSmTask = (Runnable)() -> {
+                        sess.send(new DeliverSm())
+                            .onSuccess(resp -> {})
+                            .onFailure(Throwable::printStackTrace);
+                      };
+                      if (DELIVER_SM_RESP_DELAY > 0) {
+                        vertx.setTimer(DELIVER_SM_RESP_DELAY, id -> sendDeliverSmTask.run());
+                      } else {
+                        sendDeliverSmTask.run();
+                      }
                     }
                   })
                   .onFailure(Throwable::printStackTrace);
             };
 
             if (SUBMIT_SM_RESP_DELAY > 0) {
-              vertx.setTimer(SUBMIT_SM_RESP_DELAY, id -> {
-                answering.run();
-              });
+              vertx.setTimer(SUBMIT_SM_RESP_DELAY, id -> sendSubmitSmRespTask.run());
             } else {
-              answering.run();
+              sendSubmitSmRespTask.run();
             }
           });
-          cfg.onClose(sess -> {
-            log.info("user code: session#{} closed", sess.getId());
-          });
-          cfg.onForbiddenRequest(reqCtx -> {
-            log.info("user code: forbidden req {}", reqCtx.getRequest().getName());
-          });
-          cfg.onForbiddenResponse(rspCtx -> {
-            log.info("user code: forbidden rsp {}", rspCtx.getResponse().getName());
-          });
+          cfg.onClose(sess -> log.info("user code: session#{} closed", sess.getId()));
+          cfg.onForbiddenRequest(reqCtx -> log.info("user code: forbidden req {}", reqCtx.getRequest().getName()));
+          cfg.onForbiddenResponse(rspCtx -> log.info("user code: forbidden rsp {}", rspCtx.getResponse().getName()));
         })
         .start("localhost", SSL? 2777: 2776)
         .onSuccess(done -> {

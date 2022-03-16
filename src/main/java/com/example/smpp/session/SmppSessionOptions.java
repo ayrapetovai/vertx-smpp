@@ -10,13 +10,13 @@ import io.vertx.core.Handler;
 
 import java.util.function.Function;
 
-public class SmppSessionOptions implements ServerSessionConfigurator, ClientSessionConfigurator {
+public class SmppSessionOptions implements ServerSessionConfigurator, ClientSessionConfigurator, SessionOptionsView {
 
   private SmppBindType bindType = SmppBindType.TRANSCEIVER;
   private String systemId;
   private String password;
   private String systemType;
-  private String addressRange;  // per session: ton, npi, address
+  private String addressRange;  // FIXME per session: ton, npi, address
 
   private boolean dropAllOnUnbind = false;
   private boolean replyToUnbind = true;
@@ -127,7 +127,6 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   public void setCountersEnabled(boolean countersEnabled) {
     this.countersEnabled = countersEnabled;
   }
-
 
   @Override
   public void setLogPduBody(boolean logPduBody) {

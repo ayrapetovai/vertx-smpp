@@ -6,7 +6,6 @@ import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.cloudhopper.smpp.type.Address;
 import com.cloudhopper.smpp.type.SmppInvalidArgumentException;
 import com.example.smpp.Smpp;
-import com.example.smpp.client.SmppClient;
 import com.example.smpp.client.SmppClientOptions;
 import com.example.smpp.model.SmppBindType;
 import com.example.smpp.util.smpp.Gsm7BitCharset;
@@ -23,20 +22,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-class Counters {
-  double start;
-  double submitEnd;
-  double submitSmLatencySumNano;
-  double submitSmRespCount;
-  long submitSmCount;
-  double deliverEnd;
-  double deliverSmRespCount;
-  long deliverSmCount;
-  double deliverSmRespLatencySumNano;
-}
-
 public class PerfClientMain extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(PerfClientMain.class);
+
+  private static class Counters {
+    double start;
+    double submitEnd;
+    double submitSmLatencySumNano;
+    double submitSmRespCount;
+    long submitSmCount;
+    double deliverEnd;
+    double deliverSmRespCount;
+    long deliverSmCount;
+    double deliverSmRespLatencySumNano;
+  }
 
   private static final String  SYSTEM_ID = "vertx-smpp-client";
   private static final int     SESSIONS = 1;
@@ -49,22 +48,9 @@ public class PerfClientMain extends AbstractVerticle {
 //  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_UCS_2;
 //  private static final Encoder ENCODER = Encoder.CUSTOM_GSM7;
 //  private static final Encoder ENCODER = Encoder.PLAIN_UTF8;
-//  private static final int SUBMIT_SM_NUMBER = 50_000_000;
-//  private static final int SUBMIT_SM_NUMBER = 10_000_000;
-//  private static final int SUBMIT_SM_NUMBER = 5_000_000;
-//  private static final int SUBMIT_SM_NUMBER = 2_000_000;
   private static final int SUBMIT_SM_NUMBER = 1_000_000;
-//  private static final int SUBMIT_SM_NUMBER = 100_000;
-//  private static final int SUBMIT_SM_NUMBER = 20_000;
-//  private static final int SUBMIT_SM_NUMBER = 10_000;
-//  private static final int SUBMIT_SM_NUMBER = 5_000;
-//  private static final int SUBMIT_SM_NUMBER = 1_000;
-//  private static final int SUBMIT_SM_NUMBER = 100;
-//  private static final int SUBMIT_SM_NUMBER = 10;
-//  private static final int SUBMIT_SM_NUMBER = 4;
-//  private static final int SUBMIT_SM_NUMBER = 1;
-  SmppClient client;
-  Random rng = new Random();
+
+  private final Random rng = new Random();
 
   @Override
   public void start(Promise<Void> startPromise) {
@@ -74,12 +60,12 @@ public class PerfClientMain extends AbstractVerticle {
 
     var options = new SmppClientOptions();
     if (SSL) {
-      options.setSsl(true);
-      options.setTrustAll(true);
+      options
+          .setSsl(true)
+          .setTrustAll(true);
     }
 
-    client = Smpp.client(vertx, options);
-    client
+    Smpp.client(vertx, options)
         .configure(cfg -> {
           log.info("user code: configuring new session");
           cfg.setSystemId(SYSTEM_ID);
@@ -105,8 +91,8 @@ public class PerfClientMain extends AbstractVerticle {
                   .onFailure(e -> log.trace("user code: could no reply with {}", resp.getName(), e));
             }
           });
-          cfg.onUnexpectedResponse(respCtx -> log.warn("user code: unexpected response received {}", respCtx.getResponse()));
           cfg.onCreated(sess -> log.info("user code: session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId()));
+          cfg.onUnexpectedResponse(respCtx -> log.warn("user code: unexpected response received {}", respCtx.getResponse()));
           cfg.onForbiddenRequest(reqCtx -> log.info("user code: reacts to forbidden request pdu {}", reqCtx.getRequest()));
         })
         .bind("localhost", SSL? 2777: 2776)
@@ -115,10 +101,10 @@ public class PerfClientMain extends AbstractVerticle {
           startPromise.fail(e);
         })
         .onSuccess(sess -> {
+          log.info("user code: client bound");
           var counters = new Counters();
           sess.setReferenceObject(counters);
           counters.start = System.currentTimeMillis();
-          log.info("user code: client bound");
           new Loop(vertx)
               .forLoopInt(0, SUBMIT_SM_NUMBER, i -> {
                 counters.submitSmCount++;
@@ -156,18 +142,12 @@ public class PerfClientMain extends AbstractVerticle {
                     THREADS, SESSIONS, WINDOW, (ENCODER != null? ENCODER.name(): "none"), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"
                 );
                 var submitSmThroughput = (c.submitSmRespCount/((c.submitEnd - c.start)/1000.0));
-                log.info(
-                    "submitSm=" + c.submitSmCount +
-                    ", submitSmResp=" + c.submitSmRespCount +
-                        ", throughput=" + submitSmThroughput);
+                log.info("submitSm=" + c.submitSmCount + ", submitSmResp=" + c.submitSmRespCount + ", throughput=" + submitSmThroughput);
                 log.info("submitSm latency=" + (0.000_001 * c.submitSmLatencySumNano/c.submitSmRespCount));
                 log.info("submit_sm time=" + (c.submitEnd - c.start) + "ms");
 
                 var deliverSmThroughput = (c.deliverSmRespCount/((c.deliverEnd - c.start)/1000.0));
-                log.info(
-                    "deliverSm=" + c.deliverSmCount +
-                    ", deliverSmResp=" + c.deliverSmRespCount +
-                        ", throughput=" + deliverSmThroughput);
+                log.info("deliverSm=" + c.deliverSmCount + ", deliverSmResp=" + c.deliverSmRespCount + ", throughput=" + deliverSmThroughput);
                 log.info("deliverSmResp latency=" + (0.000_001 * c.deliverSmRespLatencySumNano/c.deliverSmRespCount));
                 log.info("deliver_sm time=" + positiveOrNaN(c.deliverEnd - c.start) + "ms");
 
@@ -234,6 +214,7 @@ public class PerfClientMain extends AbstractVerticle {
     };
     public abstract byte[] encode(String text);
   }
+
   private void addShortMessage(SubmitSm ssm) {
     String text160 = "\u20AC Lorem [ipsum] dolor sit amet, consectetur adipiscing elit. Proin feugiat, leo id commodo tincidunt, nibh diam ornare est, vitae accumsan risus lacus sed sem metus.";
 //    String text160 = "txId:" + java.util.UUID.randomUUID() + ";";
