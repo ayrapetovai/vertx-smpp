@@ -32,13 +32,12 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   private boolean countersEnabled = false;
   private boolean logPduBody = false;
 
-  // TODO: check on null or call this stubs, what is more performant?
   Handler<SmppSession> createdHandler = __ -> {};
   Handler<PduRequestContext<?>> requestHandler = __ -> {};
   Handler<PduResponseContext> unexpectedResponseHandler = __ -> {};
   Handler<SmppSession> closeHandler = __ -> {};
   Handler<SmppSession> unexpectedCloseHandler = __ -> {};
-  // TODO Function<BindInfo, RespReturnCode> onBindReceived
+  // TODO Function<BindInfo, BindRespStatusCode> onBindReceived
   Function<BindInfo, Integer> onBindReceived = __ -> SmppConstants.STATUS_OK;
   Handler<PduRequestContext<?>> onForbiddenRequest = __ -> {};
   Handler<PduResponseContext> onForbiddenResponse = __ -> {};
@@ -79,12 +78,12 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   @Override
-  public void isSendUnbindOnClose(boolean sendUnbindOnClose) {
+  public void setSendUnbindOnClose(boolean sendUnbindOnClose) {
     this.sendUnbindOnClose = sendUnbindOnClose;
   }
 
   @Override
-  public void isAwaitUnbindResp(boolean awaitUnbindResp) {
+  public void setAwaitUnbindResp(boolean awaitUnbindResp) {
     this.awaitUnbindResp = awaitUnbindResp;
   }
 
@@ -225,7 +224,6 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
 
   @Override
   public void onCreated(Handler<SmppSession> createdHandler) {
-    // TODO if createdHandler != null then throw new IllegalStateException
     this.createdHandler = createdHandler;
   }
 

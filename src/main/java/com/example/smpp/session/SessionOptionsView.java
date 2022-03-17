@@ -19,14 +19,14 @@ public interface SessionOptionsView {
   int getWindowSize();
   long getWindowWaitTimeout();
   long getWindowMonitorInterval();
-  long getWriteTimeout(); // TODO rename to sendTimeout
+  long getWriteTimeout();
   boolean getCountersEnabled();
   boolean getLogPduBody();
 
   void setDropAllOnUnbind(boolean dropAllOnUnbind);
   void setReplyToUnbind(boolean replyToUnbind);
-  void isSendUnbindOnClose(boolean sendUnbindOnClose);
-  void isAwaitUnbindResp(boolean awaitUnbindResp);
+  void setSendUnbindOnClose(boolean sendUnbindOnClose);
+  void setAwaitUnbindResp(boolean awaitUnbindResp);
 //  void setBindTimeout(long bindTimeout); // нельзя изменить после подключения, бинд уже прошел
   void setUnbindTimeout(long unbindTimeout);
   void setRequestExpiryTimeout(long requestExpiryTimeout);

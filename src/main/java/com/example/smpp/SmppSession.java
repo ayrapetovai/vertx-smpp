@@ -27,9 +27,7 @@ public interface SmppSession extends Closeable, MetricsProvider {
 
   /**
    * Запрос помещается в окно (очередь на отправку) и отправляется, котогда до него додет черед.
-   * TODO возвращенный future должен получать не PduResponse, а обвертку в которой будет инфа
-   *  о том, какая именно произошла ошибка: запись в канал, ошибка формата, запрос протух в окне и т. п.
-   * @param req
+    * @param req
    * @param <T>
    * @return
    */
@@ -38,8 +36,6 @@ public interface SmppSession extends Closeable, MetricsProvider {
   <T extends PduResponse> SendPduFuture<T> send(PduRequest<T> req, long offerTimeout);
 
   /**
-   * TODO возвращенный future должен получать не Void, а обвертку в которой будет инфа
-   *  о том, какая именно произошла ошибка: запись в канал, ошибка формата, запись в канал протухла и т. п.
    * Немедленная отправка ответа без помещения в окно
    * @param pduResponse
    * @return
