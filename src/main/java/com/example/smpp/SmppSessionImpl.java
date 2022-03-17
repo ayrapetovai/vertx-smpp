@@ -133,8 +133,16 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     }
   }
 
+  private SendPduFuture<UnbindResp> sendUnbind() {
+    return send(new Unbind(), 0);
+  }
+
   @Override
   public <T extends PduResponse> SendPduFuture<T> send(PduRequest<T> req) {
+    if (req instanceof Unbind) {
+      return SendPduFuture
+          .failedFuture(new SendPduWrongOperationException("Do unbind by close session", state));
+    }
     return send(req, 0);
   }
 
@@ -209,19 +217,22 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       //    awaitAllSent() -> { pauseSend; pauseReply }
       //      onComplete( ... )
       //  }
-      var unbindRespFuture = send(new Unbind());
+//      doPause();
+//      flush();
+//      flushBytesRead();
+      var unbindRespFuture = sendUnbind();
       if (options.isAwaitUnbindResp()) {
         unbindRespFuture
-          .compose(unbindResp -> {
+          .onComplete(unbindResp -> {
             if (log.isDebugEnabled()) {
-              log.debug("session#{} did unbindResp({}) close", getId(), unbindRespFuture.succeeded() ? "success" : "failure");
+              log.debug("session#{} did unbindResp({}), disposing session", getId(), unbindRespFuture.succeeded() ? "success" : "failure");
             }
             dispose(completion);
-            return completion.future();
           });
       }
+    } else {
+      dispose(completion);
     }
-    dispose(completion);
   }
 
   private void dispose(Promise<Void> completion) {
@@ -230,6 +241,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     state = SmppSessionState.CLOSED;
     super.close(completion);
     options.getOnClose().handle(this);
+    log.debug("session disposed");
   }
 
   public SessionOptionsView getOptions() {
