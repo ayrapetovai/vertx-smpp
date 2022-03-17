@@ -14,7 +14,6 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import io.vertx.core.Handler;
-import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.EventLoopContext;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.net.NetServerOptions;
@@ -22,13 +21,10 @@ import io.vertx.core.net.impl.*;
 import io.vertx.core.spi.metrics.TCPMetrics;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 public class SmppServerWorker implements Handler<Channel> {
   private final EventLoopContext context;
   private final Handler<ServerSessionConfigurator> configurator;
-  private final Supplier<ContextInternal> streamContextSupplier;
-  private final SmppServerImpl smppServer;
   private final VertxInternal vertx;
   private final SSLHelper sslHelper;
   private final NetServerOptions options;
@@ -36,8 +32,6 @@ public class SmppServerWorker implements Handler<Channel> {
 
   public SmppServerWorker(
       EventLoopContext context,
-      Supplier<ContextInternal> streamContextSupplier,
-      SmppServerImpl smppServer,
       VertxInternal vertx,
       SSLHelper sslHelper,
       NetServerOptions options,
@@ -45,8 +39,6 @@ public class SmppServerWorker implements Handler<Channel> {
       Pool pool
   ) {
     this.context = context;
-    this.streamContextSupplier = streamContextSupplier;
-    this.smppServer = smppServer;
     this.vertx = vertx;
     this.sslHelper = sslHelper;
     this.options = options;

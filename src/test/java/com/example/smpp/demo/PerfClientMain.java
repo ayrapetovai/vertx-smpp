@@ -38,8 +38,8 @@ public class PerfClientMain extends AbstractVerticle {
   }
 
   private static final String  SYSTEM_ID = "vertx-smpp-client";
-  private static final int     SESSIONS = 2;
-  private static final int     THREADS = 2;
+  private static final int     SESSIONS = 1;
+  private static final int     THREADS = 1;
   private static final boolean SSL = false;
   private static final int     WINDOW = 600;
   private static final Encoder ENCODER = null;

@@ -36,7 +36,7 @@ public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServ
     } else {
       connContext = vertx.createEventLoopContext(context.nettyEventLoop(), context.workerPool(), context.classLoader());
     }
-    return new SmppServerWorker(connContext, context::duplicate, this, vertx, sslHelper, options, configurator, pool);
+    return new SmppServerWorker(connContext, vertx, sslHelper, options, configurator, pool);
   }
 
   @Override
