@@ -4,6 +4,7 @@ import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.DeliverSm;
 import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.example.smpp.Smpp;
+import com.example.smpp.model.SmppSessionState;
 import com.example.smpp.server.SmppServer;
 import com.example.smpp.server.SmppServerOptions;
 import io.vertx.core.*;
@@ -59,9 +60,13 @@ public class EchoServerMain extends AbstractVerticle {
                   .onSuccess(nothing -> {
                     if (reqCtx.getRequest() instanceof SubmitSm) {
                       var sendDeliverSmTask = (Runnable)() -> {
-                        sess.send(new DeliverSm())
-                            .onSuccess(resp -> {})
-                            .onFailure(Throwable::printStackTrace);
+                        if (sess.getState() != SmppSessionState.CLOSED) {
+                          sess.send(new DeliverSm())
+                              .onSuccess(resp -> {})
+                              .onFailure(e -> log.error("cannot send deliver_sm, error: {}", e.getMessage()));
+                        } else {
+                          log.error("user code: session#{} is closed, cannot send deliver_sm", sess.getId());
+                        }
                       };
                       if (DELIVER_SM_RESP_DELAY > 0) {
                         vertx.setTimer(DELIVER_SM_RESP_DELAY, id -> sendDeliverSmTask.run());
@@ -70,7 +75,7 @@ public class EchoServerMain extends AbstractVerticle {
                       }
                     }
                   })
-                  .onFailure(Throwable::printStackTrace);
+                  .onFailure(e -> log.error("cannot replay with submit_sm_resp, error: {}", e.getMessage()));
             };
 
             if (SUBMIT_SM_RESP_DELAY > 0) {

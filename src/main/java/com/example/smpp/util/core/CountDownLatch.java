@@ -5,7 +5,9 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 
+import java.lang.reflect.Array;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class CountDownLatch {
   private final Vertx vertx;
@@ -17,7 +19,7 @@ public class CountDownLatch {
   }
 
   public Future<Void> await() {
-    return await(Long.MAX_VALUE, TimeUnit.DAYS);
+    return await(10*365, TimeUnit.DAYS);
   }
 
   public Future<Void> await(long timeout, TimeUnit unit) {
@@ -26,19 +28,19 @@ public class CountDownLatch {
       awaitPromise.tryComplete();
     } else {
       var expiresAtNano = System.nanoTime() + unit.toNanos(timeout);
-      var taskRef = new Handler[]{null};
+      var taskRef = new AtomicReference<Handler<Void>>();
       var task = (Handler<Void>) v -> {
         if (this.count == 0) {
           awaitPromise.tryComplete();
         } else {
           if (System.nanoTime() < expiresAtNano) {
-            vertx.runOnContext(taskRef[0]);
+            vertx.runOnContext(taskRef.get());
           } else {
-            awaitPromise.fail("CountDownLatch:expired");
+            awaitPromise.fail(new IllegalStateException("expired"));
           }
         }
       };
-      taskRef[0] = task;
+      taskRef.set(task);
       vertx.runOnContext(task);
     }
     return awaitPromise.future();

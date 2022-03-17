@@ -38,8 +38,8 @@ public class PerfClientMain extends AbstractVerticle {
   }
 
   private static final String  SYSTEM_ID = "vertx-smpp-client";
-  private static final int     SESSIONS = 1;
-  private static final int     THREADS = 1;
+  private static final int     SESSIONS = 2;
+  private static final int     THREADS = 2;
   private static final boolean SSL = false;
   private static final int     WINDOW = 600;
   private static final Encoder ENCODER = null;
@@ -72,9 +72,10 @@ public class PerfClientMain extends AbstractVerticle {
           cfg.setPassword("test");
           cfg.setBindType(SmppBindType.TRANSCEIVER);
           cfg.setWindowSize(WINDOW);
-          cfg.setBindTimeout(1000);
-          cfg.setWriteTimeout(1000);
-          cfg.setWindowWaitTimeout(1000);
+          cfg.setUnbindTimeout(1000);
+          cfg.setBindTimeout(5000);
+          cfg.setWriteTimeout(5000);
+          cfg.setWindowWaitTimeout(5000);
           cfg.onRequest(reqCtx -> {
             var counters = reqCtx.getSession().getReferenceObject(Counters.class);
             if (reqCtx.getRequest() instanceof DeliverSm) {

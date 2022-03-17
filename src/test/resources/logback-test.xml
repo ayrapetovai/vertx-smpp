@@ -9,7 +9,8 @@
   </appender>
 
 <!--  <logger name="com" level="warn"/>-->
-<!--  <logger name="com.cloudhopper.smpp" level="trace"/>-->
+<!--  <logger name="com.example.smpp.SmppSessionPduDecoder" level="trace"/>-->
+<!--  <logger name="com.example.smpp.SmppSessionPduEncoder" level="trace"/>-->
 <!--  <logger name="com.example.smpp" level="debug"/>-->
 <!--  <logger name="com.example.smpp" level="trace"/>-->
 <!--  <logger name="com.example.smpp" level="warn"/>-->

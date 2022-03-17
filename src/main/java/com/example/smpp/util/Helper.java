@@ -16,8 +16,9 @@ public class Helper {
         return new BindReceiver();
       case TRANSCEIVER:
         return new BindTransceiver();
+      default:
+        throw new IllegalStateException("no such enumerator " + bindType);
     }
-    return null;
   }
 
   public static SmppSessionState sessionStateByBindType(SmppBindType bindType) {

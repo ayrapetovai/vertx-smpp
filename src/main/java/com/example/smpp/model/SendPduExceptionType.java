@@ -5,4 +5,5 @@ public enum SendPduExceptionType {
   CHANNEL_CLOSED,
   WRONG_OPERATION,
   BIND_REFUSED,
+  REQUEST_DISCARDED_ON_CLOSE,
 }

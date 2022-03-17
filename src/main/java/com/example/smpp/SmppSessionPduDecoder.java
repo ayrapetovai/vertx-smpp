@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 public class SmppSessionPduDecoder extends ByteToMessageDecoder {
-  private static final Logger logger = LoggerFactory.getLogger("com.cloudhopper.smpp.channel.SmppSessionPduDecoder");
+  private static final Logger logger = LoggerFactory.getLogger(SmppSessionPduDecoder.class);
 
   private final PduTranscoder transcoder;
 

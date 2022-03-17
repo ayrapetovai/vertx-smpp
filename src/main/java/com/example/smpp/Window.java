@@ -2,8 +2,8 @@ package com.example.smpp;
 
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
+import com.example.smpp.util.SendPduDiscardedException;
 import com.example.smpp.util.futures.SendPduFuture;
-import io.vertx.core.Promise;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,11 +11,11 @@ import java.util.function.Consumer;
 
 public class Window {
   public static class RequestRecord<T extends PduResponse> {
-    final Promise<T> responsePromise;
+    final SendPduFuture<T> responsePromise;
     final int sequenceNumber;
     final long expiresAt;
 
-    public RequestRecord(Promise<T> responsePromise, int sequenceNumber, long expiresAt) {
+    public RequestRecord(SendPduFuture<T> responsePromise, int sequenceNumber, long expiresAt) {
       this.expiresAt = expiresAt;
       this.sequenceNumber = sequenceNumber;
       this.responsePromise = responsePromise;
@@ -26,7 +26,7 @@ public class Window {
 
   public synchronized <T extends PduResponse> void offer(PduRequest<T> req, SendPduFuture<T> promise, long expiresAt) {
     var seqNum = req.getSequenceNumber();
-    var record = new RequestRecord(promise, seqNum, expiresAt);
+    var record = new RequestRecord<>(promise, seqNum, expiresAt);
     var sameSeqPromise = cache.put(seqNum, record);
     if (sameSeqPromise != null) {
       sameSeqPromise.responsePromise
@@ -34,12 +34,21 @@ public class Window {
     }
   }
 
-  public synchronized <T extends PduResponse> Promise<T> complement(Integer seqNum) {
+  public synchronized SendPduFuture<PduResponse> complement(Integer seqNum) {
     var promiseOfRes = cache.remove(seqNum);
     if (promiseOfRes != null) {
       return promiseOfRes.responsePromise;
     } else {
       return null;
+    }
+  }
+
+  public synchronized void discardAll() {
+    var it = cache.values().iterator();
+    while (it.hasNext()) {
+      var record = it.next();
+      record.responsePromise.tryFail(new SendPduDiscardedException("request discarded on close"));
+      it.remove();
     }
   }
 
@@ -53,5 +62,9 @@ public class Window {
         promiseHandler.accept(record);
       }
     }
+  }
+
+  public synchronized int size() {
+    return cache.size();
   }
 }

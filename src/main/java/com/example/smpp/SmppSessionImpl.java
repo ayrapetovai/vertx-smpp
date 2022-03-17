@@ -54,11 +54,10 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     this.isServer = isServer;
     this.expireTimerId = vertx.setPeriodic(options.getWindowMonitorInterval(), timerId -> {
       window.purgeAllExpired(expiredRecord -> {
-        var exRec = (Window.RequestRecord<?>) expiredRecord;
-        if (exRec.responsePromise != null) {
-          log.trace("pdu.sequence={} expired on send", exRec.sequenceNumber);
+        if (expiredRecord.responsePromise != null) {
+          log.trace("pdu.sequence={} expired on send", expiredRecord.sequenceNumber);
           windowGuard.release(1);
-          exRec.responsePromise.tryFail("no response on time, request expired");
+          expiredRecord.responsePromise.tryFail("no response on time, request expired");
         }
       });
     });
@@ -87,14 +86,14 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
         return;
       }
       if (pdu instanceof Unbind) {
+        this.state = SmppSessionState.UNBOUND;
         doPause();
-        reply(((Unbind) pdu).createResponse())
+        replyUnbind(((Unbind) pdu).createResponse())
             .compose(ar -> {
               var closePromise = Promise.<Void>promise();
               close(closePromise, false);
               return closePromise.future();
             });
-        this.state = SmppSessionState.UNBOUND;
       } else if (pdu instanceof BaseBind<?>) {
         var bindRequest = (BaseBind<? extends BaseBindResp>) pdu;
         var respCmdStatus = options.getOnBindReceived()
@@ -118,7 +117,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       }
     } else {
       var pduResp = (PduResponse) msg;
-      if (!this.state.canReceive(isServer, pdu.getCommandId())) {
+      if (pduResp.getCommandId() != SmppConstants.CMD_ID_UNBIND_RESP && !this.state.canReceive(isServer, pdu.getCommandId())) {
         this.options.getOnForbiddenResponse()
             .handle(new PduResponseContext(pduResp, this));
         return;
@@ -134,24 +133,36 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   }
 
   private SendPduFuture<UnbindResp> sendUnbind() {
-    return send(new Unbind(), 0);
+    return doSendUnchecked(new Unbind(), 0);
   }
 
   @Override
   public <T extends PduResponse> SendPduFuture<T> send(PduRequest<T> req) {
-    if (req instanceof Unbind) {
+    if (req.getCommandId() == SmppConstants.CMD_ID_UNBIND) {
       return SendPduFuture
           .failedFuture(new SendPduWrongOperationException("Do unbind by close session", state));
     }
-    return send(req, 0);
-  }
-
-  @Override
-  public <T extends PduResponse> SendPduFuture<T> send(PduRequest<T> req, long offerTimeout) {
     if (!this.state.canSend(isServer, req.getCommandId())) {
       return SendPduFuture
           .failedFuture(new SendPduWrongOperationException("For state " + state.name() + " operation " + req.getName() + " is wrong", state));
     }
+    return doSendUnchecked(req, 0);
+  }
+
+  @Override
+  public <T extends PduResponse> SendPduFuture<T> send(PduRequest<T> req, long offerTimeout) {
+    if (req.getCommandId() == SmppConstants.CMD_ID_UNBIND) {
+      return SendPduFuture // TODO SendPduUnbindTriedException
+          .failedFuture(new SendPduWrongOperationException("Do unbind by close session", state));
+    }
+    if (!this.state.canSend(isServer, req.getCommandId())) {
+      return SendPduFuture
+          .failedFuture(new SendPduWrongOperationException("For state " + state.name() + " operation " + req.getName() + " is wrong", state));
+    }
+    return doSendUnchecked(req, offerTimeout);
+  }
+
+  private  <T extends PduResponse> SendPduFuture<T> doSendUnchecked(PduRequest<T> req, long offerTimeout) {
     if (channel().isOpen()) {
       var sendPromise = SendPduFuture.<T>promise(vertx.getOrCreateContext());
       windowGuard.acquire(1, offerTimeout)
@@ -167,7 +178,11 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
                     windowGuard.release(1);
                     sendPromise.tryFail(e);
                   });
-              writeToChannel(req, written);
+              try {
+                writeToChannel(req, written);
+              } catch (Exception e) {
+                written.fail(e);
+              }
             } else {
               windowGuard.release(1);
               // TODO если задана стратегия очистки окна на закрытии (надо собрать все запросы и передать их в хендлер)
@@ -194,7 +209,13 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
 // TODO consider checks
 //    this.channel().isWritable(); {this.channel().bytesBeforeWritable();}
 //    this.channel().isActive();
-    writeToChannel(pduResponse, replyPromise);
+    writeToChannel(pduResponse, replyPromise); // TODO try catch ?
+    return replyPromise.future();
+  }
+
+  private ReplayPduFuture<Void>  replyUnbind(UnbindResp resp) {
+    var replyPromise = ReplayPduFuture.<Void>promise(context);
+    writeToChannel(resp, replyPromise); // TODO try catch ?
     return replyPromise.future();
   }
 
@@ -210,6 +231,11 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
 
   @Override
   public void close(Promise<Void> completion, boolean sendUnbindRequired) {
+    if (state == SmppSessionState.CLOSED) {
+      completion.tryComplete();
+      return;
+    }
+    this.state = SmppSessionState.UNBOUND;
     log.debug("session#{} closing", getId());
     if (sendUnbindRequired) {
       // TODO сделать ожидание отправок
@@ -217,18 +243,38 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       //    awaitAllSent() -> { pauseSend; pauseReply }
       //      onComplete( ... )
       //  }
-//      doPause();
-//      flush();
-//      flushBytesRead();
       var unbindRespFuture = sendUnbind();
       if (options.isAwaitUnbindResp()) {
-        unbindRespFuture
-          .onComplete(unbindResp -> {
-            if (log.isDebugEnabled()) {
-              log.debug("session#{} did unbindResp({}), disposing session", getId(), unbindRespFuture.succeeded() ? "success" : "failure");
-            }
+        var taskId = -1L;
+        if (options.getUnbindTimeout() > 0) {
+          taskId = vertx.setTimer(options.getUnbindTimeout(), id -> {
+            log.debug("unbind response timed out");
             dispose(completion);
           });
+        }
+        var unbindTimeoutTaskId = taskId; // keep compiler happy
+        unbindRespFuture
+            .onSuccess(unbindResp -> {
+              if (unbindTimeoutTaskId > 0) {
+                vertx.cancelTimer(unbindTimeoutTaskId);
+              }
+
+              if (log.isDebugEnabled()) {
+                if (unbindRespFuture.succeeded()) {
+                  log.debug("session#{} did unbindResp(success), disposing session", getId());
+                } else {
+                  log.debug("session#{} did unbindResp(failure), disposing session, error: {}", getId(), unbindRespFuture.cause().getMessage());
+                }
+              }
+              dispose(completion);
+            })
+            .onFailure(e -> {
+              if (unbindTimeoutTaskId > 0) {
+                vertx.cancelTimer(unbindTimeoutTaskId);
+              }
+              log.debug("error on retrieving unbind_resp, error: {}", e.getMessage());
+              dispose(completion);
+            });
       }
     } else {
       dispose(completion);
@@ -237,11 +283,17 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
 
   private void dispose(Promise<Void> completion) {
     vertx.cancelTimer(expireTimerId);
+    doPause();
+    flushBytesRead();
     pool.remove(id);
     state = SmppSessionState.CLOSED;
     super.close(completion);
-    options.getOnClose().handle(this);
-    log.debug("session disposed");
+    completion.future()
+        .onComplete(nothing -> {
+          options.getOnClose().handle(this);
+          log.debug("session disposed, pool.size={}, windows.size={}", pool.size(), window.size());
+          window.discardAll();
+        });
   }
 
   public SessionOptionsView getOptions() {

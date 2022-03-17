@@ -63,7 +63,7 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
               .compose(bindResp -> {
                 if (bindResp.getCommandStatus() == SmppConstants.STATUS_OK) {
                   var systemId = bindResp.getSystemId();
-                  log.trace("bound to client: {}", systemId);
+                  log.trace("bound to pear: {}", systemId);
                   session.setBoundToSystemId(systemId);
                   session.setState(sessionStateByBindType(session.getOptions().getBindType()));
                   session.setTargetInterface(intVerFromTlv(bindResp));

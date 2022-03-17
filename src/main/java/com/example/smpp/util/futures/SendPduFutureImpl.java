@@ -1,9 +1,7 @@
 package com.example.smpp.util.futures;
 
-import com.example.smpp.util.SendPduChannelClosedException;
-import com.example.smpp.util.SendPduFailedException;
-import com.example.smpp.util.SendPduWindowTimeoutException;
-import com.example.smpp.util.SendPduWrongOperationException;
+import com.example.smpp.util.*;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.impl.future.PromiseInternal;
 
@@ -17,6 +15,12 @@ class SendPduFutureImpl<T> extends AbstractPduFuture<T> implements SendPduFuture
 
   @Override
   public SendPduFuture<T> future() {
+    return this;
+  }
+
+  @Override
+  public SendPduFuture<T> onComplete(Handler<AsyncResult<T>> handler) {
+    delegateAsPromise.onComplete(handler);
     return this;
   }
 
@@ -65,6 +69,19 @@ class SendPduFutureImpl<T> extends AbstractPduFuture<T> implements SendPduFuture
         var error = (SendPduFailedException) e;
         if (error.getType() == WRONG_OPERATION) {
           handler.handle((SendPduWrongOperationException)e);
+        }
+      }
+    });
+    return this;
+  }
+
+  @Override
+  public SendPduFuture<T> onDiscarded(Handler<SendPduDiscardedException> handler) {
+    delegateAsPromise.onFailure(e -> {
+      if (e instanceof SendPduFailedException) {
+        var error = (SendPduFailedException) e;
+        if (error.getType() == REQUEST_DISCARDED_ON_CLOSE) {
+          handler.handle((SendPduDiscardedException)e);
         }
       }
     });
