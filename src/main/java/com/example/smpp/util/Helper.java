@@ -29,8 +29,9 @@ public class Helper {
         return SmppSessionState.BOUND_RX;
       case TRANSCEIVER:
         return SmppSessionState.BOUND_TRX;
+      default:
+        throw new IllegalStateException("no such bind type " + bindType);
     }
-    return null;
   }
 
   public static SmppSessionState sessionStateByCommandId(int commandId) {
@@ -39,9 +40,8 @@ public class Helper {
       case SmppConstants.CMD_ID_BIND_TRANSMITTER: return SmppSessionState.BOUND_TX;
       case SmppConstants.CMD_ID_BIND_TRANSCEIVER: return SmppSessionState.BOUND_TRX;
       default:
-        // TODO ошибка, неожиданный тип pdu
+        throw new IllegalStateException("unexpected pdu type " + commandId);
     }
-    return null;
   }
 
   public static byte intVerFromTlv(BaseBindResp bindResp) {
@@ -65,8 +65,8 @@ public class Helper {
 
   public static void addInterfaceVersionTlv(BaseBindResp bindResp, byte ourInterfaceVersion, byte theirInterfaceVersion) {
     if (ourInterfaceVersion >= SmppConstants.VERSION_3_4 && theirInterfaceVersion >= SmppConstants.VERSION_3_4) {
-      Tlv scInterfaceVersion = new Tlv(SmppConstants.TAG_SC_INTERFACE_VERSION, new byte[] { ourInterfaceVersion });
-      bindResp.addOptionalParameter(scInterfaceVersion);
+      Tlv interfaceVersionTlv = new Tlv(SmppConstants.TAG_SC_INTERFACE_VERSION, new byte[] { ourInterfaceVersion });
+      bindResp.addOptionalParameter(interfaceVersionTlv);
     }
   }
 }
