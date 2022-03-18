@@ -18,7 +18,7 @@ public class ClosingClientMain extends AbstractVerticle {
   private static final String  SYSTEM_ID = "vertx-smpp-client";
   private static final int     SESSIONS = 1;
   private static final int     THREADS = 1;
-  private static final int     SUBMIT_SM_NUMBER = 20;
+  private static final int     SUBMIT_SM_NUMBER = 22;
 
   @Override
   public void start(Promise<Void> startPromise) {

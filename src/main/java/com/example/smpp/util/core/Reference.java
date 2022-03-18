@@ -4,6 +4,7 @@ package com.example.smpp.util.core;
 
 /**
  * This class was made to replace AtomicReference to get rid of memory fence operations.
+ * Garbage collector handbook
  * @param <T>
  */
 public class Reference<T> {

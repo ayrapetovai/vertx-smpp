@@ -186,8 +186,6 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
               }
             } else {
               windowGuard.release(1);
-              // TODO если задана стратегия очистки окна на закрытии (надо собрать все запросы и передать их в хендлер)
-              //  но делать это надо не здесь, а в адапторе канала, для этого адаптер должен знать о сессии, чтобы достать окно и очистить его.
               sendPromise.tryFail(new SendPduChannelClosedException("channel is closed"));
             }
           })
@@ -210,18 +208,18 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
 // TODO consider checks
 //    this.channel().isWritable(); {this.channel().bytesBeforeWritable();}
 //    this.channel().isActive();
-    writeToChannel(pduResponse, replyPromise); // TODO try catch ?
+    writeToChannel(pduResponse, replyPromise); // TODO try catch ? timeout?
     return replyPromise.future();
   }
 
   private ReplayPduFuture<Void>  replyUnbind(UnbindResp resp) {
     var replyPromise = ReplayPduFuture.<Void>promise(context);
-    writeToChannel(resp, replyPromise); // TODO try catch ?
+    writeToChannel(resp, replyPromise); // TODO try catch ? timeout?
     return replyPromise.future();
   }
 
   /**
-   * Closes the session - discards all pdus.
+   * Closes the session - discards all pdus is flag is set.
    * todo timeouts
    * @param completion promise for connection is being closed
    */
