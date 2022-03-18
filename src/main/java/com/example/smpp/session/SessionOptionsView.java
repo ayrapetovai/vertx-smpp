@@ -10,9 +10,10 @@ public interface SessionOptionsView {
   String getAddressRange(); // String -> ImmutableAddress
 
   boolean getReplyToUnbind();
-  boolean getDropAllOnUnbind();
+  boolean isDiscardAllOnUnbind();
   boolean isSendUnbindOnClose();
   boolean isAwaitUnbindResp();
+  long getDiscardTimeout();
   long getBindTimeout();
   long getUnbindTimeout();
   long getRequestExpiryTimeout();
@@ -23,10 +24,11 @@ public interface SessionOptionsView {
   boolean getCountersEnabled();
   boolean getLogPduBody();
 
-  void setDropAllOnUnbind(boolean dropAllOnUnbind);
+  void setDiscardAllOnUnbind(boolean dropAllOnUnbind);
   void setReplyToUnbind(boolean replyToUnbind);
   void setSendUnbindOnClose(boolean sendUnbindOnClose);
   void setAwaitUnbindResp(boolean awaitUnbindResp);
+  void setDiscardTimeout(long drainTimeout);
 //  void setBindTimeout(long bindTimeout); // нельзя изменить после подключения, бинд уже прошел
   void setUnbindTimeout(long unbindTimeout);
   void setRequestExpiryTimeout(long requestExpiryTimeout);

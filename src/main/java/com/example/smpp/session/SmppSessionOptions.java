@@ -18,10 +18,11 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   private String systemType;
   private String addressRange;  // FIXME per session: ton, npi, address
 
-  private boolean dropAllOnUnbind = false;
+  private boolean discardAllOnUnbind = false;
   private boolean replyToUnbind = true;
   private boolean sendUnbindOnClose = true;
   private boolean awaitUnbindResp = true;
+  private long discardTimeout = 10000;
   private long bindTimeout = 10000;
   private long unbindTimeout = 10000;
   private long requestExpiryTimeout = 10000;
@@ -68,8 +69,8 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   @Override
-  public void setDropAllOnUnbind(boolean dropAllOnUnbind) {
-    this.dropAllOnUnbind = dropAllOnUnbind;
+  public void setDiscardAllOnUnbind(boolean discardAllOnUnbind) {
+    this.discardAllOnUnbind = discardAllOnUnbind;
   }
 
   @Override
@@ -85,6 +86,11 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   @Override
   public void setAwaitUnbindResp(boolean awaitUnbindResp) {
     this.awaitUnbindResp = awaitUnbindResp;
+  }
+
+  @Override
+  public void setDiscardTimeout(long discardTimeout) {
+    this.discardTimeout = discardTimeout;
   }
 
   @Override
@@ -163,8 +169,8 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   @Override
-  public boolean getDropAllOnUnbind() {
-    return dropAllOnUnbind;
+  public boolean isDiscardAllOnUnbind() {
+    return discardAllOnUnbind;
   }
 
   @Override
@@ -175,6 +181,11 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   @Override
   public boolean isAwaitUnbindResp() {
     return awaitUnbindResp;
+  }
+
+  @Override
+  public long getDiscardTimeout() {
+    return discardTimeout;
   }
 
   @Override

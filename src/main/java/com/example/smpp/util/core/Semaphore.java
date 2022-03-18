@@ -16,7 +16,7 @@ public class Semaphore {
 
   private final int initialValue;
   private final Vertx vertx;
-  private int valueCounter = 0;
+  private int valueCounter;
 
   private Semaphore(Vertx vertx, int initialValue) {
     this.vertx = vertx;
@@ -43,16 +43,16 @@ public class Semaphore {
   public Future<Void> acquire(int value) {
     var acquirePromise = Promise.<Void>promise();
     if (valueCounter < value) {
-      var taskRef = new Handler[]{null};
+      var taskRef = new Reference<Handler<Void>>();
       var task = (Handler<Void>) v -> {
         if (valueCounter < value) {
-          vertx.runOnContext(taskRef[0]);
+          vertx.runOnContext(taskRef.get());
         } else {
           valueCounter -= value;
           acquirePromise.complete();
         }
       };
-      taskRef[0] = task;
+      taskRef.set(task);
       vertx.runOnContext(task);
     } else {
       valueCounter -= value;
@@ -65,11 +65,11 @@ public class Semaphore {
     var acquirePromise = Promise.<Void>promise();
     var expiresAt = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
     if (valueCounter < value) {
-      var taskRef = new Handler[]{null};
+      var taskRef = new Reference<Handler<Void>>();
       var task = (Handler<Void>) v -> {
         if (System.nanoTime() < expiresAt || timeout <= 0) {
           if (valueCounter < value) {
-            vertx.runOnContext(taskRef[0]);
+            vertx.runOnContext(taskRef.get());
           } else {
             valueCounter -= value;
             acquirePromise.complete();
@@ -78,7 +78,7 @@ public class Semaphore {
           acquirePromise.fail("acquire expired by timeout " + timeout);
         }
       };
-      taskRef[0] = task;
+      taskRef.set(task);
       vertx.runOnContext(task);
     } else {
       valueCounter -= value;

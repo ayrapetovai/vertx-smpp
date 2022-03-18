@@ -7,6 +7,7 @@ import com.example.smpp.model.SmppSessionState;
 import com.example.smpp.session.SessionOptionsView;
 import com.example.smpp.session.SmppSessionOptions;
 import com.example.smpp.util.*;
+import com.example.smpp.util.core.FlowControl;
 import com.example.smpp.util.futures.ReplayPduFuture;
 import com.example.smpp.util.futures.SendPduFuture;
 import com.example.smpp.util.core.Semaphore;
@@ -235,14 +236,27 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       completion.tryComplete();
       return;
     }
+    if (!options.isDiscardAllOnUnbind()) {
+      FlowControl
+          .awaitCondition(vertx, () -> window.size() == 0, options.getDiscardTimeout())
+          .onComplete(ar -> {
+            if (ar.succeeded()) {
+              log.debug("awaiting of window succeed");
+            } else {
+              log.error("awaiting of window failed", ar.cause());
+            }
+            closeWithUnbind(completion, sendUnbindRequired);
+          });
+    } else {
+      log.debug("close without waiting for window to get drained");
+      closeWithUnbind(completion, sendUnbindRequired);
+    }
+  }
+
+  private void closeWithUnbind(Promise<Void> completion, boolean sendUnbindRequired) {
     this.state = SmppSessionState.UNBOUND;
     log.debug("session#{} closing", getId());
     if (sendUnbindRequired) {
-      // TODO сделать ожидание отправок
-      //  if (awaitAllSent) {
-      //    awaitAllSent() -> { pauseSend; pauseReply }
-      //      onComplete( ... )
-      //  }
       var unbindRespFuture = sendUnbind();
       if (options.isAwaitUnbindResp()) {
         var taskId = -1L;

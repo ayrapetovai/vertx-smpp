@@ -10,7 +10,7 @@ import com.example.smpp.client.SmppClientOptions;
 import com.example.smpp.model.SmppBindType;
 import com.example.smpp.util.smpp.Gsm7BitCharset;
 import com.example.smpp.util.core.CountDownLatch;
-import com.example.smpp.util.core.Loop;
+import com.example.smpp.util.core.FlowControl;
 import io.vertx.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +21,8 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+
+import static com.example.smpp.demo.PerfClientMain.Encoder.NONE;
 
 public class PerfClientMain extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(PerfClientMain.class);
@@ -42,13 +44,13 @@ public class PerfClientMain extends AbstractVerticle {
   private static final int     THREADS = 1;
   private static final boolean SSL = false;
   private static final int     WINDOW = 600;
-  private static final Encoder ENCODER = null;
+  private static final Encoder ENCODE = NONE;
 //  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_GSM;
 //  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_GSM7;
 //  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_UCS_2;
 //  private static final Encoder ENCODER = Encoder.CUSTOM_GSM7;
 //  private static final Encoder ENCODER = Encoder.PLAIN_UTF8;
-  private static final int SUBMIT_SM_NUMBER = 1_000_000;
+  private static final int     SUBMIT_SM_NUMBER = 1_000_000;
 
   private final Random rng = new Random();
 
@@ -107,12 +109,12 @@ public class PerfClientMain extends AbstractVerticle {
           var counters = new Counters();
           sess.setReferenceObject(counters);
           counters.start = System.currentTimeMillis();
-          new Loop(vertx)
-              .forLoopInt(0, SUBMIT_SM_NUMBER, i -> {
+          FlowControl
+              .forLoopInt(vertx, 0, SUBMIT_SM_NUMBER, i -> {
                 counters.submitSmCount++;
                 var ssm = new SubmitSm();
                 setSourceAndDestAddress(ssm);
-                if (ENCODER != null) {
+                if (ENCODE != NONE) {
                   addShortMessage(ssm);
                 }
                 var sendSubmitSmStart = new long[]{System.nanoTime()};
@@ -140,7 +142,7 @@ public class PerfClientMain extends AbstractVerticle {
                 var c = sess.getReferenceObject(Counters.class);
                 log.info(
                     "done: threads={}, sessions={}, window={}, text({}), this={}, that={}, ssl={}",
-                    THREADS, SESSIONS, WINDOW, (ENCODER != null? ENCODER.name(): "none"), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"
+                    THREADS, SESSIONS, WINDOW, ENCODE.name(), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"
                 );
                 var submitSmThroughput = (c.submitSmRespCount/((c.submitEnd - c.start)/1000.0));
                 log.info("submitSm=" + c.submitSmCount + ", submitSmResp=" + c.submitSmRespCount + ", throughput=" + submitSmThroughput);
@@ -177,6 +179,12 @@ public class PerfClientMain extends AbstractVerticle {
   }
 
   enum Encoder {
+    NONE {
+      @Override
+      public byte[] encode(String text) {
+        return null;
+      }
+    },
     CLOUDHOPPER_GSM {
       @Override
       public byte[] encode(String text) {
@@ -219,7 +227,7 @@ public class PerfClientMain extends AbstractVerticle {
   private void addShortMessage(SubmitSm ssm) {
     String text160 = "\u20AC Lorem [ipsum] dolor sit amet, consectetur adipiscing elit. Proin feugiat, leo id commodo tincidunt, nibh diam ornare est, vitae accumsan risus lacus sed sem metus.";
 //    String text160 = "txId:" + java.util.UUID.randomUUID() + ";";
-    var textBytes = ENCODER.encode(text160);
+    var textBytes = ENCODE.encode(text160);
     try {
       ssm.setShortMessage(textBytes);
     } catch (SmppInvalidArgumentException e) {

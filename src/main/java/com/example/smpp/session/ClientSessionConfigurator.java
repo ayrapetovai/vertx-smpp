@@ -9,7 +9,7 @@ public interface ClientSessionConfigurator extends SessionCallbacks {
   void setSystemType(String systemType);
   void setAddressRange(String addressRange); // String -> ImmutableAddress
 
-  void setDropAllOnUnbind(boolean dropAllOnUnbind);
+  void setDiscardAllOnUnbind(boolean dropAllOnUnbind);
   void setReplyToUnbind(boolean replyToUnbind);
   void setBindTimeout(long bindTimeout);
   void setUnbindTimeout(long unbindTimeout);

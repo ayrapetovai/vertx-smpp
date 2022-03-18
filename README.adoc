@@ -5,6 +5,7 @@ image:https://img.shields.io/badge/vert.x-4.2.5-purple.svg[link="https://vertx.i
 This application was generated using http://start.vertx.io
 
 == TODO
+- Описать все фичи и сделать тестирование на каждую.
 - Рефакторить имена пакетов.
 - Делать все, то связано с версией протокола interfaceVersion.
 - Сделать ошибки на старте более явными дописать обработчики ошибок с логированием.
