@@ -1,5 +1,9 @@
 package com.example.smpp.util.futures;
 
+import com.example.smpp.util.SendPduChannelClosedException;
+import com.example.smpp.util.SendPduFailedException;
+import com.example.smpp.util.SendPduWriteFailedException;
+import com.example.smpp.util.SendPduWrongOperationException;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -8,8 +12,10 @@ import io.vertx.core.impl.future.PromiseInternal;
 
 import java.util.function.Function;
 
+import static com.example.smpp.model.SendPduExceptionType.*;
+
 // package-private
-abstract class AbstractPduFuture<T> implements Future<T>, Promise<T> {
+abstract class AbstractPduFuture<T, F> implements Future<T>, Promise<T> {
 
   protected final PromiseInternal<T> delegateAsPromise;
   protected final Future<T> delegateAsFuture;
@@ -97,5 +103,41 @@ abstract class AbstractPduFuture<T> implements Future<T>, Promise<T> {
   @Override
   public boolean tryFail(String message) {
     return delegateAsPromise.tryFail(message);
+  }
+
+  public F onChannelClosed(Handler<SendPduChannelClosedException> handler) {
+    delegateAsPromise.onFailure(e -> {
+      if (e instanceof SendPduFailedException) {
+        var error = (SendPduFailedException) e;
+        if (error.getType() == CHANNEL_CLOSED) {
+          handler.handle((SendPduChannelClosedException)e);
+        }
+      }
+    });
+    return (F) this;
+  }
+
+  public F onWrongOperation(Handler<SendPduWrongOperationException> handler) {
+    delegateAsPromise.onFailure(e -> {
+      if (e instanceof SendPduFailedException) {
+        var error = (SendPduFailedException) e;
+        if (error.getType() == WRONG_OPERATION) {
+          handler.handle((SendPduWrongOperationException)e);
+        }
+      }
+    });
+    return (F) this;
+  }
+
+  public F onWriteFailed(Handler<SendPduWriteFailedException> handler) {
+    delegateAsPromise.onFailure(e -> {
+      if (e instanceof SendPduFailedException) {
+        var error = (SendPduFailedException) e;
+        if (error.getType() == WRITE_TO_CHANNEL_FAILED) {
+          handler.handle((SendPduWriteFailedException)e);
+        }
+      }
+    });
+    return (F) this;
   }
 }

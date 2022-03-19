@@ -7,7 +7,7 @@ import io.vertx.core.impl.future.PromiseInternal;
 
 import static com.example.smpp.model.SendPduExceptionType.*;
 
-class SendPduFutureImpl<T> extends AbstractPduFuture<T> implements SendPduFuture<T> {
+class SendPduFutureImpl<T> extends AbstractPduFuture<T, SendPduFuture<T>> implements SendPduFuture<T> {
 
   public SendPduFutureImpl(PromiseInternal<T> promise) {
     super(promise);
@@ -43,32 +43,6 @@ class SendPduFutureImpl<T> extends AbstractPduFuture<T> implements SendPduFuture
         var error = (SendPduFailedException) e;
         if (error.getType() == WINDOW_TIMEOUT) {
           handler.handle((SendPduWindowTimeoutException)e);
-        }
-      }
-    });
-    return this;
-  }
-
-  @Override
-  public SendPduFuture<T> onChannelClosed(Handler<SendPduChannelClosedException> handler) {
-    delegateAsPromise.onFailure(e -> {
-      if (e instanceof SendPduFailedException) {
-        var error = (SendPduFailedException) e;
-        if (error.getType() == CHANNEL_CLOSED) {
-          handler.handle((SendPduChannelClosedException)e);
-        }
-      }
-    });
-    return this;
-  }
-
-  @Override
-  public SendPduFuture<T> onWrongOperation(Handler<SendPduWrongOperationException> handler) {
-    delegateAsPromise.onFailure(e -> {
-      if (e instanceof SendPduFailedException) {
-        var error = (SendPduFailedException) e;
-        if (error.getType() == WRONG_OPERATION) {
-          handler.handle((SendPduWrongOperationException)e);
         }
       }
     });

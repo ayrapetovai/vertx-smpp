@@ -89,7 +89,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       if (pdu instanceof Unbind) {
         this.state = SmppSessionState.UNBOUND;
         doPause();
-        replyUnbind(((Unbind) pdu).createResponse())
+        replyUnchecked(((Unbind) pdu).createResponse())
             .compose(ar -> {
               var closePromise = Promise.<Void>promise();
               close(closePromise, false);
@@ -98,7 +98,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       } else if (pdu instanceof BaseBind<?>) {
         var bindRequest = (BaseBind<? extends BaseBindResp>) pdu;
         var respCmdStatus = options.getOnBindReceived()
-            .apply(new BindInfo<>(bindRequest));
+            .apply(new BindInfo<>(bindRequest)); // TODO check returned status (it must be enum)
         var bindResp = bindRequest.createResponse();
         addInterfaceVersionTlv(bindResp, getThisInterface(), bindRequest.getInterfaceVersion());
         bindResp.setSystemId(options.getSystemId());
@@ -182,7 +182,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
               try {
                 writeToChannel(req, written);
               } catch (Exception e) {
-                written.fail(e);
+                written.fail(new SendPduWriteFailedException("write request to channel failed", e));
               }
             } else {
               windowGuard.release(1);
@@ -204,17 +204,23 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     if (!this.state.canSend(isServer, pduResponse.getCommandId())) {
       return ReplayPduFuture.failedFuture(new SendPduWrongOperationException(state + " forbidden for reply, pdu " + pduResponse.getName(), state));
     }
+    return replyUnchecked(pduResponse);
+  }
+
+  private ReplayPduFuture<Void> replyUnchecked(PduResponse pduResponse) {
     var replyPromise = ReplayPduFuture.<Void>promise(context);
 // TODO consider checks
 //    this.channel().isWritable(); {this.channel().bytesBeforeWritable();}
 //    this.channel().isActive();
-    writeToChannel(pduResponse, replyPromise); // TODO try catch ? timeout?
-    return replyPromise.future();
-  }
-
-  private ReplayPduFuture<Void>  replyUnbind(UnbindResp resp) {
-    var replyPromise = ReplayPduFuture.<Void>promise(context);
-    writeToChannel(resp, replyPromise); // TODO try catch ? timeout?
+    if (channel().isOpen()) {
+      try {
+        writeToChannel(pduResponse, replyPromise); // TODO timeout?
+      } catch (Exception e) {
+        replyPromise.fail(new SendPduWriteFailedException("write response to channel failed", e));
+      }
+    } else {
+      replyPromise.fail(new SendPduChannelClosedException("write response failed, channel closed"));
+    }
     return replyPromise.future();
   }
 

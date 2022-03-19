@@ -4,7 +4,7 @@ import io.netty.util.concurrent.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.impl.future.PromiseInternal;
 
-class ReplayPduFutureImpl<T> extends AbstractPduFuture<T> implements ReplayPduFuture<T> {
+class ReplayPduFutureImpl<T> extends AbstractPduFuture<T, ReplayPduFuture<T>> implements ReplayPduFuture<T> {
 
   public ReplayPduFutureImpl(PromiseInternal<T> promise) {
     super(promise);

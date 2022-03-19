@@ -1,8 +1,12 @@
 package com.example.smpp.util.futures;
 
+import com.example.smpp.util.SendPduChannelClosedException;
 import com.example.smpp.util.SendPduFailedException;
+import com.example.smpp.util.SendPduWriteFailedException;
+import com.example.smpp.util.SendPduWrongOperationException;
 import io.netty.util.concurrent.FutureListener;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.future.PromiseImpl;
@@ -21,4 +25,10 @@ public interface ReplayPduFuture<T> extends Future<T>, Promise<T>, FutureListene
 
   @Override
   ReplayPduFuture<T> future();
+
+  ReplayPduFuture<T> onChannelClosed(Handler<SendPduChannelClosedException> handler);
+
+  ReplayPduFuture<T> onWrongOperation(Handler<SendPduWrongOperationException> handler);
+
+  ReplayPduFuture<T> onWriteFailed(Handler<SendPduWriteFailedException> handler);
 }

@@ -9,7 +9,7 @@ import io.vertx.core.impl.future.PromiseInternal;
 
 import static com.example.smpp.model.SendPduExceptionType.*;
 
-class BindFutureImpl<T> extends AbstractPduFuture<T> implements BindFuture<T> {
+class BindFutureImpl<T> extends AbstractPduFuture<T, BindFuture<T>> implements BindFuture<T> {
 
   public BindFutureImpl(PromiseInternal<T> promise) {
     super(promise);

@@ -90,14 +90,6 @@ public class SmppServerWorker implements Handler<Channel> {
     pipeline.addLast("smppDecoder", new SmppSessionPduDecoder(transcoder));
     pipeline.addLast("smppEncoder", new SmppSessionPduEncoder(transcoder));
 
-//      if (options.isDecompressionSupported()) {
-//        pipeline.addLast("inflater", new HttpContentDecompressor(false));
-//      }
-
-//      if (options.isCompressionSupported()) {
-//        pipeline.addLast("deflater", new HttpChunkContentCompressor(options.getCompressionLevel()));
-//      }
-
     int idleTimeout = options.getIdleTimeout();
     int readIdleTimeout = options.getReadIdleTimeout();
     int writeIdleTimeout = options.getWriteIdleTimeout();
