@@ -31,7 +31,7 @@ image:https://img.shields.io/badge/vert.x-4.2.5-purple.svg[link="https://vertx.i
     .. [v] User can send `SystemId`, `Password`, `SystemType`, `Address` in bind_request.
     .. [v] Also, library sends interface version in bind_request.
 . [v] User can set timeouts and callbacks.
-. [v] User can send requests `submit_sm`, `deliver_sm`, `query_sm`, `data_sm` and [-] `generic_nack` as response. But user cannot send, `bind_receiver`, `bind_trancriver`, `bind_transmitter`, `unbind` and corresponding responses.
+. [v] User can send requests `submit_sm`, `deliver_sm`, `query_sm`, `data_sm`, `enquire_link` and [-] `generic_nack` as response. But user cannot send, `bind_receiver`, `bind_trancriver`, `bind_transmitter`, `unbind` and corresponding responses.
     .. [v] Each send returns future to user. By this future user can react to errors of sending by assigning callbacks.
 . [-] Server keeps track of metrics for all sessions, which are available to user.
 

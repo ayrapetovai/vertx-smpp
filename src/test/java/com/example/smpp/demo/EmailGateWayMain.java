@@ -28,57 +28,56 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-class LocalSmtpServer {
-  private static final Logger log = LoggerFactory.getLogger(EmailGateWayMain.class);
-
-  public static class MyMessageListener implements SimpleMessageListener {
-    @Override
-    public boolean accept(String from, String recipient) {
-      log.info("accept " + from + " to " + recipient);
-      return true;
-    }
-
-    @Override
-    public void deliver(String from, String recipient, InputStream data) throws IOException {
-      StringBuilder textBuilder = new StringBuilder();
-      try (Reader reader = new BufferedReader(new InputStreamReader(data, Charset.forName(StandardCharsets.UTF_8.name())))) {
-        int c;
-        while ((c = reader.read()) != -1) {
-          textBuilder.append((char) c);
-        }
-      }
-      log.info("Sending mail from " + from + " to " + recipient + " (size: " + textBuilder.length() + " bytes)");
-      log.info("Text: " + textBuilder);
-    }
-  }
-
-  public static void start(int port) {
-    SMTPServer smtpServer = new SMTPServer(new SimpleMessageListenerAdapter(new MyMessageListener()));
-    smtpServer.setPort(port);
-    smtpServer.start();
-  }
-
-  public static void startWithAuth(int port) {
-    SMTPServer server = new SMTPServer(new SimpleMessageListenerAdapter(new MyMessageListener()));
-    server.setPort(port);
-    UsernamePasswordValidator validator = (s, s1) -> {
-      if (!"username".equalsIgnoreCase(s) || !"password".equalsIgnoreCase(s1)) {
-        throw new LoginFailedException();
-      }
-    };
-    server.setAuthenticationHandlerFactory(new PlainAuthenticationHandlerFactory(validator));
-    server.start();
-  }
-}
-
 public class EmailGateWayMain extends AbstractVerticle {
   private final static Logger log = LoggerFactory.getLogger(EmailGateWayMain.class);
+
+  static private class LocalSmtpServer {
+    private static final Logger log = LoggerFactory.getLogger(EmailGateWayMain.class);
+
+    public static class MyMessageListener implements SimpleMessageListener {
+      @Override
+      public boolean accept(String from, String recipient) {
+        log.info("accept " + from + " to " + recipient);
+        return true;
+      }
+
+      @Override
+      public void deliver(String from, String recipient, InputStream data) throws IOException {
+        StringBuilder textBuilder = new StringBuilder();
+        try (Reader reader = new BufferedReader(new InputStreamReader(data, Charset.forName(StandardCharsets.UTF_8.name())))) {
+          int c;
+          while ((c = reader.read()) != -1) {
+            textBuilder.append((char) c);
+          }
+        }
+        log.info("Sending mail from " + from + " to " + recipient + " (size: " + textBuilder.length() + " bytes)");
+        log.info("Text: " + textBuilder);
+      }
+    }
+
+    public static void start(int port) {
+      SMTPServer smtpServer = new SMTPServer(new SimpleMessageListenerAdapter(new MyMessageListener()));
+      smtpServer.setPort(port);
+      smtpServer.start();
+    }
+
+    public static void startWithAuth(int port) {
+      SMTPServer server = new SMTPServer(new SimpleMessageListenerAdapter(new MyMessageListener()));
+      server.setPort(port);
+      UsernamePasswordValidator validator = (s, s1) -> {
+        if (!"username".equalsIgnoreCase(s) || !"password".equalsIgnoreCase(s1)) {
+          throw new LoginFailedException();
+        }
+      };
+      server.setAuthenticationHandlerFactory(new PlainAuthenticationHandlerFactory(validator));
+      server.start();
+    }
+  }
 
   @Override
   public void start(Promise<Void> started) {
 
     LocalSmtpServer.startWithAuth(5870);
-    log.info("smtp server started");
 
     MailConfig mailConfig = new MailConfig()
         .setHostname("localhost")
