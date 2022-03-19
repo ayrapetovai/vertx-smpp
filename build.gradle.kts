@@ -29,11 +29,15 @@ application {
 }
 
 dependencies {
-  implementation("com.fizzed:ch-smpp:6.0.0-netty4-beta-3")
+  // vertx
   implementation(platform("io.vertx:vertx-stack-depchain:$vertxVersion"))
   implementation("io.vertx:vertx-core")
 
+  // misc
+  implementation("joda-time:joda-time:2.10.13")
+
   // logs
+  implementation("org.slf4j:slf4j-api:1.7.19")
   testImplementation("ch.qos.logback:logback-core:$logbackVersion")
   testImplementation("ch.qos.logback:logback-classic:$logbackVersion")
 

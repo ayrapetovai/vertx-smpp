@@ -1,10 +1,10 @@
 package com.example.smpp.demo;
 
-import com.cloudhopper.smpp.pdu.DeliverSm;
-import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.example.smpp.Smpp;
 import com.example.smpp.client.SmppClientOptions;
 import com.example.smpp.model.SmppBindType;
+import com.example.smpp.pdu.DeliverSm;
+import com.example.smpp.pdu.SubmitSm;
 import com.example.smpp.util.core.CountDownLatch;
 import com.example.smpp.util.core.FlowControl;
 import io.vertx.core.*;

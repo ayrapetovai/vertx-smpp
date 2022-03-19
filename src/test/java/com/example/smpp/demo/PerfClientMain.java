@@ -1,15 +1,12 @@
 package com.example.smpp.demo;
 
-import com.cloudhopper.commons.charset.BaseCharset;
-import com.cloudhopper.commons.charset.CharsetUtil;
-import com.cloudhopper.smpp.pdu.DeliverSm;
-import com.cloudhopper.smpp.pdu.SubmitSm;
-import com.cloudhopper.smpp.type.Address;
-import com.cloudhopper.smpp.type.SmppInvalidArgumentException;
 import com.example.smpp.Smpp;
 import com.example.smpp.client.SmppClientOptions;
 import com.example.smpp.model.SmppBindType;
-import com.example.smpp.util.charset.GSM8BitCharset;
+import com.example.smpp.pdu.DeliverSm;
+import com.example.smpp.pdu.SubmitSm;
+import com.example.smpp.types.Address;
+import com.example.smpp.types.SmppInvalidArgumentException;
 import com.example.smpp.util.charset.Gsm7BitCharset;
 import com.example.smpp.util.core.CountDownLatch;
 import com.example.smpp.util.core.FlowControl;
@@ -188,36 +185,36 @@ public class PerfClientMain extends AbstractVerticle {
         return null;
       }
     },
-    CLOUDHOPPER_GSM {
-      @Override
-      public byte[] encode(String text) {
-        return CharsetUtil.encode(text, CharsetUtil.CHARSET_GSM);
-      }
-    },
-    CLOUDHOPPER_GSM7 {
-      @Override
-      public byte[] encode(String text) {
-        return CharsetUtil.encode(text, CharsetUtil.CHARSET_GSM7);
-      }
-    },
-    CLOUDHOPPER_UCS_2 {
-      @Override
-      public byte[] encode(String text) {
-        return CharsetUtil.encode(text.substring(0, 255/2), CharsetUtil.CHARSET_UCS_2);
-      }
-    },
-    PLAIN_UTF8 {
-      @Override
-      public byte[] encode(String text) {
-        return text.getBytes(StandardCharsets.UTF_8);
-      }
-    },
-    CUSTOM_GSM8 {
-      @Override
-      public byte[] encode(String text) {
-        return CharsetUtil.encode(text, gsm8BitCharset);
-      }
-    },
+//    CLOUDHOPPER_GSM {
+//      @Override
+//      public byte[] encode(String text) {
+//        return CharsetUtil.encode(text, CharsetUtil.CHARSET_GSM);
+//      }
+//    },
+//    CLOUDHOPPER_GSM7 {
+//      @Override
+//      public byte[] encode(String text) {
+//        return CharsetUtil.encode(text, CharsetUtil.CHARSET_GSM7);
+//      }
+//    },
+//    CLOUDHOPPER_UCS_2 {
+//      @Override
+//      public byte[] encode(String text) {
+//        return CharsetUtil.encode(text.substring(0, 255/2), CharsetUtil.CHARSET_UCS_2);
+//      }
+//    },
+//    PLAIN_UTF8 {
+//      @Override
+//      public byte[] encode(String text) {
+//        return text.getBytes(StandardCharsets.UTF_8);
+//      }
+//    },
+//    CUSTOM_GSM8 {
+//      @Override
+//      public byte[] encode(String text) {
+//        return CharsetUtil.encode(text, gsm8BitCharset);
+//      }
+//    },
     CUSTOM_GSM7 {
       @Override
       public byte[] encode(String text) {
@@ -230,7 +227,7 @@ public class PerfClientMain extends AbstractVerticle {
       }
     };
     public abstract byte[] encode(String text);
-    private static final BaseCharset gsm8BitCharset = new GSM8BitCharset();
+//    private static final BaseCharset gsm8BitCharset = new GSM8BitCharset();
     private static final CharsetEncoder gsm7BitCharsetEncoder = new Gsm7BitCharset("UTF-8", new String[]{"gsm"}).newEncoder();
   }
 
@@ -343,6 +340,18 @@ public class PerfClientMain extends AbstractVerticle {
 //22:52:08.560 - deliverSmResp latency=0.02519616518887197
 //22:52:08.561 - deliver_sm time=-1646769025019ms
 //22:52:08.561 - Overall throughput=147775.97148463098
+
+//==================================
+
+//20:18:01.227 - done: threads=1, sessions=1, window=600, text(NONE), this=vertx-smpp-client, that=vertx-smpp-server, ssl=off
+//20:18:01.230 - submitSm=100000000, submitSmResp=1.0E8, throughput=158588.1845458986
+//20:18:01.231 - submitSm latency=0.22691762997125
+//20:18:01.232 - submit_sm time=630564.0ms
+//20:18:01.232 - deliverSm=100000000, deliverSmResp=1.0E8, throughput=158588.1845458986
+//20:18:01.232 - deliverSmResp latency=0.05354155271269
+//20:18:01.232 - deliver_sm time=630564.0ms
+//20:18:01.232 - Overall throughput=317176.3690917972
+//20:18:01.233 - cosing vertx 06d5e10c-c5c2-466e-a192-91d8551368f1
 
   public static void main(String[] args) {
     var vertx = Vertx.vertx(new VertxOptions().setEventLoopPoolSize(THREADS));

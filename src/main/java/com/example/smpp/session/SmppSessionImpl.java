@@ -1,11 +1,25 @@
 package com.example.smpp.session;
 
-import com.cloudhopper.smpp.SmppConstants;
-import com.cloudhopper.smpp.pdu.*;
+//   Copyright 2022 Artem Ayrapetov
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+
+import com.example.smpp.SmppConstants;
+import com.example.smpp.model.SequenceCounter;
+import com.example.smpp.pdu.*;
 import com.example.smpp.types.*;
 import com.example.smpp.model.Pool;
 import com.example.smpp.model.SmppSessionState;
-import com.example.smpp.util.*;
 import com.example.smpp.util.core.FlowControl;
 import com.example.smpp.futures.ReplayPduFuture;
 import com.example.smpp.futures.SendPduFuture;

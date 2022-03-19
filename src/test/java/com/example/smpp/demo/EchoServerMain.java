@@ -1,9 +1,9 @@
 package com.example.smpp.demo;
 
-import com.cloudhopper.smpp.SmppConstants;
-import com.cloudhopper.smpp.pdu.DeliverSm;
-import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.example.smpp.Smpp;
+import com.example.smpp.SmppConstants;
+import com.example.smpp.pdu.DeliverSm;
+import com.example.smpp.pdu.SubmitSm;
 import com.example.smpp.server.SmppServer;
 import com.example.smpp.server.SmppServerOptions;
 import io.vertx.core.*;
