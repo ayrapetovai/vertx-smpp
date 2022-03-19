@@ -61,4 +61,17 @@ class SendPduFutureImpl<T> extends AbstractPduFuture<T, SendPduFuture<T>> implem
     });
     return this;
   }
+
+  @Override
+  public SendPduFuture<T> onNackked(Handler<SendPduNackkedException> handler) {
+    delegateAsPromise.onFailure(e -> {
+      if (e instanceof SendPduFailedException) {
+        var error = (SendPduFailedException) e;
+        if (error.getType() == GENERIC_NACK_RECEIVED) {
+          handler.handle((SendPduNackkedException)e);
+        }
+      }
+    });
+    return this;
+  }
 }

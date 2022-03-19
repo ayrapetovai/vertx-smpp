@@ -123,10 +123,17 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
             .handle(new PduResponseContext(pduResp, this));
         return;
       }
+      // TODO sequenceNumber у generic_nack по спеке может быть null
+      //  для таких наков сделать отдельный метод для обработки коллбэка в итерфесе конфигурирования и клиента и сервера.
       var respProm = window.complement(pduResp.getSequenceNumber());
       if (respProm != null) {
         windowGuard.release(1);
-        respProm.tryComplete(pduResp);
+        if (pduResp.getCommandId() != SmppConstants.CMD_ID_GENERIC_NACK) {
+          respProm.tryComplete(pduResp);
+        } else {
+          var resultMessage = pduResp.getResultMessage();
+          respProm.tryFail(new SendPduNackkedException("request malformed: " + resultMessage, resultMessage, pduResp.getCommandStatus()));
+        }
       } else {
         this.options.getOnUnexpectedResponse().handle(new PduResponseContext(pduResp, this));
       }
@@ -139,15 +146,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
 
   @Override
   public <T extends PduResponse> SendPduFuture<T> send(PduRequest<T> req) {
-    if (req.getCommandId() == SmppConstants.CMD_ID_UNBIND) {
-      return SendPduFuture
-          .failedFuture(new SendPduWrongOperationException("Do unbind by close session", state));
-    }
-    if (!this.state.canSend(isServer, req.getCommandId())) {
-      return SendPduFuture
-          .failedFuture(new SendPduWrongOperationException("For state " + state.name() + " operation " + req.getName() + " is wrong", state));
-    }
-    return doSendUnchecked(req, 0);
+    return send(req, 0);
   }
 
   @Override
