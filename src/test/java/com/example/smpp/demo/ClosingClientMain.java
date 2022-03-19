@@ -5,7 +5,6 @@ import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.example.smpp.Smpp;
 import com.example.smpp.client.SmppClientOptions;
 import com.example.smpp.model.SmppBindType;
-import com.example.smpp.model.SmppSessionState;
 import com.example.smpp.util.core.CountDownLatch;
 import com.example.smpp.util.core.FlowControl;
 import io.vertx.core.*;
@@ -13,8 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ClosingClientMain extends AbstractVerticle {
-
   private static final Logger log = LoggerFactory.getLogger(ClosingClientMain.class);
+
   private static final String  SYSTEM_ID = "vertx-smpp-client";
   private static final int     SESSIONS = 1;
   private static final int     THREADS = 1;
@@ -50,7 +49,7 @@ public class ClosingClientMain extends AbstractVerticle {
               .forLoopInt(vertx, 0, SUBMIT_SM_NUMBER, i -> {
                 closeLatch.countDown(1);
                 var ssm = new SubmitSm();
-                if (sess.getState() != SmppSessionState.CLOSED) {
+                if (!sess.isClosed()) {
                   requestCount[0]++;
                   sess.send(ssm)
                       .onSuccess(resp -> responseCount[0]++)

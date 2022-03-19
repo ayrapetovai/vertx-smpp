@@ -1,5 +1,6 @@
 package com.example.smpp.demo;
 
+import com.cloudhopper.commons.charset.BaseCharset;
 import com.cloudhopper.commons.charset.CharsetUtil;
 import com.cloudhopper.smpp.pdu.DeliverSm;
 import com.cloudhopper.smpp.pdu.SubmitSm;
@@ -8,6 +9,7 @@ import com.cloudhopper.smpp.type.SmppInvalidArgumentException;
 import com.example.smpp.Smpp;
 import com.example.smpp.client.SmppClientOptions;
 import com.example.smpp.model.SmppBindType;
+import com.example.smpp.util.smpp.GSM8BitCharset;
 import com.example.smpp.util.smpp.Gsm7BitCharset;
 import com.example.smpp.util.core.CountDownLatch;
 import com.example.smpp.util.core.FlowControl;
@@ -45,11 +47,12 @@ public class PerfClientMain extends AbstractVerticle {
   private static final boolean SSL = false;
   private static final int     WINDOW = 600;
   private static final Encoder ENCODE = NONE;
-//  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_GSM;
-//  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_GSM7;
-//  private static final Encoder ENCODER = Encoder.CLOUDHOPPER_UCS_2;
-//  private static final Encoder ENCODER = Encoder.CUSTOM_GSM7;
-//  private static final Encoder ENCODER = Encoder.PLAIN_UTF8;
+//  private static final Encoder ENCODE = Encoder.CLOUDHOPPER_GSM;
+//  private static final Encoder ENCODE = Encoder.CLOUDHOPPER_GSM7;
+//  private static final Encoder ENCODE = Encoder.CLOUDHOPPER_UCS_2;
+//  private static final Encoder ENCODE = Encoder.CUSTOM_GSM8;
+//  private static final Encoder ENCODE = Encoder.CUSTOM_GSM7;
+//  private static final Encoder ENCODE = Encoder.PLAIN_UTF8;
   private static final int     SUBMIT_SM_NUMBER = 1_000_000;
 
   private final Random rng = new Random();
@@ -209,12 +212,17 @@ public class PerfClientMain extends AbstractVerticle {
         return text.getBytes(StandardCharsets.UTF_8);
       }
     },
+    CUSTOM_GSM8 {
+      @Override
+      public byte[] encode(String text) {
+        return CharsetUtil.encode(text, gsm8BitCharset);
+      }
+    },
     CUSTOM_GSM7 {
       @Override
       public byte[] encode(String text) {
         try {
-          CharsetEncoder gsmEncoder = new Gsm7BitCharset("UTF-8", new String[]{"gsm"}).newEncoder();
-          return gsmEncoder.encode(CharBuffer.wrap(text)).array();
+          return gsm7BitCharsetEncoder.encode(CharBuffer.wrap(text)).array();
         } catch (CharacterCodingException e) {
           e.printStackTrace();
         }
@@ -222,6 +230,8 @@ public class PerfClientMain extends AbstractVerticle {
       }
     };
     public abstract byte[] encode(String text);
+    private static final BaseCharset gsm8BitCharset = new GSM8BitCharset();
+    private static final CharsetEncoder gsm7BitCharsetEncoder = new Gsm7BitCharset("UTF-8", new String[]{"gsm"}).newEncoder();
   }
 
   private void addShortMessage(SubmitSm ssm) {

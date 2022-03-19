@@ -39,7 +39,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private final byte thisInterface = SmppConstants.VERSION_3_4;
 
   private byte targetInterface;
-  private SmppSessionState state = SmppSessionState.OPEN;
+  private SmppSessionState state = SmppSessionState.OPENED;
   private String boundToSystemId;
   private Object referenceObject;
 
@@ -100,7 +100,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
         var respCmdStatus = options.getOnBindReceived()
             .apply(new BindInfo<>(bindRequest)); // TODO check returned status (it must be enum)
         var bindResp = bindRequest.createResponse();
-        addInterfaceVersionTlv(bindResp, getThisInterface(), bindRequest.getInterfaceVersion());
+        addInterfaceVersionTlv(bindResp, getThisInterfaceVersion(), bindRequest.getInterfaceVersion());
         bindResp.setSystemId(options.getSystemId());
         bindResp.setCommandStatus(respCmdStatus);
         this.reply(bindResp)
@@ -328,14 +328,29 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     return clazz.cast(referenceObject);
   }
 
-  @Override
-  public SmppSessionState getState() {
-    return this.state;
+  public void setState(SmppSessionState state) {
+    log.debug("{} moved to state {}", this, state);
+    this.state = state;
   }
 
-  public void setState(SmppSessionState state) {
-    log.debug("session{} moved to state {}", this, state);
-    this.state = state;
+  @Override
+  public boolean isOpened() {
+    return this.state == SmppSessionState.OPENED;
+  }
+
+  @Override
+  public boolean isBound() {
+    return this.state == SmppSessionState.BOUND_RX || this.state == SmppSessionState.BOUND_TX || this.state == SmppSessionState.BOUND_TRX;
+  }
+
+  @Override
+  public boolean isUnbound() {
+    return this.state == SmppSessionState.UNBOUND;
+  }
+
+  @Override
+  public boolean isClosed() {
+    return this.state == SmppSessionState.CLOSED;
   }
 
   @Override
@@ -354,7 +369,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
 
   @Override
   public String toString() {
-    return "Session(" + id + (isServer? ":server": ":client") + "->" + boundToSystemId + ')';
+    return "Session(" + id + (isServer? "-server": "-client") + " -> " + boundToSystemId + ')';
   }
 
   @Override
@@ -367,15 +382,30 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     return options.getCountersEnabled();
   }
 
-  public byte getThisInterface() {
+  public byte getThisInterfaceVersion() {
     return thisInterface;
   }
 
-  public byte getTargetInterface() {
+  public byte getTargetInterfaceVersion() {
     return targetInterface;
   }
 
-  public void setTargetInterface(byte targetInterface) {
+  public void setTargetInterfaceVersion(byte targetInterface) {
     this.targetInterface = targetInterface;
+  }
+
+  @Override
+  public boolean areOptionalParametersSupported() {
+    return (this.targetInterface >= SmppConstants.VERSION_3_4);
+  }
+
+  @Override
+  public boolean canSend(int commandId) {
+    return this.state.canSend(isServer, commandId);
+  }
+
+  @Override
+  public boolean canReceive(int commandId) {
+    return this.state.canReceive(isServer, commandId);
   }
 }

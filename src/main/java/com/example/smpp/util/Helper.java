@@ -26,7 +26,7 @@ public class Helper {
 
     bindRequest.setSystemId(session.getOptions().getSystemId());
     bindRequest.setPassword(session.getOptions().getPassword());
-    bindRequest.setInterfaceVersion(session.getThisInterface());
+    bindRequest.setInterfaceVersion(session.getThisInterfaceVersion());
     bindRequest.setSystemType(session.getOptions().getSystemType());
     bindRequest.setAddressRange(session.getOptions().getAddressRange());
 

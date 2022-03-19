@@ -106,8 +106,7 @@ public class EmailGateWayMain extends AbstractVerticle {
               mailClient.sendMail(createEmail((SubmitSm) rqCtx.getRequest()))
                   .onComplete(sendMailStatus -> {
                     SmppSession targetSession = null;
-                    // TODO isReceiver()?
-                    if (sess.getState().canReceive(false, SmppConstants.CMD_ID_DELIVER_SM)) {
+                    if (sess.canReceive(SmppConstants.CMD_ID_DELIVER_SM)) {
                       targetSession = sess;
                     } else {
                       var sessions = smppClients.get(sess.getBoundToSystemId());
@@ -117,7 +116,7 @@ public class EmailGateWayMain extends AbstractVerticle {
                         while (
                             counter > 0 &&
                                 targetSession == sess &&
-                                !targetSession.getState().canReceive(false, SmppConstants.CMD_ID_DELIVER_SM)
+                                !targetSession.canReceive(SmppConstants.CMD_ID_DELIVER_SM)
                         ) {
                           sessions.addLast(targetSession);
                           targetSession = sessions.pollFirst();
@@ -132,9 +131,7 @@ public class EmailGateWayMain extends AbstractVerticle {
                           sendMailStatus.succeeded() ? SmppConstants.STATUS_OK : SmppConstants.STATUS_DELIVERYFAILURE
                       );
                       targetSession.send(deliveryReport)
-                          .onComplete(deliveryResult -> {
-                            log.info("delivery {}", deliveryResult.succeeded() ? "success" : "fail");
-                          });
+                          .onComplete(deliveryResult -> log.info("delivery {}", deliveryResult.succeeded() ? "success" : "fail"));
                     }
                   });
             }
@@ -145,22 +142,17 @@ public class EmailGateWayMain extends AbstractVerticle {
           log.info("smpp server started");
           started.complete();
         })
-        .onFailure(e -> {
-          log.error("Could not start smpp server", e);
-        });
+        .onFailure(e -> log.error("Could not start smpp server", e));
   }
 
   private MailMessage createEmail(SubmitSm submitSm) {
     var sender = submitSm.getSourceAddress() != null? submitSm.getSourceAddress().getAddress(): "unknown";
     var recepient = submitSm.getDestAddress() != null? submitSm.getDestAddress().getAddress(): "unknown";
     var text = new String(submitSm.getShortMessage());
-
-    MailMessage email = new MailMessage()
+    return new MailMessage()
         .setFrom((sender != null? sender: "unknown") + "@cell.operator")
         .setTo((recepient != null? recepient: "unknown") + "@cell.operator")
         .setText(text);
-
-    return email;
   }
 
   public static void main(String[] args) {

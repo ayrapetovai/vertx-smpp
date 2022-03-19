@@ -9,7 +9,7 @@ import com.cloudhopper.smpp.SmppConstants;
  * Это класс к которому пользователь должен иметь доступ, он должен лежать в соответствующем пакете
  */
 public enum SmppSessionState {
-  OPEN {  // до получения или отправки bind_*(resp)
+  OPENED {  // до получения или отправки bind_*(resp)
     @Override
     public boolean canSend(boolean isServer, int commandId) {
       if (isServer) {

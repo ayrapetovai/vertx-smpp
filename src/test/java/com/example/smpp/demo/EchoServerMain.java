@@ -4,7 +4,6 @@ import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.DeliverSm;
 import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.example.smpp.Smpp;
-import com.example.smpp.model.SmppSessionState;
 import com.example.smpp.server.SmppServer;
 import com.example.smpp.server.SmppServerOptions;
 import io.vertx.core.*;
@@ -60,7 +59,7 @@ public class EchoServerMain extends AbstractVerticle {
                   .onSuccess(nothing -> {
                     if (reqCtx.getRequest() instanceof SubmitSm) {
                       var sendDeliverSmTask = (Runnable)() -> {
-                        if (sess.getState() != SmppSessionState.CLOSED) {
+                        if (!sess.isClosed()) {
                           sess.send(new DeliverSm())
                               .onSuccess(resp -> {})
                               .onFailure(e -> log.error("cannot send deliver_sm, error: {}", e.getMessage()));

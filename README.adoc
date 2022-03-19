@@ -30,7 +30,14 @@ This application was generated using http://start.vertx.io
     * smpp-server-mock, может отрабатывать сценарии.
     * smpp-client-mock, может отрабатывать сценарии.
 
-== Features
+== Client Features
+- Bind to MC as `Transmitter`, `Receiver`, `Tranceiver` by calling bind method and pass host and port to it.
+    * User can send `SystemId`, `Password`, `SystemType`, `Address` in bind_request.
+    * Also, library sends interface version in bind_request.
+- User can set timeouts and callbacks.
+- User can send requests `submit_sm`, `deliver_sm`, `query_sm`, `data_sm`.
+
+== Server Features
 
 == Usage
 Клиентский код сам ведет пул сессий и управляет им из колбэков на события сессии.

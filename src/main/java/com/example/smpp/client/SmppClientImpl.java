@@ -28,7 +28,7 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
   private final SmppClientOptions options;
 
   private Handler<ClientSessionConfigurator> configurator;
-  private SmppSessionImpl session; // -> lastOpenedSession
+  private SmppSessionImpl lastOpenedSession;
 
   public SmppClientImpl(VertxInternal vertx, SmppClientOptions options, CloseFuture closeFuture) {
     super(vertx, options, closeFuture);
@@ -45,19 +45,25 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
   @Override
   protected void initChannel(ChannelPipeline pipeline) {
     var worker = new SmppClientWorker(vertx.createEventLoopContext(), configurator, pool);
-    session = worker.handle(pipeline.channel());
+    if (lastOpenedSession == null) {
+      lastOpenedSession = worker.handle(pipeline.channel());
+    } else {
+      throw new IllegalStateException("last session was not handled");
+    }
   }
 
   @Override
   public BindFuture<SmppSession> bind(String host, int port) {
     var sessionPromise = BindFuture.<SmppSession>promise(vertx.getOrCreateContext());
-    connect(port, host)
+    connect(port, host) // Method `this.initChannel` is called inside `super.connect`, and fills lastOpenedSession field.
         .compose(socket -> {
+          var session = lastOpenedSession;
+          lastOpenedSession = null;
           BaseBind<? extends BaseBindResp> bindRequest = bindRequestByBindType(session);
           return session.send(bindRequest, session.getOptions().getBindTimeout())
               .onFailure(e -> {
                 session.close(Promise.promise(), false);
-                sessionPromise.tryFail(e);
+                sessionPromise.tryFail(e); // TODO custom exception, and custom BindFuture.onSendFailed
               })
               .compose(bindResp -> {
                 if (bindResp.getCommandStatus() == SmppConstants.STATUS_OK) {
@@ -65,7 +71,7 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
                   log.trace("bound to pear: {}", systemId);
                   session.setBoundToSystemId(systemId);
                   session.setState(sessionStateByBindType(session.getOptions().getBindType()));
-                  session.setTargetInterface(intVerFromTlv(bindResp));
+                  session.setTargetInterfaceVersion(intVerFromTlv(bindResp));
                   sessionPromise.complete(session);
                 } else {
                   var closePromise = Promise.<Void>promise();
