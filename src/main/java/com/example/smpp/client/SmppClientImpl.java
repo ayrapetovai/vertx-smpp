@@ -53,8 +53,7 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
     var sessionPromise = BindFuture.<SmppSession>promise(vertx.getOrCreateContext());
     connect(port, host)
         .compose(socket -> {
-          BaseBind<? extends BaseBindResp> bindRequest = bindRequesstByBinType(session.getOptions().getBindType());
-          bindRequest.setSystemId(session.getOptions().getSystemId());
+          BaseBind<? extends BaseBindResp> bindRequest = bindRequestByBindType(session);
           return session.send(bindRequest, session.getOptions().getBindTimeout())
               .onFailure(e -> {
                 session.close(Promise.promise(), false);

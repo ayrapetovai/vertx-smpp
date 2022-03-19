@@ -1,6 +1,7 @@
 package com.example.smpp.session;
 
 import com.cloudhopper.smpp.SmppConstants;
+import com.cloudhopper.smpp.type.Address;
 import com.example.smpp.PduRequestContext;
 import com.example.smpp.PduResponseContext;
 import com.example.smpp.SmppSession;
@@ -16,7 +17,7 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   private String systemId;
   private String password;
   private String systemType;
-  private String addressRange;  // FIXME per session: ton, npi, address
+  private Address addressRange;
 
   private boolean discardAllOnUnbind = false;
   private boolean replyToUnbind = true;
@@ -64,7 +65,7 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   @Override
-  public void setAddressRange(String addressRange) {
+  public void setAddressRange(Address addressRange) {
     this.addressRange = addressRange;
   }
 
@@ -159,7 +160,7 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   @Override
-  public String getAddressRange() {
+  public Address getAddressRange() {
     return addressRange;
   }
 

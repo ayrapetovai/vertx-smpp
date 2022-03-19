@@ -1,5 +1,6 @@
 package com.example.smpp.session;
 
+import com.cloudhopper.smpp.type.Address;
 import com.example.smpp.model.SmppBindType;
 
 public interface ClientSessionConfigurator extends SessionCallbacks {
@@ -7,7 +8,7 @@ public interface ClientSessionConfigurator extends SessionCallbacks {
   void setSystemId(String systemId);
   void setPassword(String password);
   void setSystemType(String systemType);
-  void setAddressRange(String addressRange); // String -> ImmutableAddress
+  void setAddressRange(Address addressRange);
 
   void setDiscardAllOnUnbind(boolean dropAllOnUnbind);
   void setReplyToUnbind(boolean replyToUnbind);

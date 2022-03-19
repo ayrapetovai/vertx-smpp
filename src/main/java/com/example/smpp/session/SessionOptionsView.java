@@ -1,5 +1,6 @@
 package com.example.smpp.session;
 
+import com.cloudhopper.smpp.type.Address;
 import com.example.smpp.model.SmppBindType;
 
 public interface SessionOptionsView {
@@ -7,7 +8,7 @@ public interface SessionOptionsView {
   String getSystemId();
   String getPassword();
   String getSystemType();
-  String getAddressRange(); // String -> ImmutableAddress
+  Address getAddressRange();
 
   boolean getReplyToUnbind();
   boolean isDiscardAllOnUnbind();

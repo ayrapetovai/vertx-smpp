@@ -12,7 +12,6 @@ import java.util.List;
 
 public class SmppSessionPduDecoder extends ByteToMessageDecoder {
   private static final Logger logger = LoggerFactory.getLogger(SmppSessionPduDecoder.class);
-
   private final PduTranscoder transcoder;
 
   public SmppSessionPduDecoder(PduTranscoder transcoder) {

@@ -4,21 +4,33 @@ import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.tlv.Tlv;
 import com.cloudhopper.smpp.tlv.TlvConvertException;
+import com.example.smpp.SmppSessionImpl;
 import com.example.smpp.model.SmppBindType;
 import com.example.smpp.model.SmppSessionState;
 
 public class Helper {
-  public static BaseBind<? extends BaseBindResp> bindRequesstByBinType(SmppBindType bindType) {
+
+  public static BaseBind<? extends BaseBindResp> bindRequestByBindType(SmppSessionImpl session) {
+    var bindType = session.getOptions().getBindType();
+    BaseBind<? extends BaseBindResp> bindRequest;
     switch (bindType) {
       case TRANSMITTER:
-        return new BindTransmitter();
+        bindRequest = new BindTransmitter(); break;
       case RECEIVER:
-        return new BindReceiver();
+        bindRequest = new BindReceiver(); break;
       case TRANSCEIVER:
-        return new BindTransceiver();
+        bindRequest = new BindTransceiver(); break;
       default:
         throw new IllegalStateException("no such enumerator " + bindType);
     }
+
+    bindRequest.setSystemId(session.getOptions().getSystemId());
+    bindRequest.setPassword(session.getOptions().getPassword());
+    bindRequest.setInterfaceVersion(session.getThisInterface());
+    bindRequest.setSystemType(session.getOptions().getSystemType());
+    bindRequest.setAddressRange(session.getOptions().getAddressRange());
+
+    return bindRequest;
   }
 
   public static SmppSessionState sessionStateByBindType(SmppBindType bindType) {
