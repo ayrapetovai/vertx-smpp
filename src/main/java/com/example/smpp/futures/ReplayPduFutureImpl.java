@@ -1,4 +1,4 @@
-package com.example.smpp.util.futures;
+package com.example.smpp.futures;
 
 import io.netty.util.concurrent.Future;
 import io.vertx.core.Handler;

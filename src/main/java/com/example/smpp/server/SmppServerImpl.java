@@ -1,6 +1,6 @@
 package com.example.smpp.server;
 
-import com.example.smpp.Pool;
+import com.example.smpp.model.Pool;
 import com.example.smpp.session.ServerSessionConfigurator;
 import io.netty.channel.Channel;
 import io.vertx.core.*;

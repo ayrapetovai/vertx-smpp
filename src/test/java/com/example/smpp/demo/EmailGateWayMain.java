@@ -4,7 +4,7 @@ import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.DeliverSm;
 import com.cloudhopper.smpp.pdu.SubmitSm;
 import com.example.smpp.Smpp;
-import com.example.smpp.SmppSession;
+import com.example.smpp.session.SmppSession;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;

@@ -4,7 +4,7 @@ import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.tlv.Tlv;
 import com.cloudhopper.smpp.tlv.TlvConvertException;
-import com.example.smpp.SmppSessionImpl;
+import com.example.smpp.session.SmppSessionImpl;
 import com.example.smpp.model.SmppBindType;
 import com.example.smpp.model.SmppSessionState;
 

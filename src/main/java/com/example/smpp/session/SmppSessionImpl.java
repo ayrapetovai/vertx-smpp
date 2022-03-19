@@ -1,15 +1,14 @@
-package com.example.smpp;
+package com.example.smpp.session;
 
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.*;
-import com.example.smpp.model.BindInfo;
+import com.example.smpp.types.*;
+import com.example.smpp.model.Pool;
 import com.example.smpp.model.SmppSessionState;
-import com.example.smpp.session.SessionOptionsView;
-import com.example.smpp.session.SmppSessionOptions;
 import com.example.smpp.util.*;
 import com.example.smpp.util.core.FlowControl;
-import com.example.smpp.util.futures.ReplayPduFuture;
-import com.example.smpp.util.futures.SendPduFuture;
+import com.example.smpp.futures.ReplayPduFuture;
+import com.example.smpp.futures.SendPduFuture;
 import com.example.smpp.util.core.Semaphore;
 import io.netty.channel.ChannelHandlerContext;
 import io.vertx.core.Promise;

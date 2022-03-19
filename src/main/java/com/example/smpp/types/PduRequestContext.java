@@ -1,7 +1,8 @@
-package com.example.smpp;
+package com.example.smpp.types;
 
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
+import com.example.smpp.session.SmppSession;
 
 public class PduRequestContext<T extends PduResponse> {
   private final PduRequest<T> request;

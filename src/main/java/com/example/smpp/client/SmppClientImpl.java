@@ -2,12 +2,12 @@ package com.example.smpp.client;
 
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.*;
-import com.example.smpp.SmppSession;
-import com.example.smpp.Pool;
-import com.example.smpp.SmppSessionImpl;
+import com.example.smpp.session.SmppSession;
+import com.example.smpp.model.Pool;
+import com.example.smpp.session.SmppSessionImpl;
 import com.example.smpp.session.ClientSessionConfigurator;
-import com.example.smpp.util.futures.BindFuture;
-import com.example.smpp.util.SendBindRefusedException;
+import com.example.smpp.futures.BindFuture;
+import com.example.smpp.types.SendBindRefusedException;
 import io.netty.channel.ChannelPipeline;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;

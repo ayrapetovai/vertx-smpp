@@ -1,10 +1,9 @@
-package com.example.smpp;
+package com.example.smpp.session;
 
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
-import com.example.smpp.session.SessionOptionsView;
-import com.example.smpp.util.futures.ReplayPduFuture;
-import com.example.smpp.util.futures.SendPduFuture;
+import com.example.smpp.futures.ReplayPduFuture;
+import com.example.smpp.futures.SendPduFuture;
 import io.vertx.core.Closeable;
 import io.vertx.core.Promise;
 import io.vertx.core.spi.metrics.MetricsProvider;

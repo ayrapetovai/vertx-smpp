@@ -1,6 +1,7 @@
-package com.example.smpp;
+package com.example.smpp.types;
 
 import com.cloudhopper.smpp.pdu.PduResponse;
+import com.example.smpp.session.SmppSession;
 
 // TODO to PduResponseContext
 /*

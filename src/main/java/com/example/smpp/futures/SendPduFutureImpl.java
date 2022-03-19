@@ -1,6 +1,9 @@
-package com.example.smpp.util.futures;
+package com.example.smpp.futures;
 
-import com.example.smpp.util.*;
+import com.example.smpp.types.SendPduDiscardedException;
+import com.example.smpp.types.SendPduFailedException;
+import com.example.smpp.types.SendPduNackkedException;
+import com.example.smpp.types.SendPduWindowTimeoutException;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.impl.future.PromiseInternal;

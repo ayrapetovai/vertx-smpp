@@ -1,7 +1,7 @@
-package com.example.smpp.util.futures;
+package com.example.smpp.futures;
 
-import com.example.smpp.util.SendBindRefusedException;
-import com.example.smpp.util.SendPduChannelClosedException;
+import com.example.smpp.types.SendBindRefusedException;
+import com.example.smpp.types.SendPduChannelClosedException;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;

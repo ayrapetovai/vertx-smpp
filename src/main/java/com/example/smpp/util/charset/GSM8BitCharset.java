@@ -1,4 +1,4 @@
-package com.example.smpp.util.smpp;
+package com.example.smpp.util.charset;
 
 import com.cloudhopper.commons.charset.BaseCharset;
 import com.cloudhopper.commons.util.FastByteArrayOutputStream;

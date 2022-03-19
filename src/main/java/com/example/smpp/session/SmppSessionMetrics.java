@@ -1,4 +1,4 @@
-package com.example.smpp;
+package com.example.smpp.session;
 
 import io.vertx.core.spi.metrics.Metrics;
 

@@ -10,22 +10,22 @@ import io.vertx.core.Vertx;
 import io.vertx.core.impl.CloseFuture;
 import io.vertx.core.impl.VertxInternal;
 
-public class Smpp {
+public interface Smpp {
 
-  public static SmppServer server(Vertx vertx) {
+  static SmppServer server(Vertx vertx) {
     return new SmppServerImpl((VertxInternal) vertx, new SmppServerOptions());
   }
 
-  public static SmppServer server(Vertx vertx, SmppServerOptions options) {
+  static SmppServer server(Vertx vertx, SmppServerOptions options) {
     return new SmppServerImpl((VertxInternal) vertx, options);
   }
 
-  public static SmppClient client(Vertx vertx) {
-    return new SmppClientImpl((VertxInternal) vertx,  new SmppClientOptions(), new CloseFuture());
+  static SmppClient client(Vertx vertx) {
+    return new SmppClientImpl((VertxInternal) vertx, new SmppClientOptions(), new CloseFuture());
   }
 
-  public static SmppClient client(Vertx vertx, SmppClientOptions options) {
-    return new SmppClientImpl((VertxInternal) vertx,  options, new CloseFuture());
+  static SmppClient client(Vertx vertx, SmppClientOptions options) {
+    return new SmppClientImpl((VertxInternal) vertx, options, new CloseFuture());
   }
 
 }

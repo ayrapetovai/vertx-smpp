@@ -1,4 +1,4 @@
-package com.example.smpp.util;
+package com.example.smpp.types;
 
 import com.example.smpp.model.SendPduExceptionType;
 import com.example.smpp.model.SmppSessionState;

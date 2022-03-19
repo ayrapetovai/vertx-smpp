@@ -2,10 +2,9 @@ package com.example.smpp.session;
 
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.type.Address;
-import com.example.smpp.PduRequestContext;
-import com.example.smpp.PduResponseContext;
-import com.example.smpp.SmppSession;
-import com.example.smpp.model.BindInfo;
+import com.example.smpp.types.PduRequestContext;
+import com.example.smpp.types.PduResponseContext;
+import com.example.smpp.types.BindInfo;
 import com.example.smpp.model.SmppBindType;
 import io.vertx.core.Handler;
 

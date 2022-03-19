@@ -1,4 +1,4 @@
-package com.example.smpp.model;
+package com.example.smpp.types;
 
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;

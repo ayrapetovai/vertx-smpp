@@ -1,9 +1,9 @@
-package com.example.smpp;
+package com.example.smpp.session;
 
 import com.cloudhopper.smpp.pdu.PduRequest;
 import com.cloudhopper.smpp.pdu.PduResponse;
-import com.example.smpp.util.SendPduDiscardedException;
-import com.example.smpp.util.futures.SendPduFuture;
+import com.example.smpp.types.SendPduDiscardedException;
+import com.example.smpp.futures.SendPduFuture;
 
 import java.util.HashMap;
 import java.util.Map;

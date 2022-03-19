@@ -1,9 +1,8 @@
 package com.example.smpp.session;
 
-import com.example.smpp.PduRequestContext;
-import com.example.smpp.PduResponseContext;
-import com.example.smpp.SmppSession;
-import com.example.smpp.model.BindInfo;
+import com.example.smpp.types.PduRequestContext;
+import com.example.smpp.types.PduResponseContext;
+import com.example.smpp.types.BindInfo;
 import io.vertx.core.Handler;
 
 import java.util.function.Function;

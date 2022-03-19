@@ -1,6 +1,6 @@
-package com.example.smpp.util.futures;
+package com.example.smpp.futures;
 
-import com.example.smpp.util.*;
+import com.example.smpp.types.*;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;

@@ -1,4 +1,4 @@
-package com.example.smpp;
+package com.example.smpp.util.channel;
 
 import com.cloudhopper.smpp.pdu.Pdu;
 import com.cloudhopper.smpp.transcoder.PduTranscoder;
