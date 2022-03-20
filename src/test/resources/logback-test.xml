@@ -8,13 +8,13 @@
     </layout>
   </appender>
 
-<!--  <logger name="com" level="warn"/>-->
-<!--  <logger name="com.example.smpp.channel.SmppSessionPduDecoder" level="trace"/>-->
-<!--  <logger name="com.example.smpp.channel.SmppSessionPduEncoder" level="trace"/>-->
-<!--  <logger name="com.example.smpp" level="debug"/>-->
-<!--  <logger name="com.example.smpp" level="trace"/>-->
-<!--  <logger name="com.example.smpp" level="warn"/>-->
-  <logger name="com.example.smpp.demo" level="info"/>
+<!--  <logger name="io" level="warn"/>-->
+<!--  <logger name="io.vertx.smpp.channel.SmppSessionPduDecoder" level="trace"/>-->
+<!--  <logger name="io.vertx.smpp.channel.SmppSessionPduEncoder" level="trace"/>-->
+<!--  <logger name="io.vertx.smpp" level="debug"/>-->
+<!--  <logger name="io.vertx.smpp" level="trace"/>-->
+<!--  <logger name="io.vertx.smpp" level="warn"/>-->
+  <logger name="io.vertx.smpp.demo" level="info"/>
 
 <!--  <root level="trace">-->
   <root level="info">
