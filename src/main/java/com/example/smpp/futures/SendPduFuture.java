@@ -47,6 +47,8 @@ public interface SendPduFuture<T> extends Future<T>, Promise<T> {
 
   SendPduFuture<T> onWindowTimeout(Handler<SendPduWindowTimeoutException> handler);
 
+  SendPduFuture<T> onTimeout(Handler<SendPduRequestTimeoutException> handler);
+
   SendPduFuture<T> onChannelClosed(Handler<SendPduChannelClosedException> handler);
 
   SendPduFuture<T> onWrongOperation(Handler<SendPduWrongOperationException> handler);

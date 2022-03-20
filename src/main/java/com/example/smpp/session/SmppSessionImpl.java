@@ -43,7 +43,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
 
   private final Pool pool;
   private final Long id;
-  private final Window window = new Window();
+  private final Window window;
   private final Semaphore windowGuard;
   private final SmppSessionOptions options;
   private final boolean isServer;
@@ -66,14 +66,21 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     this.windowGuard = Semaphore.create(context.owner(), options.getWindowSize());
     this.options = options;
     this.isServer = isServer;
+    this.window = new Window(context);
     this.expireTimerId = vertx.setPeriodic(options.getWindowMonitorInterval(), timerId -> {
-      window.purgeAllExpired(expiredRecord -> {
-        if (expiredRecord.responsePromise != null) {
-          log.trace("pdu.sequence={} expired on send", expiredRecord.sequenceNumber);
-          windowGuard.release(1);
-          expiredRecord.responsePromise.tryFail("no response on time, request expired");
-        }
-      });
+      try {
+        window.purgeAllExpired(expiredRecord -> {
+          if (expiredRecord.responsePromise != null) {
+            log.trace("pdu.sequence={} expired on send", expiredRecord.sequenceNumber);
+            windowGuard.release(1);
+            expiredRecord.responsePromise.tryFail(
+                new SendPduRequestTimeoutException("no response on time, request expired", expiredRecord.offeredAt, expiredRecord.expiresAt)
+            );
+          }
+        });
+      } catch (Exception e) {
+        log.error("Expiring periodic routing failed", e);
+      }
     });
   }
 
@@ -254,7 +261,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     }
     if (!options.isDiscardAllOnUnbind()) {
       FlowControl
-          .awaitCondition(vertx, () -> window.size() == 0, options.getDiscardTimeout())
+          .awaitCondition(vertx.getOrCreateContext(), () -> window.size() == 0, options.getDiscardTimeout())
           .onComplete(ar -> {
             if (ar.succeeded()) {
               log.debug("awaiting of window succeed");

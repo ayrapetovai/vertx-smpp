@@ -14,15 +14,11 @@ package com.example.smpp.futures;
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-import com.example.smpp.types.SendPduDiscardedException;
-import com.example.smpp.types.SendPduFailedException;
-import com.example.smpp.types.SendPduNackkedException;
-import com.example.smpp.types.SendPduWindowTimeoutException;
+import com.example.smpp.types.*;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.impl.future.PromiseInternal;
 
-import static com.example.smpp.model.SendPduExceptionType.*;
 
 class SendPduFutureImpl<T> extends AbstractPduFuture<T, SendPduFuture<T>> implements SendPduFuture<T> {
 
@@ -56,11 +52,8 @@ class SendPduFutureImpl<T> extends AbstractPduFuture<T, SendPduFuture<T>> implem
   @Override
   public SendPduFuture<T> onWindowTimeout(Handler<SendPduWindowTimeoutException> handler) {
     delegateAsPromise.onFailure(e -> {
-      if (e instanceof SendPduFailedException) {
-        var error = (SendPduFailedException) e;
-        if (error.getType() == WINDOW_TIMEOUT) {
-          handler.handle((SendPduWindowTimeoutException)e);
-        }
+      if (e instanceof SendPduWindowTimeoutException) {
+        handler.handle((SendPduWindowTimeoutException)e);
       }
     });
     return this;
@@ -69,11 +62,8 @@ class SendPduFutureImpl<T> extends AbstractPduFuture<T, SendPduFuture<T>> implem
   @Override
   public SendPduFuture<T> onDiscarded(Handler<SendPduDiscardedException> handler) {
     delegateAsPromise.onFailure(e -> {
-      if (e instanceof SendPduFailedException) {
-        var error = (SendPduFailedException) e;
-        if (error.getType() == REQUEST_DISCARDED_ON_CLOSE) {
-          handler.handle((SendPduDiscardedException)e);
-        }
+      if (e instanceof SendPduDiscardedException) {
+        handler.handle((SendPduDiscardedException)e);
       }
     });
     return this;
@@ -82,11 +72,18 @@ class SendPduFutureImpl<T> extends AbstractPduFuture<T, SendPduFuture<T>> implem
   @Override
   public SendPduFuture<T> onNackked(Handler<SendPduNackkedException> handler) {
     delegateAsPromise.onFailure(e -> {
-      if (e instanceof SendPduFailedException) {
-        var error = (SendPduFailedException) e;
-        if (error.getType() == GENERIC_NACK_RECEIVED) {
-          handler.handle((SendPduNackkedException)e);
-        }
+      if (e instanceof SendPduNackkedException) {
+        handler.handle((SendPduNackkedException)e);
+      }
+    });
+    return this;
+  }
+
+  @Override
+  public SendPduFuture<T> onTimeout(Handler<SendPduRequestTimeoutException> handler) {
+    delegateAsPromise.onFailure(e -> {
+      if (e instanceof SendPduRequestTimeoutException) {
+        handler.handle((SendPduRequestTimeoutException)e);
       }
     });
     return this;

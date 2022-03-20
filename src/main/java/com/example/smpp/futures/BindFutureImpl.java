@@ -16,12 +16,8 @@ package com.example.smpp.futures;
 
 import com.example.smpp.types.SendBindRefusedException;
 import com.example.smpp.types.SendPduChannelClosedException;
-import com.example.smpp.types.SendPduFailedException;
 import io.vertx.core.Handler;
 import io.vertx.core.impl.future.PromiseInternal;
-
-
-import static com.example.smpp.model.SendPduExceptionType.*;
 
 class BindFutureImpl<T> extends AbstractPduFuture<T, BindFuture<T>> implements BindFuture<T> {
 
@@ -50,11 +46,8 @@ class BindFutureImpl<T> extends AbstractPduFuture<T, BindFuture<T>> implements B
   @Override
   public BindFuture<T> onChannelClosed(Handler<SendPduChannelClosedException> handler) {
     delegateAsPromise.onFailure(e -> {
-      if (e instanceof SendPduFailedException) {
-        var error = (SendPduFailedException) e;
-        if (error.getType() == CHANNEL_CLOSED) {
-          handler.handle((SendPduChannelClosedException)e);
-        }
+      if (e instanceof SendPduChannelClosedException) {
+        handler.handle((SendPduChannelClosedException)e);
       }
     });
     return this;
@@ -63,11 +56,8 @@ class BindFutureImpl<T> extends AbstractPduFuture<T, BindFuture<T>> implements B
   @Override
   public BindFuture<T> onRefuse(Handler<SendBindRefusedException> handler) {
     delegateAsPromise.onFailure(e -> {
-      if (e instanceof SendPduFailedException) {
-        var error = (SendPduFailedException) e;
-        if (error.getType() == BIND_REFUSED) {
-          handler.handle((SendBindRefusedException)e);
-        }
+      if (e instanceof SendBindRefusedException) {
+        handler.handle((SendBindRefusedException)e);
       }
     });
     return this;

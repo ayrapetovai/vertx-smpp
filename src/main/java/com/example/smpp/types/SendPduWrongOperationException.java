@@ -14,7 +14,6 @@ package com.example.smpp.types;
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-import com.example.smpp.model.SendPduExceptionType;
 import com.example.smpp.model.SmppSessionState;
 
 public class SendPduWrongOperationException extends SendPduFailedException {
@@ -24,11 +23,6 @@ public class SendPduWrongOperationException extends SendPduFailedException {
   public SendPduWrongOperationException(String message, SmppSessionState state) {
     super(message);
     this.state = state;
-  }
-
-  @Override
-  public SendPduExceptionType getType() {
-    return SendPduExceptionType.WRONG_OPERATION;
   }
 
   public SmppSessionState getState() {

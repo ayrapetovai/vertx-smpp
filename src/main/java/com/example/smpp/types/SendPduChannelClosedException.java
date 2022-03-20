@@ -14,16 +14,9 @@ package com.example.smpp.types;
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-import com.example.smpp.model.SendPduExceptionType;
-
 public class SendPduChannelClosedException extends SendPduFailedException {
 
   public SendPduChannelClosedException(String message) {
     super(message);
-  }
-
-  @Override
-  public SendPduExceptionType getType() {
-    return SendPduExceptionType.CHANNEL_CLOSED;
   }
 }

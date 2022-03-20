@@ -14,8 +14,6 @@ package com.example.smpp.types;
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-import com.example.smpp.model.SendPduExceptionType;
-
 public class SendPduWindowTimeoutException extends SendPduFailedException {
 
   private final int windowSize;
@@ -23,11 +21,6 @@ public class SendPduWindowTimeoutException extends SendPduFailedException {
   public SendPduWindowTimeoutException(String message, int windowSize) {
     super(message);
     this.windowSize = windowSize;
-  }
-
-  @Override
-  public SendPduExceptionType getType() {
-    return SendPduExceptionType.WINDOW_TIMEOUT;
   }
 
   public int getWindowSize() {

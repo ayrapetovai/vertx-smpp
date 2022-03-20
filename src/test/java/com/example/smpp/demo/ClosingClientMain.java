@@ -46,7 +46,7 @@ public class ClosingClientMain extends AbstractVerticle {
         .onSuccess(sess -> {
           log.info("user code: client bound");
           FlowControl
-              .forLoopInt(vertx, 0, SUBMIT_SM_NUMBER, i -> {
+              .forLoopInt(vertx.getOrCreateContext(), 0, SUBMIT_SM_NUMBER, i -> {
                 closeLatch.countDown(1);
                 var ssm = new SubmitSm();
                 if (!sess.isClosed()) {

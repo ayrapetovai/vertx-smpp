@@ -1,4 +1,4 @@
-package com.example.smpp.types;
+package com.example.smpp.util;
 
 
 /*

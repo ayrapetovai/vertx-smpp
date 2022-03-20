@@ -15,7 +15,6 @@ package com.example.smpp.futures;
 //   limitations under the License.
 
 import com.example.smpp.types.SendPduChannelClosedException;
-import com.example.smpp.types.SendPduFailedException;
 import com.example.smpp.types.SendPduWriteFailedException;
 import com.example.smpp.types.SendPduWrongOperationException;
 import io.vertx.core.AsyncResult;
@@ -28,8 +27,6 @@ import io.vertx.core.impl.future.Listener;
 import io.vertx.core.impl.future.PromiseInternal;
 
 import java.util.function.Function;
-
-import static com.example.smpp.model.SendPduExceptionType.*;
 
 // package-private
 abstract class AbstractPduFuture<T, F> implements Future<T>, Promise<T>, FutureInternal<T> {
@@ -134,11 +131,8 @@ abstract class AbstractPduFuture<T, F> implements Future<T>, Promise<T>, FutureI
 
   public F onChannelClosed(Handler<SendPduChannelClosedException> handler) {
     delegateAsPromise.onFailure(e -> {
-      if (e instanceof SendPduFailedException) {
-        var error = (SendPduFailedException) e;
-        if (error.getType() == CHANNEL_CLOSED) {
-          handler.handle((SendPduChannelClosedException)e);
-        }
+      if (e instanceof SendPduChannelClosedException) {
+        handler.handle((SendPduChannelClosedException)e);
       }
     });
     return (F) this;
@@ -146,11 +140,8 @@ abstract class AbstractPduFuture<T, F> implements Future<T>, Promise<T>, FutureI
 
   public F onWrongOperation(Handler<SendPduWrongOperationException> handler) {
     delegateAsPromise.onFailure(e -> {
-      if (e instanceof SendPduFailedException) {
-        var error = (SendPduFailedException) e;
-        if (error.getType() == WRONG_OPERATION) {
-          handler.handle((SendPduWrongOperationException)e);
-        }
+      if (e instanceof SendPduWrongOperationException) {
+        handler.handle((SendPduWrongOperationException)e);
       }
     });
     return (F) this;
@@ -158,11 +149,8 @@ abstract class AbstractPduFuture<T, F> implements Future<T>, Promise<T>, FutureI
 
   public F onWriteFailed(Handler<SendPduWriteFailedException> handler) {
     delegateAsPromise.onFailure(e -> {
-      if (e instanceof SendPduFailedException) {
-        var error = (SendPduFailedException) e;
-        if (error.getType() == WRITE_TO_CHANNEL_FAILED) {
-          handler.handle((SendPduWriteFailedException)e);
-        }
+      if (e instanceof SendPduWriteFailedException) {
+        handler.handle((SendPduWriteFailedException)e);
       }
     });
     return (F) this;

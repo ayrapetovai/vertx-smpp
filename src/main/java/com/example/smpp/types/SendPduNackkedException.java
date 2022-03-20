@@ -14,8 +14,6 @@ package com.example.smpp.types;
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-import com.example.smpp.model.SendPduExceptionType;
-
 public class SendPduNackkedException extends SendPduFailedException {
 
   private final String resultMessage;
@@ -33,10 +31,5 @@ public class SendPduNackkedException extends SendPduFailedException {
 
   public int getStatus() {
     return status;
-  }
-
-  @Override
-  public SendPduExceptionType getType() {
-    return SendPduExceptionType.GENERIC_NACK_RECEIVED;
   }
 }

@@ -18,25 +18,36 @@ import com.example.smpp.pdu.PduRequest;
 import com.example.smpp.pdu.PduResponse;
 import com.example.smpp.types.SendPduDiscardedException;
 import com.example.smpp.futures.SendPduFuture;
+import com.example.smpp.util.core.FlowControl;
+import io.vertx.core.impl.ContextInternal;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public class Window {
   public static class RequestRecord<T extends PduResponse> {
     final SendPduFuture<T> responsePromise;
     final int sequenceNumber;
+    final long offeredAt;
     final long expiresAt;
 
     public RequestRecord(SendPduFuture<T> responsePromise, int sequenceNumber, long expiresAt) {
+      this.offeredAt = System.nanoTime();
       this.expiresAt = expiresAt;
       this.sequenceNumber = sequenceNumber;
       this.responsePromise = responsePromise;
     }
   }
 
-  private final Map<Integer, RequestRecord> cache = new HashMap<>();
+  private final Map<Integer, RequestRecord> cache = new ConcurrentHashMap<>();
+  private final ContextInternal context;
+
+  private boolean expirationInProgress = false;
+
+  public Window(ContextInternal context) {
+    this.context = context;
+  }
 
   public synchronized <T extends PduResponse> void offer(PduRequest<T> req, SendPduFuture<T> promise, long expiresAt) {
     var seqNum = req.getSequenceNumber();
@@ -67,15 +78,27 @@ public class Window {
   }
 
   public synchronized void purgeAllExpired(Consumer<RequestRecord> promiseHandler) {
-    var now = System.currentTimeMillis();
-    var it = cache.values().iterator();
-    while (it.hasNext()) {
-      var record = it.next();
-      if (record.expiresAt < now && record.responsePromise != null) {
-        it.remove();
-        promiseHandler.accept(record);
-      }
+    if (expirationInProgress) {
+      return;
     }
+    expirationInProgress = true;
+    var it = cache.values().iterator();
+    FlowControl
+        .whileCondition(context, it::hasNext, () -> {
+          var record = it.next();
+          if (record != null) {
+            if (record.expiresAt < System.currentTimeMillis() && record.responsePromise != null) {
+              it.remove();
+              promiseHandler.accept(record);
+            }
+          }
+        })
+        .onComplete(v -> {
+              synchronized (Window.this) {
+                expirationInProgress = false;
+              }
+            }
+        );
   }
 
   public synchronized int size() {

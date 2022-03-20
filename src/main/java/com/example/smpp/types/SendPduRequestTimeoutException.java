@@ -14,16 +14,24 @@ package com.example.smpp.types;
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-public class SendBindRefusedException extends SendPduFailedException {
+import java.util.concurrent.TimeUnit;
 
-  private final int status;
+public class SendPduRequestTimeoutException extends SendPduFailedException {
 
-  public SendBindRefusedException(String message, int status) {
+  private final long offeredAt;
+  private final long expiresAt;
+
+  public SendPduRequestTimeoutException(String message, long offeredAtNs, long expiresAtNs) {
     super(message);
-    this.status = status;
+    this.offeredAt = offeredAtNs;
+    this.expiresAt = expiresAtNs;
   }
 
-  public int getStatus() {
-    return status;
+  public long getOfferedAt(TimeUnit desiredTimeUnit) {
+    return desiredTimeUnit.convert(offeredAt, TimeUnit.NANOSECONDS);
+  }
+
+  public long getExpiresAt(TimeUnit desiredTimeUnit) {
+    return desiredTimeUnit.convert(expiresAt, TimeUnit.NANOSECONDS);
   }
 }

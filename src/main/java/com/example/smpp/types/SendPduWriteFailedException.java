@@ -14,16 +14,9 @@ package com.example.smpp.types;
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-import com.example.smpp.model.SendPduExceptionType;
-
 public class SendPduWriteFailedException extends SendPduFailedException {
 
   public SendPduWriteFailedException(String message, Exception cause) {
     super(message, cause);
-  }
-
-  @Override
-  public SendPduExceptionType getType() {
-    return SendPduExceptionType.WRITE_TO_CHANNEL_FAILED;
   }
 }
