@@ -4,13 +4,16 @@ import com.example.smpp.Smpp;
 import com.example.smpp.SmppConstants;
 import com.example.smpp.pdu.DeliverSm;
 import com.example.smpp.pdu.SubmitSm;
+import com.example.smpp.pdu.SubmitSmResp;
 import com.example.smpp.server.SmppServer;
 import com.example.smpp.server.SmppServerOptions;
+import com.example.smpp.types.SmppInvalidArgumentException;
 import io.vertx.core.*;
 import io.vertx.core.net.JksOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
 public class EchoServerMain extends AbstractVerticle {
@@ -55,12 +58,15 @@ public class EchoServerMain extends AbstractVerticle {
           cfg.onRequest(reqCtx -> {
             var sendSubmitSmRespTask = (Runnable) () -> {
               var sess = reqCtx.getSession();
-              sess.reply(reqCtx.getRequest().createResponse())
+              var messageId = UUID.randomUUID().toString();
+              var submitSmResp = (SubmitSmResp) reqCtx.getRequest().createResponse();
+              submitSmResp.setMessageId(messageId);
+              sess.reply(submitSmResp)
                   .onSuccess(nothing -> {
                     if (reqCtx.getRequest() instanceof SubmitSm) {
                       var sendDeliverSmTask = (Runnable)() -> {
                         if (!sess.isClosed()) {
-                          sess.send(new DeliverSm())
+                          sess.send(createDeliverSm(messageId))
                               .onSuccess(resp -> {})
                               .onFailure(e -> log.error("cannot send deliver_sm, error: {}", e.getMessage()));
                         } else {
@@ -98,6 +104,14 @@ public class EchoServerMain extends AbstractVerticle {
         });
 
     onShutdown(vertx, server);
+  }
+
+  private DeliverSm createDeliverSm(String messageId) {
+    var deliverSm = new DeliverSm();
+    try {
+      deliverSm.setShortMessage(messageId.getBytes());
+    } catch (SmppInvalidArgumentException ignores) {}
+    return deliverSm;
   }
 
   private boolean check(String systemId, String password) {

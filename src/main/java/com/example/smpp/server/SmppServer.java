@@ -31,6 +31,8 @@ public interface SmppServer extends Closeable {
 
   // API for built smpp server
   Future<SmppServer> start(String host, int port);
+  Future<SmppServer> start();
+  int actualPort();
   boolean isListening();
 
   /**

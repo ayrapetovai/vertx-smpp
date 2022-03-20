@@ -16,6 +16,7 @@ package com.example.smpp.server;
 
 import com.example.smpp.model.Pool;
 import com.example.smpp.session.ServerSessionConfigurator;
+import com.example.smpp.util.core.CountDownLatch;
 import io.netty.channel.Channel;
 import io.vertx.core.*;
 import io.vertx.core.impl.ContextInternal;
@@ -26,7 +27,7 @@ import io.vertx.core.net.impl.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 // FIXME implement clone()
 public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServer {
@@ -34,7 +35,7 @@ public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServ
 
   private final Pool pool = new Pool();
 
-  private Handler<ServerSessionConfigurator> configurator;
+  private Handler<ServerSessionConfigurator> configurator = x -> {};
 
   public SmppServerImpl(VertxInternal vertx, SmppServerOptions options) {
     super(vertx, options);
@@ -54,58 +55,43 @@ public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServ
   }
 
   @Override
+  public int actualPort() {
+    return super.actualPort();
+  }
+
+  @Override
   public Future<SmppServer> start(String host, int port) {
     return listen(port, host).map(this);
   }
 
   @Override
+  public Future<SmppServer> start() {
+    return listen(options.getPort(), options.getHost()).map(this);
+  }
+
+  @Override
   public SmppServer configure(Handler<ServerSessionConfigurator> configurator) {
-    if (this.configurator == null) {
-      this.configurator = configurator;
-    } else {
-      throw new IllegalStateException("only one configuration");
-    }
+    this.configurator = configurator;
     return this;
   }
 
   @Override
   public void close(Promise<Void> completion) {
     log.debug("closing sessions {}", pool.size());
-    var closeSessionFutures = new ArrayList<Future>(pool.size());
+    var latch = new CountDownLatch(vertx, pool.size());
     pool.forEach(sess -> {
       var closeSessionPromise = vertx.<Void>promise();
       sess.close(closeSessionPromise);
-      closeSessionFutures.add(closeSessionPromise.future());
+      closeSessionPromise.future()
+          .onComplete(ar -> {
+            log.debug("{} close counted", sess);
+            latch.countDown(1);
+          });
     });
-
-    CompositeFuture.all(closeSessionFutures)
-        .onComplete(ar -> {
+    latch.await(10, TimeUnit.SECONDS)
+        .onComplete(nothing -> {
           log.debug("closing NetServer");
           super.close(completion);
         });
   }
-
-  //  public void stop(Future<Void> future) throws Exception {
-  //    // In current design, the publisher is responsible for removing the service
-  //    List<Future> futures = new ArrayList<>();
-  //    registeredRecords.forEach(record -> {
-  //      Future<Void> cleanupFuture = Future.future();
-  //      futures.add(cleanupFuture);
-  //      discovery.unpublish(record.getRegistration(), cleanupFuture.completer());
-  //    });
-  //
-  //    if (futures.isEmpty()) {
-  //      discovery.close();
-  //      future.complete();
-  //    } else {
-  //      CompositeFuture.all(futures)
-  //        .setHandler(ar -> {
-  //          discovery.close();
-  //          if (ar.failed()) {
-  //            future.fail(ar.cause());
-  //          } else {
-  //            future.complete();
-  //          }
-  //        });
-  //    }
 }

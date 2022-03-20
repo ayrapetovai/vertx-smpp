@@ -35,6 +35,8 @@ dependencies {
 
   // misc
   implementation("joda-time:joda-time:2.10.13")
+  // TODO get rid of it
+  implementation("com.cloudhopper:ch-commons-charset:3.0.2")
 
   // logs
   implementation("org.slf4j:slf4j-api:1.7.19")
@@ -44,6 +46,10 @@ dependencies {
   // demo
   testImplementation("io.vertx:vertx-mail-client:$vertxVersion")
   testImplementation("org.subethamail:subethasmtp:3.1.7")
+
+  testImplementation("junit:junit:4.13.1")
+  testImplementation("org.mockito:mockito-core:4.4.0")
+  testImplementation("io.vertx:vertx-unit:4.2.6")
 
   testImplementation("io.vertx:vertx-junit5")
   testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")

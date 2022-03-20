@@ -42,7 +42,7 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
   private final Pool pool = new Pool();
   private final SmppClientOptions options;
 
-  private Handler<ClientSessionConfigurator> configurator;
+  private Handler<ClientSessionConfigurator> configurator = x -> {};
   private SmppSessionImpl lastOpenedSession;
 
   public SmppClientImpl(VertxInternal vertx, SmppClientOptions options, CloseFuture closeFuture) {
@@ -65,6 +65,11 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
     } else {
       throw new IllegalStateException("last session was not handled");
     }
+  }
+
+  @Override
+  public BindFuture<SmppSession> bind(int port) {
+    return bind("localhost", port);
   }
 
   @Override
@@ -105,11 +110,7 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
 
   @Override
   public SmppClient configure(Handler<ClientSessionConfigurator> configurator) {
-    if (this.configurator == null) {
-      this.configurator = configurator;
-    } else {
-      throw new IllegalStateException("configure once");
-    }
+    this.configurator = configurator;
     return this;
   }
 }

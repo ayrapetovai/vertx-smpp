@@ -20,7 +20,8 @@ import com.example.smpp.futures.BindFuture;
 import io.vertx.core.Handler;
 
 public interface SmppClient {
-  // API for built smpp client
+  BindFuture<SmppSession> bind(int port);
+
   BindFuture<SmppSession> bind(String host, int port);
 
   SmppClient configure(Handler<ClientSessionConfigurator> configurator);

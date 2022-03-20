@@ -1,5 +1,7 @@
 package com.example.smpp.demo;
 
+import com.cloudhopper.commons.charset.BaseCharset;
+import com.cloudhopper.commons.charset.CharsetUtil;
 import com.example.smpp.Smpp;
 import com.example.smpp.client.SmppClientOptions;
 import com.example.smpp.model.SmppBindType;
@@ -7,6 +9,7 @@ import com.example.smpp.pdu.DeliverSm;
 import com.example.smpp.pdu.SubmitSm;
 import com.example.smpp.types.Address;
 import com.example.smpp.types.SmppInvalidArgumentException;
+import com.example.smpp.util.charset.GSM8BitCharset;
 import com.example.smpp.util.charset.Gsm7BitCharset;
 import com.example.smpp.util.core.CountDownLatch;
 import com.example.smpp.util.core.FlowControl;
@@ -157,7 +160,8 @@ public class PerfClientMain extends AbstractVerticle {
                 log.info("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
                 startPromise.complete();
               });
-        });
+        })
+        .onFailure(e -> log.error("bind failed", e));
 
 
     // make second session
@@ -185,36 +189,36 @@ public class PerfClientMain extends AbstractVerticle {
         return null;
       }
     },
-//    CLOUDHOPPER_GSM {
-//      @Override
-//      public byte[] encode(String text) {
-//        return CharsetUtil.encode(text, CharsetUtil.CHARSET_GSM);
-//      }
-//    },
-//    CLOUDHOPPER_GSM7 {
-//      @Override
-//      public byte[] encode(String text) {
-//        return CharsetUtil.encode(text, CharsetUtil.CHARSET_GSM7);
-//      }
-//    },
-//    CLOUDHOPPER_UCS_2 {
-//      @Override
-//      public byte[] encode(String text) {
-//        return CharsetUtil.encode(text.substring(0, 255/2), CharsetUtil.CHARSET_UCS_2);
-//      }
-//    },
-//    PLAIN_UTF8 {
-//      @Override
-//      public byte[] encode(String text) {
-//        return text.getBytes(StandardCharsets.UTF_8);
-//      }
-//    },
-//    CUSTOM_GSM8 {
-//      @Override
-//      public byte[] encode(String text) {
-//        return CharsetUtil.encode(text, gsm8BitCharset);
-//      }
-//    },
+    CLOUDHOPPER_GSM {
+      @Override
+      public byte[] encode(String text) {
+        return CharsetUtil.encode(text, CharsetUtil.CHARSET_GSM);
+      }
+    },
+    CLOUDHOPPER_GSM7 {
+      @Override
+      public byte[] encode(String text) {
+        return CharsetUtil.encode(text, CharsetUtil.CHARSET_GSM7);
+      }
+    },
+    CLOUDHOPPER_UCS_2 {
+      @Override
+      public byte[] encode(String text) {
+        return CharsetUtil.encode(text.substring(0, 255/2), CharsetUtil.CHARSET_UCS_2);
+      }
+    },
+    PLAIN_UTF8 {
+      @Override
+      public byte[] encode(String text) {
+        return text.getBytes(StandardCharsets.UTF_8);
+      }
+    },
+    CUSTOM_GSM8 {
+      @Override
+      public byte[] encode(String text) {
+        return CharsetUtil.encode(text, gsm8BitCharset);
+      }
+    },
     CUSTOM_GSM7 {
       @Override
       public byte[] encode(String text) {
@@ -227,7 +231,7 @@ public class PerfClientMain extends AbstractVerticle {
       }
     };
     public abstract byte[] encode(String text);
-//    private static final BaseCharset gsm8BitCharset = new GSM8BitCharset();
+    private static final BaseCharset gsm8BitCharset = new GSM8BitCharset();
     private static final CharsetEncoder gsm7BitCharsetEncoder = new Gsm7BitCharset("UTF-8", new String[]{"gsm"}).newEncoder();
   }
 
@@ -357,7 +361,7 @@ public class PerfClientMain extends AbstractVerticle {
     var vertx = Vertx.vertx(new VertxOptions().setEventLoopPoolSize(THREADS));
     vertx.deployVerticle(PerfClientMain.class.getCanonicalName(), new DeploymentOptions().setInstances(SESSIONS))
         .onComplete(arId -> {
-          log.info("cosing vertx {}", arId.result());
+          log.info("closing vertx {}", arId.result());
           vertx.close();
         });
   }

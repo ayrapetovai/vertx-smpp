@@ -22,6 +22,9 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
+import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.future.FutureInternal;
+import io.vertx.core.impl.future.Listener;
 import io.vertx.core.impl.future.PromiseInternal;
 
 import java.util.function.Function;
@@ -29,7 +32,7 @@ import java.util.function.Function;
 import static com.example.smpp.model.SendPduExceptionType.*;
 
 // package-private
-abstract class AbstractPduFuture<T, F> implements Future<T>, Promise<T> {
+abstract class AbstractPduFuture<T, F> implements Future<T>, Promise<T>, FutureInternal<T> {
 
   protected final PromiseInternal<T> delegateAsPromise;
   protected final Future<T> delegateAsFuture;
@@ -37,6 +40,16 @@ abstract class AbstractPduFuture<T, F> implements Future<T>, Promise<T> {
   public AbstractPduFuture(PromiseInternal<T> delegateAsPromise) {
     this.delegateAsPromise = delegateAsPromise;
     this.delegateAsFuture = delegateAsPromise.future();
+  }
+
+  @Override
+  public ContextInternal context() {
+    return delegateAsPromise.context();
+  }
+
+  @Override
+  public void addListener(Listener<T> listener) {
+    delegateAsPromise.addListener(listener);
   }
 
   @Override
