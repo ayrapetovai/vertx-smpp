@@ -1,6 +1,10 @@
-= vertex-smpp
+= vertx-smpp
 
 image:https://img.shields.io/badge/vert.x-4.2.5-purple.svg[link="https://vertx.io"]
+
+SMPP client and server based on 'Cloudhooper by Twitter' (https://github.com/fizzed/cloudhopper-smpp/tree/netty4[repo]) source code, adapted to Vert.x, and it is not production ready yet.
+
+This project needs help and wants to be a part of Vert.x.
 
 == TODO
 - Implement onChannelClosed in session which must be called on network connection reset by netty. Whit method must invalidate all requests in window with error *onChannelClosed*.
@@ -25,6 +29,8 @@ image:https://img.shields.io/badge/vert.x-4.2.5-purple.svg[link="https://vertx.i
     * (utility) smpp-client-mock, can play scenarios.
 
 == Client Features
+Legend: [v] done, [0] partialy done, [-] not done.
+
 . [v] Bind to MC as `Transmitter`, `Receiver`, `Tranceiver` by calling bind method and pass host and port to it.
     .. [v] User can send `SystemId`, `Password`, `SystemType`, `Address` in bind_request.
     .. [v] Also, library sends interface version in bind_request.
@@ -59,18 +65,11 @@ Client and server user code manages session object by their self's.
 
 Jmv argument for ssl debugging `-Djavax.net.debug=ssl`.
 
-Memory write speed
-[source,bash]
-----
-$ dd if=/dev/zero of=/dev/null count=10000000
-5120000000 bytes transferred in 9.106614 secs (562228720 bytes/sec)
-----
-
 == Building
 To package library:
 [source,bash]
 ----
-./gradlew clean assemble
+gradle clean assemble
 ----
 
 == Help

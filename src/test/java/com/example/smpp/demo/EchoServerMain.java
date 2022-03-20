@@ -22,6 +22,7 @@ public class EchoServerMain extends AbstractVerticle {
   private static final int     INSTANCES = 1;
   private static final int     THREADS = 1;
   private static final long    SUBMIT_SM_RESP_DELAY = 0;
+  private static final boolean SEND_DELIVERY = true;
   private static final long    DELIVER_SM_RESP_DELAY = 0;
   private static final boolean SSL = false;
   private static final boolean REFUSE_ALL_BINDS = false;
@@ -63,7 +64,7 @@ public class EchoServerMain extends AbstractVerticle {
               submitSmResp.setMessageId(messageId);
               sess.reply(submitSmResp)
                   .onSuccess(nothing -> {
-                    if (reqCtx.getRequest() instanceof SubmitSm) {
+                    if (SEND_DELIVERY && reqCtx.getRequest() instanceof SubmitSm) {
                       var sendDeliverSmTask = (Runnable)() -> {
                         if (!sess.isClosed()) {
                           sess.send(createDeliverSm(messageId))

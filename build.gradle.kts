@@ -1,14 +1,11 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.api.tasks.testing.logging.TestLogEvent.*
 
 plugins {
   java
-  application
-  id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
-group = "com.example"
-version = "1.0.0-SNAPSHOT"
+group = "io.vertx"
+version = "0.0.1-SNAPSHOT"
 
 repositories {
   mavenCentral()
@@ -18,24 +15,14 @@ val vertxVersion = "4.2.5"
 val logbackVersion = "1.2.10"
 val junitJupiterVersion = "5.8.2"
 
-val mainVerticleName = "com.example.smpp.PerfClientMain"
-val launcherClassName = "io.vertx.core.Launcher"
-
-val watchForChange = "src/**/*"
-val doOnChange = "${projectDir}/gradlew classes"
-
-application {
-  mainClass.set(launcherClassName)
-}
-
 dependencies {
   // vertx
   implementation(platform("io.vertx:vertx-stack-depchain:$vertxVersion"))
   implementation("io.vertx:vertx-core")
 
   // misc
-  implementation("joda-time:joda-time:2.10.13")
-  // TODO get rid of it
+  implementation("joda-time:joda-time:2.10.13") // needed by coludhopper classes
+  // TODO remove
   implementation("com.cloudhopper:ch-commons-charset:3.0.2")
 
   // logs
@@ -60,14 +47,6 @@ java {
   targetCompatibility = JavaVersion.VERSION_11
 }
 
-tasks.withType<ShadowJar> {
-  archiveClassifier.set("fat")
-  manifest {
-    attributes(mapOf("Main-Verticle" to mainVerticleName))
-  }
-  mergeServiceFiles()
-}
-
 tasks.withType<Test> {
   useJUnitPlatform()
   testLogging {
@@ -75,6 +54,3 @@ tasks.withType<Test> {
   }
 }
 
-tasks.withType<JavaExec> {
-  args = listOf("run", mainVerticleName, "--redeploy=$watchForChange", "--launcher-class=$launcherClassName", "--on-redeploy=$doOnChange")
-}
