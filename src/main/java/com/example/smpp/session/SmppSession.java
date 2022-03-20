@@ -43,14 +43,14 @@ public interface SmppSession extends Closeable, MetricsProvider {
   Long getId();
 
   /**
-   * Id систем к которой создано сетевое подключение и прошел успешный bind
+   * Id of the system which was connected over the network connection and successful bind was made.
    * @return
    */
   String getBoundToSystemId();
   boolean areOptionalParametersSupported();
   /**
-   * Запрос помещается в окно (очередь на отправку) и отправляется, котогда до него додет черед.
-    * @param req
+   * Request is offered to the session window (send queue), and will be sent on it's turn.
+   * @param req
    * @param <T>
    * @return
    */
@@ -59,7 +59,7 @@ public interface SmppSession extends Closeable, MetricsProvider {
   <T extends PduResponse> SendPduFuture<T> send(PduRequest<T> req, long offerTimeout);
 
   /**
-   * Немедленная отправка ответа без помещения в окно
+   * Immediate sending of response without offering to the session window.
    * @param pduResponse
    * @return
    */

@@ -20,26 +20,9 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 
 public interface SmppServer extends Closeable {
-  // smpp builder's static API
-
-  /**
-   * Срабатывает на запрос соединения, когда в канал пришел BindTransmitter или BindReceiver или BindTranceiver
-   * UnboundSmppSession - сессия в которую нельзя писать и читать, но можно задать хэндлеры
-   * @return - UnbindRespStatusCode - com.cloudhopper.smpp.SmppConstants.STATUS_*
-   */
-//  SmppServer onBindRequested(Function<UnboundSmppSession, UnbindRespStatusCode> configurator);
-
-  // API for built smpp server
   Future<SmppServer> start(String host, int port);
   Future<SmppServer> start();
   int actualPort();
   boolean isListening();
-
-  /**
-   *
-   * @param configurator
-   * @return true if client system is allowed to bind
-   */
   SmppServer configure(Handler<ServerSessionConfigurator> configurator);
-//  ? getPool(); // get all connected (bound) client systems with their session pools
 }

@@ -104,7 +104,7 @@ public class PerfClientMain extends AbstractVerticle {
           cfg.onCreated(sess -> log.info("user code: session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId()));
           cfg.onUnexpectedResponse(respCtx -> log.warn("user code: unexpected response received {}", respCtx.getResponse()));
           cfg.onForbiddenRequest(reqCtx -> log.info("user code: reacts to forbidden request pdu {}", reqCtx.getRequest()));
-          cfg.onClose(sess -> {}); // TODO удалить? Вместо этого используется промис для close?
+          cfg.onClose(sess -> {}); // TODO remove onClose() method? Let user use future returned by close(...)?
         })
         .bind("localhost", SSL? 2777: 2776)
         .onRefuse(e -> {

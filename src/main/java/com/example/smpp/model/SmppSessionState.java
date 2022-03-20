@@ -18,11 +18,10 @@ import com.example.smpp.SmppConstants;
 
 /**
  * SMPP_v5_0.pdf
- * 2.4 Operation Matrix - таблица в каком состоянии можно обслуживать какую pdu.
- * Это класс к которому пользователь должен иметь доступ, он должен лежать в соответствующем пакете
+ * 2.4 Operation Matrix - table with eligible operations for particular states.
  */
 public enum SmppSessionState {
-  OPENED {  // до получения или отправки bind_*(resp)
+  OPENED {  // Before sending or receiving bind_*(resp)
     @Override
     public boolean canSend(boolean isServer, int commandId) {
       if (isServer) {
@@ -329,7 +328,7 @@ public enum SmppSessionState {
       }
     }
   },
-  UNBOUND { // после получения unbind
+  UNBOUND { // after unbind received
     @Override
     public boolean canSend(boolean isServer, int commandId) {
       switch (commandId) {
@@ -354,7 +353,7 @@ public enum SmppSessionState {
       }
     }
   },
-  CLOSED { // после UNBIND
+  CLOSED { // after UNBIND
     @Override
     public boolean canSend(boolean isServer, int commandId) {
       return false;
@@ -365,7 +364,7 @@ public enum SmppSessionState {
       return false;
     }
   },
-  OUTBOUND { // то же что и OPEN, но когда соединение установил MC.
+  OUTBOUND { // same as OPEN, but when MC claimed a connection.
     @Override
     public boolean canSend(boolean isServer, int commandId) {
       return false;

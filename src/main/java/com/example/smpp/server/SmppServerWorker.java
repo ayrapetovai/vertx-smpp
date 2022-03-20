@@ -115,7 +115,7 @@ public class SmppServerWorker implements Handler<Channel> {
       return sess;
     });
     handler.addHandler(conn -> {
-      // FIXME сессия еще не связана, boundTo == null
+      // FIXME session is not bound yet, boundTo == null
 //      context.emit(conn, sessOpts[0].getOnCreated()::handle);
     });
     pipeline.addLast("handler", handler);

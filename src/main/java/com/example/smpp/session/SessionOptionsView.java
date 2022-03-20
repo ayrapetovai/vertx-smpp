@@ -44,13 +44,13 @@ public interface SessionOptionsView {
   void setSendUnbindOnClose(boolean sendUnbindOnClose);
   void setAwaitUnbindResp(boolean awaitUnbindResp);
   void setDiscardTimeout(long drainTimeout);
-//  void setBindTimeout(long bindTimeout); // нельзя изменить после подключения, бинд уже прошел
+//  void setBindTimeout(long bindTimeout); // cannot change, bind was done already
   void setUnbindTimeout(long unbindTimeout);
   void setRequestExpiryTimeout(long requestExpiryTimeout);
-//  void setWindowSize(int windowSize); // нельзя изменить после подключения, значение уже передано симафор
+//  void setWindowSize(int windowSize); // the window size cannot be changed after connection is established
   void setWindowWaitTimeout(long windowWaitTimeout);
   void setWindowMonitorInterval(long windowMonitorInterval);
-//  void setWriteTimeout(long writeTimeout); // нельзя изменить после подключения, значение уже передано в слушатель канала
+//  void setWriteTimeout(long writeTimeout); // cannot be changed after connection is established, value was passed to the channel
   void setCountersEnabled(boolean countersEnabled);
   void setLogPduBody(boolean logPduBody);
 

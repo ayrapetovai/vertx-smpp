@@ -34,7 +34,7 @@ public interface SendPduFuture<T> extends Future<T>, Promise<T> {
     return new SendPduFutureImpl<>(promise);
   }
 
-  // TODO здесь надо перечислить все методы, которые возвращают Future<T> и заменить на этот интерфейс
+  // TODO Implement all methods which return Future<T>, make them return SendPduFuture, as well for other custom futures.
 
   @Override
   SendPduFuture<T> onComplete(Handler<AsyncResult<T>> handler);

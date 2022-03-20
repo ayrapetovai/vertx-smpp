@@ -54,7 +54,7 @@ public class ClosingClientMain extends AbstractVerticle {
                   sess.send(ssm)
                       .onSuccess(resp -> responseCount[0]++)
 //                      .onComplete(v -> submitSmLatch.countDown(1))
-                      .onDiscarded(v -> { // TODO задокументировать, onDiscarded() срабатывает асинхронно с close().
+                      .onDiscarded(v -> {
                         discardedCount[0]++;
                         log.warn("!!! Discarded: {}", ssm);
                       });

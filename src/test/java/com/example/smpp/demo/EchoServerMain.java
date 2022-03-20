@@ -43,7 +43,7 @@ public class EchoServerMain extends AbstractVerticle {
           cfg.setSystemId("vertx-smpp-server");
           cfg.setWindowSize(600);
           cfg.setWriteTimeout(2000);
-          cfg.setRequestExpiryTimeout(1000); // Время на отправку запроса и получение ответа
+          cfg.setRequestExpiryTimeout(1000); // Duration for send request and receive response
           cfg.onBindReceived(bindInfo -> {
             var systemId = bindInfo.getBindRequest().getSystemId();
             var password = bindInfo.getBindRequest().getPassword();

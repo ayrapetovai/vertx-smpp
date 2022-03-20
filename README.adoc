@@ -44,7 +44,9 @@ image:https://img.shields.io/badge/vert.x-4.2.5-purple.svg[link="https://vertx.i
     .. [v] For send future user can assign a callback *onWrongOperation*, which is called if session state is not suitable for request type.
     .. [v] For send future user can assign a callback *onNackked*, which is called if the `generic_nack` pdu was received as a response, and it's sequence number corresponds to the sequence number of the request.
     .. [-] User can use all vertx native API for send future, as that *compose(...)* and so on.
-. [-] Server keeps track of metrics for all sessions, which are available to user.
+. [-] Client keeps track of metrics for all sessions, which are available to user.
+. [-] User can *pause()* receiving of PDUs, can *resume()* receiving, and check is session is paused by *paused()*.
+. [-] User can obtain a size of a session window with *windowSize()* operation on session.
 . [0] User can unbind session by calling *close(...)* method.
     .. [-] User can specify timeout for session to close.
     .. [v] User can specify whether they want closing routing to await for window to be drained and send or they want window to be discarded on session close.
