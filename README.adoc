@@ -54,6 +54,7 @@ Legend: [v] done, [0] partially done, [-] not done.
     .. [v] For send future user can assign a callback *onWrongOperation*, that is called if session state is not suitable for request type.
     .. [v] For send future user can assign a callback *onNackked*, that is called if the `generic_nack` pdu was received as a response, and it's sequence number corresponds to the sequence number of the request.
     .. [-] User can use all vertx native API for send future, as that *compose(...)* and so on.
+    .. [v] User can react on `generic_nack` with no sequence number by passing callback to *configuratior.onUnexpectedResponse(...)*.
 . [-] Client keeps track of metrics for all sessions, which are available to user.
 . [-] User can *pause()* receiving of PDUs, can *resume()* receiving, and check is session is paused by *paused()*.
 . [-] User can obtain a size of a session window with *windowSize()* operation on session.
