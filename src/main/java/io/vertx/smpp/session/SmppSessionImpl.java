@@ -141,10 +141,8 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
             .handle(new PduResponseContext(pduResp, this));
         return;
       }
-      // TODO sequenceNumber field of generic_nack can be null by specification,
-      //  do a method to determine weather sequenceNumber as received as null, or as 0.
       var respProm = window.complement(pduResp.getSequenceNumber());
-      if (respProm != null) {
+      if (respProm != null && pduResp.hasSequenceNumberAssigned()) {
         windowGuard.release(1);
         if (pduResp.getCommandId() != SmppConstants.CMD_ID_GENERIC_NACK) {
           respProm.tryComplete(pduResp);
