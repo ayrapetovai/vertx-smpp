@@ -4,9 +4,9 @@ image:https://img.shields.io/badge/vert.x-4.2.5-purple.svg[link="https://vertx.i
 
 SMPP client and server based on 'Cloudhooper by Twitter' (https://github.com/fizzed/cloudhopper-smpp/tree/netty4[repo]) source code, adapted to Vert.x, and it is not production ready yet.
 
-Server reference (https://github.com/ayrapetovai/vertx-smpp/blob/main/src/test/java/io/vertx/smpp/demo/EchoServerMain.java[in this repo]).
+Server example (https://github.com/ayrapetovai/vertx-smpp/blob/main/src/test/java/io/vertx/smpp/demo/EchoServerMain.java[in this repo]).
 
-Client reference (https://github.com/ayrapetovai/vertx-smpp/blob/main/src/test/java/io/vertx/smpp/demo/PerfClientMain.java[in this repo]).
+Client example (https://github.com/ayrapetovai/vertx-smpp/blob/main/src/test/java/io/vertx/smpp/demo/PerfClientMain.java[in this repo]).
 
 This project needs help and wants to be a part of Vert.x.
 
@@ -62,12 +62,12 @@ Legend: [v] done, [0] partialy done, [-] not done.
     .. [v] User can specify whether they want closing routing to await for window to be drained and send or they want window to be discarded on session close.
 
 == Server Features
-. [-] Each session keeps track of metrics, which are available to user.
+. [-] Each session keeps track of metrics, available to user.
 
 == Usage
-Client and server user code manages session object by their self's.
+User code manages client/server session objects by their self's.
 
-Jmv argument for ssl debugging `-Djavax.net.debug=ssl`.
+JVM command line argument for ssl debugging `-Djavax.net.debug=ssl`.
 
 == Building
 To package library:
