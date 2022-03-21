@@ -33,6 +33,7 @@ dependencies {
   // demo
   testImplementation("io.vertx:vertx-mail-client:$vertxVersion")
   testImplementation("org.subethamail:subethasmtp:3.1.7")
+  testImplementation("com.fasterxml.jackson.core:jackson-databind:2.13.2")
 
   testImplementation("junit:junit:4.13.1")
   testImplementation("org.mockito:mockito-core:4.4.0")

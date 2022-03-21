@@ -76,6 +76,13 @@ To package library:
 gradle clean assemble
 ----
 
+== Load Testing
+To load SmppGateway, run EchoServerMain, SmppGatewayMain and run jmeter:
+[source,bash]
+----
+jmeter -n -t {$PROJECT_DIR}/src/test/resources/JmeterSmppGateway.jmx
+----
+
 == Help
 
 * https://vertx.io/docs/[Vert.x Documentation]
