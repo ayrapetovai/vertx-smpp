@@ -64,9 +64,8 @@ public class PerfClientMain extends AbstractVerticle {
     var submitSmLatch = new CountDownLatch(vertx, SUBMIT_SM_NUMBER);
     var deliverSmRespLatch = new CountDownLatch(vertx, SUBMIT_SM_NUMBER);
 
-    // TODO fluent: make setConnectTimeout return SmppClientOptions rather then NetClientOptions, no composition.
-    var options = new SmppClientOptions();
-    options.setConnectTimeout(2000); // FIXME if server is shutdown, connection timeout does not do anything, implement.
+    var options = new SmppClientOptions()
+      .setConnectTimeout(2000); // FIXME if server is shutdown, connection timeout does not do anything, implement.
     if (SSL) {
       options
           .setSsl(true)

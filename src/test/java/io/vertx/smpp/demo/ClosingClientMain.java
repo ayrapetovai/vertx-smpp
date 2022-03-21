@@ -1,7 +1,6 @@
 package io.vertx.smpp.demo;
 
 import io.vertx.smpp.Smpp;
-import io.vertx.smpp.client.SmppClientOptions;
 import io.vertx.smpp.model.SmppBindType;
 import io.vertx.smpp.pdu.DeliverSm;
 import io.vertx.smpp.pdu.SubmitSm;
@@ -28,8 +27,7 @@ public class ClosingClientMain extends AbstractVerticle {
     var requestCount = new int[]{0};
     var responseCount = new int[]{0};
 
-    var options = new SmppClientOptions();
-    Smpp.client(vertx, options)
+    Smpp.client(vertx)
         .configure(cfg -> {
           cfg.setSystemId(SYSTEM_ID);
           cfg.setPassword("test");
