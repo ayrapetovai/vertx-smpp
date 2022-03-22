@@ -11,7 +11,6 @@ Client example (https://github.com/ayrapetovai/vertx-smpp/blob/main/src/test/jav
 This project needs help and wants to be a part of Vert.x.
 
 == TODO
-- Implement onChannelClosed in session which must be called on network connection reset by netty. Whit method must invalidate all requests in window with error *onChannelClosed*.
 - Refactor package names.
 - Implement metrics for Server, Client, Session in the most vertx-friendly way.
 - Request expiry should not corrupt other requests in channel (not knowing is it so or not in an AS IS code).
@@ -37,6 +36,7 @@ Legend: [v] done, [0] partially done, [-] not done.
 
 . [v] Bind to MC as `Transmitter`, `Receiver`, `Tranceiver` by calling bind method and pass host and port to it.
     .. [v] User can send `SystemId`, `Password`, `SystemType`, `Address` in bind_request.
+    .. [v] User can specify ClientSessionConfigurator *onCreated* callback to be notified when connection is established and session is created and ready for use, it fires before BindFuture *onSuccess* but provides the same session instance.
     .. [v] Also, library sends interface version in bind_request.
 . [0] User can set timeouts for operations *bind(...)*, *send(...)*, *close(...)*:
     .. [0] User can specify bind timeout in *bind(...) method call or by setting option 'requestExpiryTimeout', bind request in this case.
@@ -49,7 +49,7 @@ Legend: [v] done, [0] partially done, [-] not done.
     .. [v] For send future user can assign a callback *onDiscard*, that is called on session close, if option 'discardAllOnUnbind' is set to *true*. There is no guarantees that request was not sent on network connection, nor response was not arrived at network connection.
     .. [v] For send future user can assign a callback *onWriteFailed*, that is called if netty cannot write request to a session channel.
     .. [v] For send future user can assign a callback *onTimeout*, that is called if request was successfully offered to the session window and sent over the network connection, but response was not received in desired time duration set in option 'requestExpiryTimeout'.
-    .. [-] For send future user can assign a callback *onChannelClosed*, that is called when connection is reset or if it was reset on the moment user code did a *send(...)* operation.
+    .. [v] For send future user can assign a callback *onChannelClosed*, that is called when connection is reset or if it was reset on the moment user code did a *send(...)* operation.
     .. [v] For send future user can assign a callback *onWindowTimeout*, that is called when request is expired in window, that means that request was sent over the network connection but ro response was received until the duration ends, that was set in option 'requestExpiryTimeout'.
     .. [v] For send future user can assign a callback *onWrongOperation*, that is called if session state is not suitable for request type.
     .. [v] For send future user can assign a callback *onNackked*, that is called if the `generic_nack` pdu was received as a response, and it's sequence number corresponds to the sequence number of the request.
@@ -58,7 +58,9 @@ Legend: [v] done, [0] partially done, [-] not done.
 . [-] Client keeps track of metrics for all sessions, which are available to user.
 . [-] User can *pause()* receiving of PDUs, can *resume()* receiving, and check is session is paused by *paused()*.
 . [-] User can obtain a size of a session window with *windowSize()* operation on session.
+. [v] If network connection gets reset or user decides to close connections by *session.close(...)*, the callback session *onClosed* is called. Also, all send futures get *onChannelClosed* called. The session *onClosed* callback purpose is to make user to be able to react on session close event when it was not initiated by them.
 . [0] User can unbind session by calling *close(...)* method.
+    .. [v] Close operation is idempotent.
     .. [-] User can specify timeout for session to close.
     .. [v] User can specify whether they want closing routing to await for window to be drained and send or they want window to be discarded on session close.
 

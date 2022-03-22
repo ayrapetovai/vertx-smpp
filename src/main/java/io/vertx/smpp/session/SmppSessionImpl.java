@@ -272,6 +272,12 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     }
   }
 
+  @Override
+  protected void handleClosed() {
+    super.handleClosed();
+    close(context.promise(), false);
+  }
+
   private void closeWithUnbind(Promise<Void> completion, boolean sendUnbindRequired) {
     this.state = SmppSessionState.UNBOUND;
     log.debug("session#{} closing", getId());
@@ -383,11 +389,6 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   }
 
   @Override
-  public String toString() {
-    return "Session(" + id + (isServer? "-server": "-client") + " -> " + boundToSystemId + ')';
-  }
-
-  @Override
   public Metrics getMetrics() {
     return new SmppSessionMetrics();
   }
@@ -422,5 +423,10 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   @Override
   public boolean canReceive(int commandId) {
     return this.state.canReceive(isServer, commandId);
+  }
+
+  @Override
+  public String toString() {
+    return "Session(" + id + (isServer? "-server": "-client") + " -> " + boundToSystemId + ')';
   }
 }

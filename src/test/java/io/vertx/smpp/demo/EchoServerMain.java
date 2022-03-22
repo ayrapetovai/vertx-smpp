@@ -90,7 +90,7 @@ public class EchoServerMain extends AbstractVerticle {
               sendSubmitSmRespTask.run();
             }
           });
-          cfg.onClose(sess -> log.info("user code: session#{} closed", sess.getId()));
+          cfg.onClosed(sess -> log.info("user code: session#{} closed", sess.getId()));
           cfg.onForbiddenRequest(reqCtx -> log.info("user code: forbidden req {}", reqCtx.getRequest().getName()));
           cfg.onForbiddenResponse(rspCtx -> log.info("user code: forbidden rsp {}", rspCtx.getResponse().getName()));
         })

@@ -28,7 +28,7 @@ public interface SessionCallbacks {
   void onCreated(Handler<SmppSession> createdHandler);
   void onRequest(Handler<PduRequestContext<?>> requestHandler);
   void onUnexpectedResponse(Handler<PduResponseContext> unexpectedResponseHandler);
-  void onClose(Handler<SmppSession> closeHandler);
+  void onClosed(Handler<SmppSession> closedHandler);
   void onUnexpectedClose(Handler<SmppSession> unexpectedCloseHandler);
   void onBindReceived(Function<BindInfo, Integer> onBindReceived);
   void onForbiddenRequest(Handler<PduRequestContext<?>> onForbiddenRequest);
