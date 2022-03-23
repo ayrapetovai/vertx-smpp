@@ -116,7 +116,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       } else if (pdu instanceof BaseBind<?>) {
         var bindRequest = (BaseBind<? extends BaseBindResp>) pdu;
         var respCmdStatus = options.getOnBindReceived()
-            .apply(new BindInfo<>(bindRequest)); // TODO check returned status (it must be enum)
+            .apply(new BindInfo(bindRequest)); // TODO check returned status (it must be enum)
         var bindResp = bindRequest.createResponse();
         Helper.addInterfaceVersionTlv(bindResp, getThisInterfaceVersion(), bindRequest.getInterfaceVersion());
         bindResp.setSystemId(options.getSystemId());
