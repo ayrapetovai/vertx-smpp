@@ -21,28 +21,59 @@ import java.util.function.BooleanSupplier;
 
 public class FlowControl {
 
-  public static Future<Void> forLoopInt(Context ctx, int initial, int upperBound, Handler<Integer> handler) {
-    var completed = Promise.<Void>promise();
-    var counter = new IntegerBox(initial);
-    var jobRef = new Reference<Handler<Void>>();
-    var job = (Handler<Void>) doJob -> {
-      var cnt = counter.getAndIncrement();
-      if (cnt < upperBound) {
-        handler.handle(cnt);
-        ctx.runOnContext(jobRef.get());
-      } else {
-        completed.complete();
-      }
-    };
-    jobRef.set(job);
-    if (initial >= upperBound) {
-      completed.complete();
-    } else {
-      ctx.runOnContext(job);
+  public static class ForIntLoop {
+    private final Context ctx;
+    private final int initial;
+    private final int upperBound;
+
+    private boolean done = false;
+
+    private ForIntLoop(Context ctx, int initial, int upperBound) {
+      this.ctx = ctx;
+      this.initial = initial;
+      this.upperBound = upperBound;
     }
-    return completed.future();
+
+    public Future<Void> start(Handler<Integer> handler) {
+      var completed = Promise.<Void>promise();
+      var counter = new IntegerBox(initial);
+      var jobRef = new Reference<Handler<Void>>();
+      var job = (Handler<Void>) doJob -> {
+        if (!done) {
+          var cnt = counter.getAndIncrement();
+          if (cnt < upperBound) {
+            handler.handle(cnt);
+            ctx.runOnContext(jobRef.get());
+          } else {
+            completed.complete();
+          }
+        } else {
+          completed.complete();
+        }
+      };
+      jobRef.set(job);
+      if (initial >= upperBound) {
+        completed.complete();
+      } else {
+        if (!done) {
+          ctx.runOnContext(job);
+        } else {
+          completed.complete();
+        }
+      }
+      return completed.future();
+    }
+
+    public void stop() {
+      done = true;
+    }
   }
 
+  public static ForIntLoop forLoopInt(Context ctx, int initial, int upperBound) {
+    return new ForIntLoop(ctx, initial, upperBound);
+  }
+
+  // TODO make it return object with state (flag running), and let it be able to be interrupted on some event
   public static Future<Void> awaitCondition(Context ctx, BooleanSupplier condition, long timeout) {
     var awaited = Promise.<Void>promise();
     var expiresAt = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
@@ -66,6 +97,7 @@ public class FlowControl {
     return awaited.future();
   }
 
+  // TODO make it return object with state (flag running), and let it be able to be closed on some event
   public static Future<Void> whileCondition(Context ctx, BooleanSupplier condition, Runnable handler) {
     var completed = Promise.<Void>promise();
     var jobRef = new Reference<Handler<Void>>();

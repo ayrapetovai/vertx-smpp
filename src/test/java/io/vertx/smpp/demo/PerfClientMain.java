@@ -70,6 +70,8 @@ public class PerfClientMain extends AbstractVerticle {
     var submitSmLatch = new CountDownLatch(vertx, SUBMIT_SM_NUMBER);
     var deliverSmRespLatch = new CountDownLatch(vertx, SUBMIT_SM_NUMBER);
 
+    var forLoop = FlowControl.forLoopInt(vertx.getOrCreateContext(), 0, SUBMIT_SM_NUMBER);
+
     var options = new SmppClientOptions()
       .setConnectTimeout(2000); // FIXME if server is shutdown, connection timeout does not do anything, implement.
     if (SSL) {
@@ -111,7 +113,11 @@ public class PerfClientMain extends AbstractVerticle {
           cfg.onCreated(sess -> log.info("user code: session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId()));
           cfg.onUnexpectedResponse(respCtx -> log.warn("user code: unexpected response received {}", respCtx.getResponse()));
           cfg.onForbiddenRequest(reqCtx -> log.info("user code: reacts to forbidden request pdu {}", reqCtx.getRequest()));
-          cfg.onClosed(sess -> startPromise.tryComplete());
+          cfg.onClosed(sess -> {
+            log.info("user code: onClosed, stopping for loop and completing startPromise");
+            forLoop.stop();
+            startPromise.tryComplete();
+          });
         })
         .bind("localhost", SSL? 2777: 2776)
         .onRefuse(e -> {
@@ -124,44 +130,43 @@ public class PerfClientMain extends AbstractVerticle {
           var counters = new Counters();
           sess.setReferenceObject(counters);
           counters.start = System.currentTimeMillis();
-          // TODO When session is closed by the server, this cycle must be stopped.
-          FlowControl
-              .forLoopInt(vertx.getOrCreateContext(), 0, SUBMIT_SM_NUMBER, i -> {
-                counters.submitSmCount++;
-                var ssm = new SubmitSm();
-                setSourceAndDestAddress(ssm);
-                if (ENCODE != NONE) {
-                  addShortMessage(ssm);
-                }
-                var sendSubmitSmStart = new long[]{System.nanoTime()};
-                sess.send(ssm)
-                    .onSuccess(submitSmResp -> {
-                      counters.submitSmLatencySumNano += (System.nanoTime() - sendSubmitSmStart[0]);
-                      counters.submitSmRespCount++;
-                      submitSmLatch.countDown(1);
-                    })
-                    .onWrongOperation(e -> counters.submitSmWrongOperation++)
-                    .onChannelClosed(e -> counters.submitSmOnChannelClosed++ )
-                    .onTimeout(e -> counters.submitSmTimeout++)
-                    .onDiscarded(e -> counters.submitSmDiscarded++)
-                    .onWindowTimeout(e -> counters.submitSmOfferTimeout++)
-                    .onFailure(e -> log.error("user code: cannot send", e));
-              })
-              .compose(v -> submitSmLatch.await(5, TimeUnit.SECONDS))
-              .compose(v -> {
-                counters.submitEnd = System.currentTimeMillis();
-                return deliverSmRespLatch.await(5, TimeUnit.SECONDS);
-              })
-              .compose(v -> {
-                counters.deliverEnd = System.currentTimeMillis();
-                var closePromise = Promise.<Void>promise();
-                sess.close(closePromise);
-                return closePromise.future();
-              })
-              .onComplete(ar -> {
-                printCounters(sess);
-                startPromise.complete();
-              });
+          forLoop.start(i -> {
+            counters.submitSmCount++;
+            var ssm = new SubmitSm();
+            setSourceAndDestAddress(ssm);
+            if (ENCODE != NONE) {
+              addShortMessage(ssm);
+            }
+            var sendSubmitSmStart = new long[]{System.nanoTime()};
+            sess.send(ssm)
+                .onSuccess(submitSmResp -> {
+                  counters.submitSmLatencySumNano += (System.nanoTime() - sendSubmitSmStart[0]);
+                  counters.submitSmRespCount++;
+                  submitSmLatch.countDown(1);
+                })
+                .onWrongOperation(e -> counters.submitSmWrongOperation++)
+                .onChannelClosed(e -> counters.submitSmOnChannelClosed++ )
+                .onTimeout(e -> counters.submitSmTimeout++)
+                .onDiscarded(e -> counters.submitSmDiscarded++)
+                .onWindowTimeout(e -> counters.submitSmOfferTimeout++)
+                .onFailure(e -> log.error("user code: cannot send", e))
+                ;
+          })
+          .compose(v -> submitSmLatch.await(5, TimeUnit.SECONDS))
+          .compose(v -> {
+            counters.submitEnd = System.currentTimeMillis();
+            return deliverSmRespLatch.await(5, TimeUnit.SECONDS);
+          })
+          .compose(v -> {
+            counters.deliverEnd = System.currentTimeMillis();
+            var closePromise = Promise.<Void>promise();
+            sess.close(closePromise);
+            return closePromise.future();
+          })
+          .onComplete(ar -> {
+            printCounters(sess);
+            startPromise.tryComplete();
+          });
         })
         .onFailure(e -> {
           log.error("bind failed", e);
@@ -190,7 +195,6 @@ public class PerfClientMain extends AbstractVerticle {
             }
           } catch (InterruptedException ignore) {}
         }
-        vertx.close();
     }));
   }
 
