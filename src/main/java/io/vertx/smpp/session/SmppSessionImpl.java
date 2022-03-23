@@ -116,7 +116,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       } else if (pdu instanceof BaseBind<?>) {
         var bindRequest = (BaseBind<? extends BaseBindResp>) pdu;
         var respCmdStatus = options.getOnBindReceived()
-            .apply(new BindInfo<>(bindRequest)); // TODO check returned status (it must be enum)
+            .apply(new BindInfo(bindRequest)); // TODO check returned status (it must be enum)
         var bindResp = bindRequest.createResponse();
         Helper.addInterfaceVersionTlv(bindResp, getThisInterfaceVersion(), bindRequest.getInterfaceVersion());
         bindResp.setSystemId(options.getSystemId());
@@ -141,10 +141,8 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
             .handle(new PduResponseContext(pduResp, this));
         return;
       }
-      // TODO sequenceNumber field of generic_nack can be null by specification,
-      //  do a method to determine weather sequenceNumber as received as null, or as 0.
       var respProm = window.complement(pduResp.getSequenceNumber());
-      if (respProm != null) {
+      if (respProm != null && pduResp.hasSequenceNumberAssigned()) {
         windowGuard.release(1);
         if (pduResp.getCommandId() != SmppConstants.CMD_ID_GENERIC_NACK) {
           respProm.tryComplete(pduResp);
@@ -274,6 +272,12 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     }
   }
 
+  @Override
+  protected void handleClosed() {
+    super.handleClosed();
+    close(context.promise(), false);
+  }
+
   private void closeWithUnbind(Promise<Void> completion, boolean sendUnbindRequired) {
     this.state = SmppSessionState.UNBOUND;
     log.debug("session#{} closing", getId());
@@ -385,11 +389,6 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   }
 
   @Override
-  public String toString() {
-    return "Session(" + id + (isServer? "-server": "-client") + " -> " + boundToSystemId + ')';
-  }
-
-  @Override
   public Metrics getMetrics() {
     return new SmppSessionMetrics();
   }
@@ -424,5 +423,10 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   @Override
   public boolean canReceive(int commandId) {
     return this.state.canReceive(isServer, commandId);
+  }
+
+  @Override
+  public String toString() {
+    return "Session(" + id + (isServer? "-server": "-client") + " -> " + boundToSystemId + ')';
   }
 }

@@ -17,14 +17,14 @@ package io.vertx.smpp.types;
 import io.vertx.smpp.pdu.BaseBind;
 import io.vertx.smpp.pdu.BaseBindResp;
 
-public class BindInfo<T extends BaseBindResp> {
-  private final BaseBind<T> bindRequest;
+public class BindInfo {
+  private final BaseBind<? extends BaseBindResp> bindRequest;
 
-  public BindInfo(BaseBind<T> bindRequest) {
+  public BindInfo(BaseBind<? extends BaseBindResp> bindRequest) {
     this.bindRequest = bindRequest;
   }
 
-  public BaseBind<T> getBindRequest() {
+  public BaseBind<? extends BaseBindResp> getBindRequest() {
     return bindRequest;
   }
 }

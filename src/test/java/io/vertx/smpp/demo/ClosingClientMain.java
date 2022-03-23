@@ -1,7 +1,6 @@
 package io.vertx.smpp.demo;
 
 import io.vertx.smpp.Smpp;
-import io.vertx.smpp.client.SmppClientOptions;
 import io.vertx.smpp.model.SmppBindType;
 import io.vertx.smpp.pdu.DeliverSm;
 import io.vertx.smpp.pdu.SubmitSm;
@@ -28,8 +27,7 @@ public class ClosingClientMain extends AbstractVerticle {
     var requestCount = new int[]{0};
     var responseCount = new int[]{0};
 
-    var options = new SmppClientOptions();
-    Smpp.client(vertx, options)
+    Smpp.client(vertx)
         .configure(cfg -> {
           cfg.setSystemId(SYSTEM_ID);
           cfg.setPassword("test");
@@ -45,21 +43,21 @@ public class ClosingClientMain extends AbstractVerticle {
         .bind("localhost", 2776)
         .onSuccess(sess -> {
           log.info("user code: client bound");
-          FlowControl
-              .forLoopInt(vertx.getOrCreateContext(), 0, SUBMIT_SM_NUMBER, i -> {
-                closeLatch.countDown(1);
-                var ssm = new SubmitSm();
-                if (!sess.isClosed()) {
-                  requestCount[0]++;
-                  sess.send(ssm)
-                      .onSuccess(resp -> responseCount[0]++)
-//                      .onComplete(v -> submitSmLatch.countDown(1))
-                      .onDiscarded(v -> {
-                        discardedCount[0]++;
-                        log.warn("!!! Discarded: {}", ssm);
-                      });
-                }
-              });
+          var forLoop = FlowControl.forLoopInt(vertx.getOrCreateContext(), 0, SUBMIT_SM_NUMBER);
+          forLoop.start(i -> {
+            closeLatch.countDown(1);
+              var ssm = new SubmitSm();
+              if (!sess.isClosed()) {
+                requestCount[0]++;
+                sess.send(ssm)
+                    .onSuccess(resp -> responseCount[0]++)
+//                    .onComplete(v -> submitSmLatch.countDown(1))
+                    .onDiscarded(v -> {
+                      discardedCount[0]++;
+                      log.warn("!!! Discarded: {}", ssm);
+                    });
+              }
+            });
 
           // Close session right after half of requests were send
           // to get some requests stuck in the session window, check

@@ -50,7 +50,7 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   Handler<SmppSession> createdHandler = __ -> {};
   Handler<PduRequestContext<?>> requestHandler = __ -> {};
   Handler<PduResponseContext> unexpectedResponseHandler = __ -> {};
-  Handler<SmppSession> closeHandler = __ -> {};
+  Handler<SmppSession> closedHandler = __ -> {};
   Handler<SmppSession> unexpectedCloseHandler = __ -> {};
   // TODO Function<BindInfo, BindRespStatusCode> onBindReceived
   Function<BindInfo, Integer> onBindReceived = __ -> SmppConstants.STATUS_OK;
@@ -263,8 +263,8 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   @Override
-  public void onClose(Handler<SmppSession> closeHandler) {
-    this.closeHandler = closeHandler;
+  public void onClosed(Handler<SmppSession> closedHandler) {
+    this.closedHandler = closedHandler;
   }
 
   @Override
@@ -300,7 +300,7 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   public Handler<SmppSession> getOnClose() {
-    return closeHandler;
+    return closedHandler;
   }
 
   public Handler<SmppSession> getOnUnexpectedClose() {

@@ -4,17 +4,16 @@ image:https://img.shields.io/badge/vert.x-4.2.5-purple.svg[link="https://vertx.i
 
 SMPP client and server based on 'Cloudhooper by Twitter' (https://github.com/fizzed/cloudhopper-smpp/tree/netty4[repo]) source code, adapted to Vert.x, and it is not production ready yet.
 
-Server reference (https://github.com/ayrapetovai/vertx-smpp/blob/main/src/test/java/io/vertx/smpp/demo/EchoServerMain.java[in this repo]).
+Server example (https://github.com/ayrapetovai/vertx-smpp/blob/main/src/test/java/io/vertx/smpp/demo/EchoServerMain.java[in this repo]).
 
-Client reference (https://github.com/ayrapetovai/vertx-smpp/blob/main/src/test/java/io/vertx/smpp/demo/PerfClientMain.java[in this repo]).
+Client example (https://github.com/ayrapetovai/vertx-smpp/blob/main/src/test/java/io/vertx/smpp/demo/PerfClientMain.java[in this repo]).
 
 This project needs help and wants to be a part of Vert.x.
 
 == TODO
-- Implement onChannelClosed in session which must be called on network connection reset by netty. Whit method must invalidate all requests in window with error *onChannelClosed*.
 - Refactor package names.
 - Implement metrics for Server, Client, Session in the most vertx-friendly way.
-- Request expiry houdl not corrupt othe requests in channel (not knowing is it so or not in an AS IS code).
+- Request expiry should not corrupt other requests in channel (not knowing is it so or not in an AS IS code).
 - Implement request.createGenarickNack() next to the request.createResponse() operation.
 - Implement Outbind?
 - Implement JMX?
@@ -33,10 +32,11 @@ This project needs help and wants to be a part of Vert.x.
     * (utility) smpp-client-mock, can play scenarios.
 
 == Client Features
-Legend: [v] done, [0] partialy done, [-] not done.
+Legend: [v] done, [0] partially done, [-] not done.
 
 . [v] Bind to MC as `Transmitter`, `Receiver`, `Tranceiver` by calling bind method and pass host and port to it.
     .. [v] User can send `SystemId`, `Password`, `SystemType`, `Address` in bind_request.
+    .. [v] User can specify ClientSessionConfigurator *onCreated* callback to be notified when connection is established and session is created and ready for use, it fires before BindFuture *onSuccess* but provides the same session instance.
     .. [v] Also, library sends interface version in bind_request.
 . [0] User can set timeouts for operations *bind(...)*, *send(...)*, *close(...)*:
     .. [0] User can specify bind timeout in *bind(...) method call or by setting option 'requestExpiryTimeout', bind request in this case.
@@ -44,36 +44,46 @@ Legend: [v] done, [0] partialy done, [-] not done.
     .. [-] User can specify timeout for *close(...)* operation on session. Which handicapped time for session to wait for window to be drained, for `unbind` to send and for `unbid_resp` to be received all together.
     .. [v] User can specify 'offerTimeout' for *send(...)* operation, which is desired duration of waiting on window to abele to take the request. If widow continues to be full during all the waiting time, the send future will be failed with *onWindowTimeout* callback call.
 . [v] User can send requests `submit_sm`, `deliver_sm`, `query_sm`, `data_sm`, `enquire_link` and [-] `generic_nack` as response. But user cannot send, `bind_receiver`, `bind_trancriver`, `bind_transmitter`, `unbind` and corresponding responses.
-    .. [v] For send future user can assign a callback *onSuccess*, which will be called when request will be answered with corresponding response or `generic_nack`.
-    .. [v] For send future user can assign a callback *onFailure*, which is called if any of send error event happened.
-    .. [v] For send future user can assign a callback *onDiscard*, which is called on session close, if option 'discardAllOnUnbind' is set to *true*. There is no guarantees that request was not sent on network connection, nor response was not arrived at network connection.
-    .. [v] For send future user can assign a callback *onWriteFailed*, which is called if netty cannot write request to a session channel.
-    .. [v] For send future user can assign a callback *onTimeout*, which is called if request was successfully offered to the session window and sent over the network connection, but response was not received in desired time duration set in option 'requestExpiryTimeout'.
-    .. [-] For send future user can assign a callback *onChannelClosed*, which is called when connection is reset or if it was reset on the moment user code did a *send(...)* operation.
-    .. [v] For send future user can assign a callback *onWindowTimeout*, which is called when request is expired in window, that means that request was sent over the network connection but ro response was received until the duration ends, that was set in option 'requestExpiryTimeout'.
-    .. [v] For send future user can assign a callback *onWrongOperation*, which is called if session state is not suitable for request type.
-    .. [v] For send future user can assign a callback *onNackked*, which is called if the `generic_nack` pdu was received as a response, and it's sequence number corresponds to the sequence number of the request.
+    .. [v] For send future user can assign a callback *onSuccess*, that will be called when request will be answered with corresponding response or `generic_nack`.
+    .. [v] For send future user can assign a callback *onFailure*, that is called if any of send error event happened.
+    .. [v] For send future user can assign a callback *onDiscard*, that is called on session close, if option 'discardAllOnUnbind' is set to *true*. There is no guarantees that request was not sent on network connection, nor response was not arrived at network connection.
+    .. [v] For send future user can assign a callback *onWriteFailed*, that is called if netty cannot write request to a session channel.
+    .. [v] For send future user can assign a callback *onTimeout*, that is called if request was successfully offered to the session window and sent over the network connection, but response was not received in desired time duration set in option 'requestExpiryTimeout'.
+    .. [v] For send future user can assign a callback *onChannelClosed*, that is called when connection is reset or if it was reset on the moment user code did a *send(...)* operation.
+    .. [v] For send future user can assign a callback *onWindowTimeout*, that is called when request is expired in window, that means that request was sent over the network connection but ro response was received until the duration ends, that was set in option 'requestExpiryTimeout'.
+    .. [v] For send future user can assign a callback *onWrongOperation*, that is called if session state is not suitable for request type.
+    .. [v] For send future user can assign a callback *onNackked*, that is called if the `generic_nack` pdu was received as a response, and it's sequence number corresponds to the sequence number of the request.
     .. [-] User can use all vertx native API for send future, as that *compose(...)* and so on.
+    .. [v] User can react on `generic_nack` with no sequence number by passing callback to *configuratior.onUnexpectedResponse(...)*.
 . [-] Client keeps track of metrics for all sessions, which are available to user.
 . [-] User can *pause()* receiving of PDUs, can *resume()* receiving, and check is session is paused by *paused()*.
 . [-] User can obtain a size of a session window with *windowSize()* operation on session.
+. [v] If network connection gets reset or user decides to close connections by *session.close(...)*, the callback session *onClosed* is called. Also, all send futures get *onChannelClosed* called. The session *onClosed* callback purpose is to make user to be able to react on session close event when it was not initiated by them.
 . [0] User can unbind session by calling *close(...)* method.
+    .. [v] Close operation is idempotent.
     .. [-] User can specify timeout for session to close.
     .. [v] User can specify whether they want closing routing to await for window to be drained and send or they want window to be discarded on session close.
 
 == Server Features
-. [-] Each session keeps track of metrics, which are available to user.
+. [-] Each session keeps track of metrics, available to user.
 
 == Usage
-Client and server user code manages session object by their self's.
+User code manages client/server session objects by their self's.
 
-Jmv argument for ssl debugging `-Djavax.net.debug=ssl`.
+JVM command line argument for ssl debugging `-Djavax.net.debug=ssl`.
 
 == Building
 To package library:
 [source,bash]
 ----
 gradle clean assemble
+----
+
+== Load Testing
+To load SmppGateway, run EchoServerMain, SmppGatewayMain and run jmeter:
+[source,bash]
+----
+jmeter -n -t {$PROJECT_DIR}/src/test/resources/JmeterSmppGateway.jmx
 ----
 
 == Help

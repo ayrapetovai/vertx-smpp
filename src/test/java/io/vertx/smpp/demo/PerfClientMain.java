@@ -7,6 +7,7 @@ import io.vertx.smpp.client.SmppClientOptions;
 import io.vertx.smpp.model.SmppBindType;
 import io.vertx.smpp.pdu.DeliverSm;
 import io.vertx.smpp.pdu.SubmitSm;
+import io.vertx.smpp.session.SmppSession;
 import io.vertx.smpp.types.Address;
 import io.vertx.smpp.types.SmppInvalidArgumentException;
 import io.vertx.smpp.util.charset.GSM8BitCharset;
@@ -23,6 +24,7 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static io.vertx.smpp.demo.PerfClientMain.Encoder.NONE;
 
@@ -34,6 +36,10 @@ public class PerfClientMain extends AbstractVerticle {
     double submitEnd;
     double submitSmLatencySumNano;
     double submitSmRespCount;
+    long submitSmOnChannelClosed;
+    long submitSmDiscarded;
+    long submitSmWrongOperation;
+    long submitSmOfferTimeout;
     long submitSmTimeout;
     long submitSmCount;
     double deliverEnd;
@@ -64,15 +70,17 @@ public class PerfClientMain extends AbstractVerticle {
     var submitSmLatch = new CountDownLatch(vertx, SUBMIT_SM_NUMBER);
     var deliverSmRespLatch = new CountDownLatch(vertx, SUBMIT_SM_NUMBER);
 
-    // TODO fluent: make setConnectTimeout return SmppClientOptions rather then NetClientOptions, no composition.
-    var options = new SmppClientOptions();
-    options.setConnectTimeout(2000); // FIXME if server is shutdown, connection timeout does not do anything, implement.
+    var forLoop = FlowControl.forLoopInt(vertx.getOrCreateContext(), 0, SUBMIT_SM_NUMBER);
+
+    var options = new SmppClientOptions()
+      .setConnectTimeout(2000); // FIXME if server is shutdown, connection timeout does not do anything, implement.
     if (SSL) {
       options
           .setSsl(true)
           .setTrustAll(true);
     }
 
+    final var sessionReference = new AtomicReference<SmppSession>();
     Smpp.client(vertx, options)
         .configure(cfg -> {
           log.info("user code: configuring new session");
@@ -101,10 +109,15 @@ public class PerfClientMain extends AbstractVerticle {
                   .onFailure(e -> log.trace("user code: could no reply with {}", resp.getName(), e));
             }
           });
+          // TODO remove onCreated from ClientSessionConfigurator? Let user use BindFuture.onSuccess(session)?
           cfg.onCreated(sess -> log.info("user code: session#{} created, bound to {}", sess.getId(), sess.getBoundToSystemId()));
           cfg.onUnexpectedResponse(respCtx -> log.warn("user code: unexpected response received {}", respCtx.getResponse()));
           cfg.onForbiddenRequest(reqCtx -> log.info("user code: reacts to forbidden request pdu {}", reqCtx.getRequest()));
-          cfg.onClose(sess -> {}); // TODO remove onClose() method? Let user use future returned by close(...)?
+          cfg.onClosed(sess -> {
+            log.info("user code: onClosed, stopping for loop and completing startPromise");
+            forLoop.stop();
+            startPromise.tryComplete();
+          });
         })
         .bind("localhost", SSL? 2777: 2776)
         .onRefuse(e -> {
@@ -112,73 +125,106 @@ public class PerfClientMain extends AbstractVerticle {
           startPromise.fail(e);
         })
         .onSuccess(sess -> {
+          sessionReference.set(sess);
           log.info("user code: client bound");
           var counters = new Counters();
           sess.setReferenceObject(counters);
           counters.start = System.currentTimeMillis();
-          FlowControl
-              .forLoopInt(vertx.getOrCreateContext(), 0, SUBMIT_SM_NUMBER, i -> {
-                counters.submitSmCount++;
-                var ssm = new SubmitSm();
-                setSourceAndDestAddress(ssm);
-                if (ENCODE != NONE) {
-                  addShortMessage(ssm);
-                }
-                var sendSubmitSmStart = new long[]{System.nanoTime()};
-                sess.send(ssm)
-                    .onSuccess(submitSmResp -> {
-                      counters.submitSmLatencySumNano += (System.nanoTime() - sendSubmitSmStart[0]);
-                      counters.submitSmRespCount++;
-                      submitSmLatch.countDown(1);
-                    })
-                    .onTimeout(e -> counters.submitSmTimeout++)
-                    .onFailure(e -> log.error("user code: cannot send", e))
-                    .onWindowTimeout(e -> log.error("user code: window timeout", e));
-              })
-              .compose(v -> submitSmLatch.await(5, TimeUnit.SECONDS))
-              .compose(v -> {
-                counters.submitEnd = System.currentTimeMillis();
-                return deliverSmRespLatch.await(5, TimeUnit.SECONDS);
-              })
-              .compose(v -> {
-                counters.deliverEnd = System.currentTimeMillis();
-                var closePromise = Promise.<Void>promise();
-                sess.close(closePromise);
-                return closePromise.future();
-              })
-              .onComplete(ar -> {
-                // TODO add shutdown hook to print stats on interrupt
-                var c = sess.getReferenceObject(Counters.class);
-                log.info(
-                    "done: threads={}, sessions={}, window={}, text({}), this={}, that={}, ssl={}",
-                    THREADS, SESSIONS, WINDOW, ENCODE.name(), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"
-                );
-                var submitSmThroughput = (c.submitSmRespCount/((c.submitEnd - c.start)/1000.0));
-                log.info("submit_sm=" + c.submitSmCount + ", submitSmResp=" + c.submitSmRespCount + ", throughput=" + submitSmThroughput);
-                log.info("submit_sm latency=" + (0.000_001 * c.submitSmLatencySumNano/c.submitSmRespCount));
-                log.info("submit_sm timeout=" + c.submitSmTimeout);
-                log.info("submit_sm time=" + (c.submitEnd - c.start) + "ms");
-
-                var deliverSmThroughput = (c.deliverSmRespCount/((c.deliverEnd - c.start)/1000.0));
-                log.info("deliver_sm=" + c.deliverSmCount + ", deliverSmResp=" + c.deliverSmRespCount + ", throughput=" + deliverSmThroughput);
-                log.info("deliver_sm_resp latency=" + (0.000_001 * c.deliverSmRespLatencySumNano/c.deliverSmRespCount));
-                log.info("deliver_sm time=" + positiveOrNaN(c.deliverEnd - c.start) + "ms");
-
-                log.info("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
-                startPromise.complete();
-              });
+          forLoop.start(i -> {
+            counters.submitSmCount++;
+            var ssm = new SubmitSm();
+            setSourceAndDestAddress(ssm);
+            if (ENCODE != NONE) {
+              addShortMessage(ssm);
+            }
+            var sendSubmitSmStart = new long[]{System.nanoTime()};
+            sess.send(ssm)
+                .onSuccess(submitSmResp -> {
+                  counters.submitSmLatencySumNano += (System.nanoTime() - sendSubmitSmStart[0]);
+                  counters.submitSmRespCount++;
+                  submitSmLatch.countDown(1);
+                })
+                .onWrongOperation(e -> counters.submitSmWrongOperation++)
+                .onChannelClosed(e -> counters.submitSmOnChannelClosed++ )
+                .onTimeout(e -> counters.submitSmTimeout++)
+                .onDiscarded(e -> counters.submitSmDiscarded++)
+                .onWindowTimeout(e -> counters.submitSmOfferTimeout++)
+                .onFailure(e -> log.error("user code: cannot send", e))
+                ;
+          })
+          .compose(v -> submitSmLatch.await(5, TimeUnit.SECONDS))
+          .compose(v -> {
+            counters.submitEnd = System.currentTimeMillis();
+            return deliverSmRespLatch.await(5, TimeUnit.SECONDS);
+          })
+          .compose(v -> {
+            counters.deliverEnd = System.currentTimeMillis();
+            var closePromise = Promise.<Void>promise();
+            sess.close(closePromise);
+            return closePromise.future();
+          })
+          .onComplete(ar -> {
+            printCounters(sess);
+            startPromise.tryComplete();
+          });
         })
         .onFailure(e -> {
           log.error("bind failed", e);
           startPromise.fail("bind failed");
         });
 
+    registerShutdownHook(sessionReference);
+  }
 
-    // make second session
-//    client
-//        .bind("localhost", 2776)
-//        .onSuccess(sess -> {
-//        });
+  private void registerShutdownHook(AtomicReference<SmppSession> sessionReference) {
+      Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        if (sessionReference.get() != null && !sessionReference.get().isClosed()) {
+          var closeLatch = new java.util.concurrent.CountDownLatch(1);
+          vertx.runOnContext(__ -> {
+            var closePromise = Promise.<Void>promise();
+            closePromise.future()
+                .onComplete(v -> {
+                  printCounters(sessionReference.get());
+                  closeLatch.countDown();
+                });
+            sessionReference.get().close(closePromise);
+          });
+          try {
+            if (!closeLatch.await(2, TimeUnit.SECONDS)) {
+              log.warn("session close timed out");
+            }
+          } catch (InterruptedException ignore) {}
+        }
+    }));
+  }
+
+  void printCounters(SmppSession sess) {
+    var c = sess.getReferenceObject(Counters.class);
+
+    if (c.submitEnd == 0) {
+      c.submitEnd = System.currentTimeMillis();
+    }
+    if (c.deliverEnd == 0) {
+      c.deliverEnd = System.currentTimeMillis();
+    }
+
+    log.info(
+        "done: threads={}, sessions={}, window={}, text({}), this={}, that={}, ssl={}",
+        THREADS, SESSIONS, WINDOW, ENCODE.name(), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"
+    );
+    var submitSmThroughput = (c.submitSmRespCount/((c.submitEnd - c.start)/1000.0));
+    log.info("submit_sm=" + c.submitSmCount + ", submitSmResp=" + c.submitSmRespCount + ", throughput=" + submitSmThroughput);
+    log.info("submit_sm latency=" + (0.000_001 * c.submitSmLatencySumNano/c.submitSmRespCount));
+    log.info("submit_sm requestTimeout=" + c.submitSmTimeout + ", discarded=" + c.submitSmDiscarded + ", onClosed=" +
+        c.submitSmOnChannelClosed + ", wrongOp=" + c.submitSmWrongOperation + ", offerTimeout=" + c.submitSmOfferTimeout);
+    log.info("submit_sm time=" + (c.submitEnd - c.start) + "ms");
+
+    var deliverSmThroughput = (c.deliverSmRespCount/((c.deliverEnd - c.start)/1000.0));
+    log.info("deliver_sm=" + c.deliverSmCount + ", deliverSmResp=" + c.deliverSmRespCount + ", throughput=" + deliverSmThroughput);
+    log.info("deliver_sm_resp latency=" + (0.000_001 * c.deliverSmRespLatencySumNano/c.deliverSmRespCount));
+    log.info("deliver_sm time=" + positiveOrNaN(c.deliverEnd - c.start) + "ms");
+
+    log.info("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
   }
 
   private void setSourceAndDestAddress(SubmitSm ssm) {
@@ -365,7 +411,6 @@ public class PerfClientMain extends AbstractVerticle {
 //20:18:01.232 - deliverSmResp latency=0.05354155271269
 //20:18:01.232 - deliver_sm time=630564.0ms
 //20:18:01.232 - Overall throughput=317176.3690917972
-//20:18:01.233 - cosing vertx 06d5e10c-c5c2-466e-a192-91d8551368f1
 
   public static void main(String[] args) {
     var vertx = Vertx.vertx(new VertxOptions().setEventLoopPoolSize(THREADS));
