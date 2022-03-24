@@ -11,6 +11,7 @@ Client example (https://github.com/ayrapetovai/vertx-smpp/blob/main/src/test/jav
 This project needs help and wants to be a part of Vert.x.
 
 == TODO
+- Setting window size > 1200, using >2 sessions 2 thread on client submit_sm requests times out. Server settings: 1 session, 1 thread.
 - Refactor package names.
 - Implement metrics for Server, Client, Session in the most vertx-friendly way.
 - Request expiry should not corrupt other requests in channel (not knowing is it so or not in an AS IS code).
@@ -63,6 +64,7 @@ Legend: [v] done, [0] partially done, [-] not done.
     .. [v] Close operation is idempotent.
     .. [-] User can specify timeout for session to close.
     .. [v] User can specify whether they want closing routing to await for window to be drained and send or they want window to be discarded on session close.
+. [-] Client can automatically do backpressure if channel's read queue or write queue are overflowed. User can specify lower and higher watermarks.
 
 == Server Features
 . [-] Each session keeps track of metrics, available to user.
