@@ -59,7 +59,7 @@ public class SmppGatewayMain extends AbstractVerticle {
     }
   }
 
-  public static class HttpServerVerticl extends AbstractVerticle {
+  public static class HttpServerVerticle extends AbstractVerticle {
     public void start(Promise<Void> startPromise) {
       vertx.createHttpServer()
           .requestHandler(request -> {
@@ -98,7 +98,7 @@ public class SmppGatewayMain extends AbstractVerticle {
         .compose(v -> {
           log.info("smpp-client deployed");
           log.info("deploying http-server");
-          return vertx.deployVerticle(new HttpServerVerticl());
+          return vertx.deployVerticle(new HttpServerVerticle());
         })
         .onSuccess(__ -> {
           log.info("http-server deployed");
