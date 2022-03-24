@@ -75,6 +75,7 @@ public class SmppClientImpl extends NetClientImpl implements SmppClient {
   public BindFuture<SmppSession> bind(String host, int port) {
     var sessionPromise = BindFuture.<SmppSession>promise(vertx.getOrCreateContext());
     connect(port, host) // Method `this.initChannel` is called inside `super.connect`, and fills lastOpenedSession field.
+        .onFailure(sessionPromise::fail)
         .compose(socket -> {
           var session = lastOpenedSession;
           lastOpenedSession = null;

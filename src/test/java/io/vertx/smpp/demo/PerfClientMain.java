@@ -73,7 +73,7 @@ public class PerfClientMain extends AbstractVerticle {
     var forLoop = FlowControl.forLoopInt(vertx.getOrCreateContext(), 0, SUBMIT_SM_NUMBER);
 
     var options = new SmppClientOptions()
-      .setConnectTimeout(2000); // FIXME if server is shutdown, connection timeout does not do anything, implement.
+      .setConnectTimeout(2000);
     if (SSL) {
       options
           .setSsl(true)
@@ -120,10 +120,7 @@ public class PerfClientMain extends AbstractVerticle {
           });
         })
         .bind("localhost", SSL? 2777: 2776)
-        .onRefuse(e -> {
-          log.error("user code: server refused to bind", e);
-          startPromise.fail(e);
-        })
+        .onBindRefused(e -> log.error("user code: server refused to bind"))
         .onSuccess(sess -> {
           sessionReference.set(sess);
           log.info("user code: client bound");

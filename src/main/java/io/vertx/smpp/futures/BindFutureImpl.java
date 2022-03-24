@@ -19,6 +19,8 @@ import io.vertx.smpp.types.SendPduChannelClosedException;
 import io.vertx.core.Handler;
 import io.vertx.core.impl.future.PromiseInternal;
 
+import java.net.ConnectException;
+
 class BindFutureImpl<T> extends AbstractPduFuture<T, BindFuture<T>> implements BindFuture<T> {
 
   public BindFutureImpl(PromiseInternal<T> promise) {
@@ -54,10 +56,20 @@ class BindFutureImpl<T> extends AbstractPduFuture<T, BindFuture<T>> implements B
   }
 
   @Override
-  public BindFuture<T> onRefuse(Handler<SendBindRefusedException> handler) {
+  public BindFuture<T> onBindRefused(Handler<SendBindRefusedException> handler) {
     delegateAsPromise.onFailure(e -> {
       if (e instanceof SendBindRefusedException) {
         handler.handle((SendBindRefusedException)e);
+      }
+    });
+    return this;
+  }
+
+  @Override
+  public BindFuture<T> onConnectionRefused(Handler<ConnectException> handler) {
+    delegateAsPromise.onFailure(e -> {
+      if (e instanceof ConnectException) {
+        handler.handle((ConnectException)e);
       }
     });
     return this;
