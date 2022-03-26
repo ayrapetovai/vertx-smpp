@@ -19,7 +19,6 @@ This project needs help and wants to be a part of Vert.x.
 - Implement request.createGenarickNack() next to the request.createResponse() operation.
 - Implement Outbind?
 - Implement JMX?
-- Make sequenceNumber of generic_nack could be null or introduce a field with will say was it null or just 0.
 - Client and Server config should have an ability to be updated in runtime.
 - Chaos testing: make a docker-image with echo-server and use on it `pumba netem --duration 60s --tc-image giadocker/iproute2 delay --destribution pareto --time 1000 --jetter 500 my-container-with-smmpp-echo-server`
 - Find out how to scale client and server or several threads and connection such a way they would not lose performance.

@@ -39,7 +39,6 @@ public interface SmppSession extends Closeable, MetricsProvider {
   boolean isPaused();
   boolean canSend(int commandId);
   boolean canReceive(int commandId);
-//  SmppSessionSubState getSubState(); // SEND_PAUSED, REPLAY_PAUSED, SEND_REPLAY_PAUSED, PLAY.
 
   Long getId();
 
@@ -66,9 +65,6 @@ public interface SmppSession extends Closeable, MetricsProvider {
    */
   ReplayPduFuture<Void> reply(PduResponse pduResponse);
 
-  // void pauseAll();
-  // void pauseSend();
-  // void pauseReply();
   // void failAllUnsentRequests();
 
   SessionOptionsView getOptions();
