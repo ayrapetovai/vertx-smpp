@@ -82,8 +82,8 @@ public class SmppGatewayMain extends AbstractVerticle {
                   });
             } else {
               request.response()
-                  .setStatusCode(400)
-                  .end("no such path");
+                  .setStatusCode(404)
+                  .end();
             }
           })
           .listen(8080)
