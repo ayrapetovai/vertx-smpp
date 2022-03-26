@@ -161,6 +161,8 @@ public class PerfClientMain extends AbstractVerticle {
     long deliverSmRespCount;
     long deliverSmCount;
     double deliverSmRespLatencySumNano;
+    double meanWindowSize;
+    int maxWindowSize;
   }
 
   private static final String  SYSTEM_ID = "vertx-smpp-client";
@@ -270,6 +272,11 @@ public class PerfClientMain extends AbstractVerticle {
                 })
                 .onFailure(e -> counters.submitSmAllFailures++)
                 ;
+            var windowSize = sess.getWindowSize();
+            if (windowSize > counters.maxWindowSize) {
+              counters.maxWindowSize = windowSize;
+            }
+            counters.meanWindowSize += (double) windowSize/SUBMIT_SM_NUMBER;
           })
           .compose(v -> submitSmLatch.await(5, TimeUnit.SECONDS))
           .compose(v -> {
@@ -315,8 +322,8 @@ public class PerfClientMain extends AbstractVerticle {
 
     var table = new StringBuilder();
     table.append(String.format(
-        "|> threads=%d, sessions=%d, window=%d, text(%s), this=%s, that=%s, ssl=%s",
-        THREADS, SESSIONS, WINDOW, ENCODE.name(), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"
+        "|> threads=%d, sessions=%d, window=%d(mean %d, max %d), text(%s), this=%s, that=%s, ssl=%s",
+        THREADS, SESSIONS, WINDOW, (int) c.meanWindowSize, c.maxWindowSize, ENCODE.name(), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"
         )).append('\n');
     table.append(
         "        |   requests | responses | throughput | latency,ms |  time,ms | failures | rTimeout |  discard | onClosed |  wrongOp | oTimeout | overflowed ").append('\n');

@@ -58,12 +58,11 @@ Legend: [v] done, [0] partially done, [-] not done.
     .. [v] For send future user can assign a callback *onNackked*, that is called if the `generic_nack` pdu was received as a response, and it's sequence number corresponds to the sequence number of the request.
     .. [v] For send future user can assign a callback *onWriteOverflowed*, that is called when write buffer of the channel becomes full. This means that the receiver of requests (server) cannot take that many requests, and client have to slow down sending.
     User is supposed to do *pause* on the source of requests in case of being notified with *onWriteOverflow*. The session *onOverflowed* callback has check interval no less than 1ms, whereas the send future *onWriteOverflowed* is called as often as send attempts are made.
-    .. [-] When write buffer of session is ready to accepting requests again use must be able to get notified.
     .. [-] User can use all vertx native API for send future, as that *compose(...)* and so on.
     .. [v] User can react on `generic_nack` with no sequence number by passing callback to *configuratior.onUnexpectedResponse(...)*.
 . [-] Client keeps track of metrics for all sessions, which are available to user.
-. [-] User can *pause()* receiving of PDUs, can *resume()* receiving, and check is session is paused by *paused()*.
-. [-] User can obtain a size of a session window with *windowSize()* operation on session.
+. [v] User can *doPause()* receiving of PDUs, can *doResume()* receiving, and check is session is paused by *isPaused()*.
+. [v] User can obtain a size of a session window with *getWindowSize()* operation on session.
 . [v] If network connection gets reset or user decides to close connections by *session.close(...)*, the callback session *onClosed* is called. Also, all send futures get *onChannelClosed* called. The session *onClosed* callback purpose is to make user to be able to react on session close event when it was not initiated by them.
 . [0] User can unbind session by calling *close(...)* method.
     .. [v] Close operation is idempotent.
