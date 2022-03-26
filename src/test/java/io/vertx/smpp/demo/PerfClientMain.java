@@ -306,7 +306,6 @@ public class PerfClientMain extends AbstractVerticle {
     if (c.deliverEnd == 0) {
       c.deliverEnd = System.currentTimeMillis();
     }
-    // TODO this information must represented as table
     log.info(
         "done: threads={}, sessions={}, window={}, text({}), this={}, that={}, ssl={}",
         THREADS, SESSIONS, WINDOW, ENCODE.name(), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"

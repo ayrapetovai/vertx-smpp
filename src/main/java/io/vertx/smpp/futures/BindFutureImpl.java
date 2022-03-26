@@ -44,7 +44,6 @@ class BindFutureImpl<T> extends AbstractPduFuture<T, BindFuture<T>> implements B
     return this;
   }
 
-
   @Override
   public BindFuture<T> onChannelClosed(Handler<SendPduChannelClosedException> handler) {
     delegateAsPromise.onFailure(e -> {

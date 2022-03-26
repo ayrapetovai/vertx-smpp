@@ -29,7 +29,7 @@ import io.vertx.core.impl.future.PromiseInternal;
 import java.util.function.Function;
 
 // package-private
-abstract class AbstractPduFuture<T, F> implements Future<T>, Promise<T>, FutureInternal<T> {
+abstract class AbstractPduFuture<T, F extends Future<T>> implements Future<T>, Promise<T>, FutureInternal<T> {
 
   protected final PromiseInternal<T> delegateAsPromise;
   protected final Future<T> delegateAsFuture;
@@ -60,8 +60,8 @@ abstract class AbstractPduFuture<T, F> implements Future<T>, Promise<T>, FutureI
   }
 
   @Override
-  public Future<T> onComplete(Handler<AsyncResult<T>> handler) {
-    return delegateAsFuture.onComplete(handler);
+  public F onComplete(Handler<AsyncResult<T>> handler) {
+    return (F) delegateAsFuture.onComplete(handler);
   }
 
   @Override
@@ -95,8 +95,8 @@ abstract class AbstractPduFuture<T, F> implements Future<T>, Promise<T>, FutureI
   }
 
   @Override
-  public <U> Future<T> eventually(Function<Void, Future<U>> mapper) {
-    return delegateAsFuture.eventually(mapper);
+  public <U> F eventually(Function<Void, Future<U>> mapper) {
+    return (F) delegateAsFuture.eventually(mapper);
   }
 
   @Override
@@ -127,6 +127,11 @@ abstract class AbstractPduFuture<T, F> implements Future<T>, Promise<T>, FutureI
   @Override
   public boolean tryFail(String message) {
     return delegateAsPromise.tryFail(message);
+  }
+
+  @Override
+  public F recover(Function<Throwable, Future<T>> mapper) {
+    return (F) compose(Future::succeededFuture, mapper);
   }
 
   public F onChannelClosed(Handler<SendPduChannelClosedException> handler) {
