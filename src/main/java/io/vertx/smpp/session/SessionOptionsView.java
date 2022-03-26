@@ -41,21 +41,21 @@ public interface SessionOptionsView {
   boolean getCountersEnabled();
   boolean getLogPduBody();
 
-  void setDiscardAllOnUnbind(boolean dropAllOnUnbind);
-  void setReplyToUnbind(boolean replyToUnbind);
-  void setSendUnbindOnClose(boolean sendUnbindOnClose);
-  void setAwaitUnbindResp(boolean awaitUnbindResp);
-  void setDiscardTimeout(long drainTimeout);
-//  void setBindTimeout(long bindTimeout); // cannot change, bind was done already
-  void setUnbindTimeout(long unbindTimeout);
-  void setRequestExpiryTimeout(long requestExpiryTimeout);
-//  void setWindowSize(int windowSize); // the window size cannot be changed after connection is established
-  void setWindowWaitTimeout(long windowWaitTimeout);
-  void setWindowMonitorInterval(long windowMonitorInterval);
-//  void setWriteTimeout(long writeTimeout); // cannot be changed after connection is established, value was passed to the channel
-  void setWriteQueueSize(int writeQueueSize);
-  void setOverflowMonitorInterval(long overflowMonitorInterval);
-  void setCountersEnabled(boolean countersEnabled);
-  void setLogPduBody(boolean logPduBody);
+  SessionOptionsView setDiscardAllOnUnbind(boolean dropAllOnUnbind);
+  SessionOptionsView setReplyToUnbind(boolean replyToUnbind);
+  SessionOptionsView setSendUnbindOnClose(boolean sendUnbindOnClose);
+  SessionOptionsView setAwaitUnbindResp(boolean awaitUnbindResp);
+  SessionOptionsView setDiscardTimeout(long drainTimeout);
+//  SessionOptionsView setBindTimeout(long bindTimeout); // cannot change, bind was done already
+  SessionOptionsView setUnbindTimeout(long unbindTimeout);
+  SessionOptionsView setRequestExpiryTimeout(long requestExpiryTimeout);
+//  SessionOptionsView setWindowSize(int windowSize); // the window size cannot be changed after connection is established
+  SessionOptionsView setWindowWaitTimeout(long windowWaitTimeout);
+  SessionOptionsView setWindowMonitorInterval(long windowMonitorInterval);
+//  SessionOptionsView setWriteTimeout(long writeTimeout); // cannot be changed after connection is established, value was passed to the channel
+  SessionOptionsView setWriteQueueSize(int writeQueueSize);
+  SessionOptionsView setOverflowMonitorInterval(long overflowMonitorInterval);
+  SessionOptionsView setCountersEnabled(boolean countersEnabled);
+  SessionOptionsView setLogPduBody(boolean logPduBody);
 
 }
