@@ -307,19 +307,44 @@ public class PerfClientMain extends AbstractVerticle {
         THREADS, SESSIONS, WINDOW, ENCODE.name(), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"
     );
     var submitSmThroughput = ((double) c.submitSmRespCount/((c.submitEnd - c.start)/1000.0));
-    log.info("submit_sm=" + c.submitSmCount + ", submitSmResp=" + c.submitSmRespCount + ", throughput=" + submitSmThroughput);
-    log.info("submit_sm latency=" + (0.000_001 * c.submitSmLatencySumNano/c.submitSmRespCount) + ", failures=" + c.submitSmAllFailures);
-    log.info("submit_sm requestTimeout=" + c.submitSmTimeout + ", discarded=" + c.submitSmDiscarded +
-        ", onClosed=" + c.submitSmOnChannelClosed + ", wrongOp=" + c.submitSmWrongOperation +
-        ", offerTimeout=" + c.submitSmOfferTimeout + ", writeOverflow=" + c.submitSmWriteOverflow);
-    log.info("submit_sm time=" + (c.submitEnd - c.start) + "ms");
-
     var deliverSmThroughput = ((double) c.deliverSmRespCount/((c.deliverEnd - c.start)/1000.0));
-    log.info("deliver_sm=" + c.deliverSmCount + ", deliverSmResp=" + c.deliverSmRespCount + ", throughput=" + deliverSmThroughput);
-    log.info("deliver_sm_resp latency=" + (0.000_001 * c.deliverSmRespLatencySumNano/c.deliverSmRespCount));
-    log.info("deliver_sm time=" + positiveOrNaN(c.deliverEnd - c.start) + "ms");
 
-    log.info("Overall throughput=" + (submitSmThroughput + deliverSmThroughput));
+    var table = new StringBuilder();
+    table.append(String.format(
+        "|> threads=%d, sessions=%d, window=%d, text(%s), this=%s, that=%s, ssl=%s",
+        THREADS, SESSIONS, WINDOW, ENCODE.name(), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"
+        )).append('\n');
+    table.append(
+        "        |   requests | responses | throughput | latency,ms |  time,ms | failures | rTimeout |  discard | onClosed |  wrongOp | oTimeout | overflowed ").append('\n');
+    table.append(" submit | ")
+        .append(String.format("%10d |", c.submitSmCount)) // requests
+        .append(String.format("%10d |", c.submitSmRespCount)) // responses
+        .append(String.format(" %10d |", (int) submitSmThroughput)) // throughput
+        .append(String.format("%11.3f |", (0.000_001 * c.submitSmLatencySumNano/c.submitSmRespCount))) // latency,ms
+        .append(String.format("%9.2f |", c.submitEnd - c.start)) // time,ms
+        .append(String.format("%9d |", c.submitSmAllFailures)) // failures
+        .append(String.format("%9d |", c.submitSmTimeout)) // rTimeout
+        .append(String.format("%9d |", c.submitSmDiscarded)) // discard
+        .append(String.format("%9d |", c.submitSmOnChannelClosed)) // onClosed
+        .append(String.format("%9d |", c.submitSmWrongOperation)) // wrongOp
+        .append(String.format("%9d |", c.submitSmOfferTimeout)) // oTimeout
+        .append(String.format("%11d",  c.submitSmWriteOverflow)) // overflowed
+        .append('\n');
+    table.append("deliver |")
+        .append(String.format("%11d |", c.deliverSmCount)) // requests
+        .append(String.format("%10d |", c.deliverSmRespCount)) // responses
+        .append(String.format(" %10d |", (int) deliverSmThroughput)) // throughput
+        .append(String.format("%11.3f |", (0.000_001 * c.deliverSmRespLatencySumNano/c.deliverSmRespCount))) // latency,ms
+        .append(String.format("%9.2f |", positiveOrNaN(c.deliverEnd - c.start))) // time,ms
+        .append(String.format("%9d |", -1)) // failures
+        .append(String.format("%9d |", -1)) // rTimeout
+        .append(String.format("%9d |", -1)) // discard
+        .append(String.format("%9d |", -1)) // onClosed
+        .append(String.format("%9d |", -1)) // wrongOp
+        .append(String.format("%9d |", -1)) // oTimeout
+        .append(String.format("%11d",  -1)) // overflowed
+        .append('\n');
+    log.info("Statistics:\n{}", table);
   }
 
   private static double positiveOrNaN(double l) {
