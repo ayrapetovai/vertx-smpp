@@ -22,6 +22,9 @@ import io.vertx.core.Promise;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.future.PromiseImpl;
 
+import java.net.ConnectException;
+
+// TODO add all methods returning BindFuture instead of Future
 public interface BindFuture<T> extends Future<T>, Promise<T> {
 
   static <T> BindFuture<T> promise(ContextInternal contextInternal) {
@@ -30,6 +33,15 @@ public interface BindFuture<T> extends Future<T>, Promise<T> {
 
   @Override
   BindFuture<T> future();
+  @Override
+  default BindFuture<T> onFailure(Handler<Throwable> handler) {
+    return (BindFuture<T>) onComplete(ar -> {
+      if (ar.failed()) {
+        handler.handle(ar.cause());
+      }
+    });
+  }
   BindFuture<T> onChannelClosed(Handler<SendPduChannelClosedException> handler);
-  BindFuture<T> onRefuse(Handler<SendBindRefusedException> handler);
+  BindFuture<T> onBindRefused(Handler<SendBindRefusedException> handler);
+  BindFuture<T> onConnectionRefused(Handler<ConnectException> handler);
 }

@@ -17,10 +17,7 @@ package io.vertx.smpp.futures;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.impl.future.PromiseInternal;
-import io.vertx.smpp.types.SendPduDiscardedException;
-import io.vertx.smpp.types.SendPduNackkedException;
-import io.vertx.smpp.types.SendPduRequestTimeoutException;
-import io.vertx.smpp.types.SendPduWindowTimeoutException;
+import io.vertx.smpp.types.*;
 
 
 class SendPduFutureImpl<T> extends AbstractPduFuture<T, SendPduFuture<T>> implements SendPduFuture<T> {
@@ -87,6 +84,16 @@ class SendPduFutureImpl<T> extends AbstractPduFuture<T, SendPduFuture<T>> implem
     delegateAsPromise.onFailure(e -> {
       if (e instanceof SendPduRequestTimeoutException) {
         handler.handle((SendPduRequestTimeoutException)e);
+      }
+    });
+    return this;
+  }
+
+  @Override
+  public SendPduFuture<T> onOverflowed(Handler<SendPduWriteOverflowedException> handler) {
+    delegateAsPromise.onFailure(e -> {
+      if (e instanceof SendPduWriteOverflowedException) {
+        handler.handle((SendPduWriteOverflowedException)e);
       }
     });
     return this;

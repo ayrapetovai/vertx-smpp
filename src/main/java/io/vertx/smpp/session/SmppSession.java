@@ -71,5 +71,7 @@ public interface SmppSession extends Closeable, MetricsProvider {
   // void failAllUnsentRequests();
 
   SessionOptionsView getOptions();
+  void doPause();
+  void doResume();
   void close(Promise<Void> completion, boolean sendUnbindRequired);
 }

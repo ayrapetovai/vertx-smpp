@@ -27,6 +27,8 @@ public interface ServerSessionConfigurator extends SessionCallbacks {
   void setWindowWaitTimeout(long windowWaitTimeout);
   void setWindowMonitorInterval(long windowMonitorInterval);
   void setWriteTimeout(long writeTimeout);
+  void setWriteQueueSize(int writeQueueSize);
+  void setOverflowMonitorInterval(long overflowMonitorInterval);
   void setCountersEnabled(boolean countersEnabled);
   void setLogPduBody(boolean logBytes);
 }

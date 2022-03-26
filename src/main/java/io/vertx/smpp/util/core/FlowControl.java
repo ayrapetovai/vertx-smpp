@@ -21,12 +21,14 @@ import java.util.function.BooleanSupplier;
 
 public class FlowControl {
 
+  // TODO make it implement ReadStream<Integer>
   public static class ForIntLoop {
     private final Context ctx;
     private final int initial;
     private final int upperBound;
 
-    private boolean done = false;
+    private boolean stopped = false;
+    private boolean paused = false;
 
     private ForIntLoop(Context ctx, int initial, int upperBound) {
       this.ctx = ctx;
@@ -39,11 +41,16 @@ public class FlowControl {
       var counter = new IntegerBox(initial);
       var jobRef = new Reference<Handler<Void>>();
       var job = (Handler<Void>) doJob -> {
-        if (!done) {
+        if (!stopped) {
           var cnt = counter.getAndIncrement();
           if (cnt < upperBound) {
             handler.handle(cnt);
-            ctx.runOnContext(jobRef.get());
+            if (!paused) {
+              ctx.runOnContext(jobRef.get());
+            } else {
+              awaitCondition(ctx, () -> !paused, 10000)
+                  .onComplete(v -> ctx.runOnContext(jobRef.get()));
+            }
           } else {
             completed.complete();
           }
@@ -55,7 +62,7 @@ public class FlowControl {
       if (initial >= upperBound) {
         completed.complete();
       } else {
-        if (!done) {
+        if (!stopped) {
           ctx.runOnContext(job);
         } else {
           completed.complete();
@@ -65,7 +72,15 @@ public class FlowControl {
     }
 
     public void stop() {
-      done = true;
+      stopped = true;
+    }
+
+    public void pause() {
+      paused = true;
+    }
+
+    public void resume() {
+      paused = false;
     }
   }
 

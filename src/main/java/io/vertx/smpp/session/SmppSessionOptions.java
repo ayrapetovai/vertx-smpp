@@ -41,21 +41,25 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   private long unbindTimeout = 10000;
   private long requestExpiryTimeout = 10000;
   private int windowSize = 50;
-  private long windowWaitTimeout = 5000;
+  private long windowWaitTimeout = 10000;
   private long windowMonitorInterval = 10;
   private long writeTimeout = 0;
+  private int writeQueueSize = 0;
+  private long overflowMonitorInterval = 10;
   private boolean countersEnabled = false;
   private boolean logPduBody = false;
 
-  Handler<SmppSession> createdHandler = __ -> {};
-  Handler<PduRequestContext<?>> requestHandler = __ -> {};
-  Handler<PduResponseContext> unexpectedResponseHandler = __ -> {};
-  Handler<SmppSession> closedHandler = __ -> {};
-  Handler<SmppSession> unexpectedCloseHandler = __ -> {};
+  private Handler<SmppSession> createdHandler = __ -> {};
+  private Handler<PduRequestContext<?>> requestHandler = __ -> {};
+  private Handler<PduResponseContext> unexpectedResponseHandler = __ -> {};
+  private Handler<SmppSession> closedHandler = __ -> {};
+  private Handler<SmppSession> unexpectedCloseHandler = __ -> {};
   // TODO Function<BindInfo, BindRespStatusCode> onBindReceived
-  Function<BindInfo, Integer> onBindReceived = __ -> SmppConstants.STATUS_OK;
-  Handler<PduRequestContext<?>> onForbiddenRequest = __ -> {};
-  Handler<PduResponseContext> onForbiddenResponse = __ -> {};
+  private Function<BindInfo, Integer> onBindReceived = __ -> SmppConstants.STATUS_OK;
+  private Handler<PduRequestContext<?>> onForbiddenRequest = __ -> {};
+  private Handler<PduResponseContext> onForbiddenResponse = __ -> {};
+  private Handler<Void> onOverflowed = __ -> {};
+  private Handler<Void> onDrained = __ -> {};
 
   @Override
   public void setBindType(SmppBindType bindType) {
@@ -135,6 +139,16 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   @Override
   public void setWindowMonitorInterval(long windowMonitorInterval) {
     this.windowMonitorInterval = windowMonitorInterval;
+  }
+
+  @Override
+  public void setWriteQueueSize(int writeQueueSize) {
+    this.writeQueueSize = writeQueueSize;
+  }
+
+  @Override
+  public void setOverflowMonitorInterval(long overflowMonitorInterval) {
+    this.overflowMonitorInterval = overflowMonitorInterval;
   }
 
   @Override
@@ -238,6 +252,16 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   @Override
+  public int getWriteQueueSize() {
+    return this.writeQueueSize;
+  }
+
+  @Override
+  public long getOverflowMonitorInterval() {
+    return this.overflowMonitorInterval;
+  }
+
+  @Override
   public boolean getCountersEnabled() {
     return countersEnabled;
   }
@@ -287,6 +311,16 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
     this.onForbiddenResponse = onForbiddenResponse;
   }
 
+  @Override
+  public void onOverflowed(Handler<Void> onOverflowed) {
+    this.onOverflowed = onOverflowed;
+  }
+
+  @Override
+  public void onDrained(Handler<Void> onDrained) {
+    this.onDrained = onDrained;
+  }
+
   public Handler<SmppSession> getOnCreated() {
     return createdHandler;
   }
@@ -317,5 +351,13 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
 
   public Handler<PduResponseContext> getOnForbiddenResponse() {
     return this.onForbiddenResponse;
+  }
+
+  public Handler<Void> getOnOverflowed() {
+    return onOverflowed;
+  }
+
+  public Handler<Void> getOnDrained() {
+    return onDrained;
   }
 }
