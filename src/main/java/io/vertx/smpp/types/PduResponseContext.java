@@ -71,6 +71,7 @@ import io.vertx.smpp.session.SmppSession;
  *      this request and all requests ahead of it in the window).
  */
 //public long getEstimatedProcessingTime();
+// TODO PduResponseContext must contain the request
 public class PduResponseContext {
   private final PduResponse response;
   private final SmppSession session;

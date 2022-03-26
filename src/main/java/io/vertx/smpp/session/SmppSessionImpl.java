@@ -45,7 +45,8 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private final Semaphore windowGuard;
   private final SmppSessionOptions options;
   private final boolean isServer;
-  private final long expireTimerId;
+  private final long windowMonitorId;
+  private final long overflowMonitorId;
   private final SequenceCounter sequenceCounter = new SequenceCounter();
   private final byte thisInterface = SmppConstants.VERSION_3_4;
 
@@ -53,6 +54,8 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private SmppSessionState state = SmppSessionState.OPENED;
   private String boundToSystemId;
   private Object referenceObject;
+  private boolean previousWritable;
+  private boolean currentWritable;
 
   public SmppSessionImpl(Pool pool, Long id, ContextInternal context, ChannelHandlerContext chctx, SmppSessionOptions options, boolean isServer) {
     super(context, chctx);
@@ -65,7 +68,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     this.options = options;
     this.isServer = isServer;
     this.window = new Window(context);
-    this.expireTimerId = vertx.setPeriodic(options.getWindowMonitorInterval(), timerId -> {
+    this.windowMonitorId = vertx.setPeriodic(options.getWindowMonitorInterval(), timerId -> {
       try {
         window.purgeAllExpired(expiredRecord -> {
           if (expiredRecord.responsePromise != null) {
@@ -78,6 +81,21 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
         });
       } catch (Exception e) {
         log.error("Expiring periodic routing failed", e);
+      }
+    });
+
+    if (options.getWriteQueueSize() > 0) {
+      doSetWriteQueueMaxSize(options.getWriteQueueSize());
+    }
+
+    this.overflowMonitorId = vertx.setPeriodic(options.getOverflowMonitorInterval(), timerId -> {
+      previousWritable = currentWritable;
+      currentWritable = channel().isWritable();
+
+      if (previousWritable && !currentWritable) {
+        options.getOnOverflowed().handle(null);
+      } else if (!previousWritable && currentWritable) {
+        options.getOnDrained().handle(null);
       }
     });
   }
@@ -160,6 +178,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
     return doSendUnchecked(new Unbind(), 0);
   }
 
+  // TODO send must return PduResponseContext not only the response, but session, request and so on...
   @Override
   public <T extends PduResponse> SendPduFuture<T> send(PduRequest<T> req) {
     return send(req, 0);
@@ -180,6 +199,9 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
 
   private  <T extends PduResponse> SendPduFuture<T> doSendUnchecked(PduRequest<T> req, long offerTimeout) {
     if (channel().isOpen()) {
+      if (channel().bytesBeforeUnwritable() == 0) {
+        return SendPduFuture.failedFuture(new SendPduWriteOverflowedException("Cannot write to channel", channel().bytesBeforeWritable()));
+      }
       var sendPromise = SendPduFuture.<T>promise(vertx.getOrCreateContext());
       windowGuard.acquire(1, offerTimeout)
           .onSuccess(v -> {
@@ -262,7 +284,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
             if (ar.succeeded()) {
               log.debug("awaiting of window succeed");
             } else {
-              log.error("awaiting of window failed", ar.cause());
+              log.error("awaiting of window failed, window size {}",  window.size(), ar.cause());
             }
             closeWithUnbind(completion, sendUnbindRequired);
           });
@@ -321,7 +343,8 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   }
 
   private void dispose(Promise<Void> completion) {
-    vertx.cancelTimer(expireTimerId);
+    vertx.cancelTimer(windowMonitorId);
+    vertx.cancelTimer(overflowMonitorId);
     doPause();
     flushBytesRead();
     pool.remove(id);
@@ -427,6 +450,6 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
 
   @Override
   public String toString() {
-    return "Session(" + id + (isServer? "-server": "-client") + " -> " + boundToSystemId + ')';
+    return "Session(" + state + ":" + id + (isServer? "-server": "-client") + " -> " + boundToSystemId + ')';
   }
 }

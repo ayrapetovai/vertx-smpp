@@ -17,6 +17,7 @@ package io.vertx.smpp.session;
 import io.vertx.smpp.model.SmppBindType;
 import io.vertx.smpp.types.Address;
 
+// TODO make is API fluent
 public interface ClientSessionConfigurator extends SessionCallbacks {
   void setBindType(SmppBindType bindType);
   void setSystemId(String systemId);
@@ -33,6 +34,8 @@ public interface ClientSessionConfigurator extends SessionCallbacks {
   void setWindowWaitTimeout(long windowWaitTimeout);
   void setWindowMonitorInterval(long windowMonitorInterval);
   void setWriteTimeout(long writeTimeout);
+  void setWriteQueueSize(int writeQueueSize);
+  void setOverflowMonitorInterval(long overflowMonitorInterval);
   void setCountersEnabled(boolean countersEnabled);
   void setLogPduBody(boolean logBytes);
 }

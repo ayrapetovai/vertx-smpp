@@ -58,4 +58,6 @@ public interface SendPduFuture<T> extends Future<T>, Promise<T> {
   SendPduFuture<T> onWriteFailed(Handler<SendPduWriteFailedException> handler);
 
   SendPduFuture<T> onNackked(Handler<SendPduNackkedException> handler);
+
+  SendPduFuture<T> onOverflowed(Handler<SendPduWriteOverflowedException> handler);
 }

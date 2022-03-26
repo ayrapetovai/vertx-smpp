@@ -15,7 +15,7 @@ package io.vertx.smpp.types;
 //   limitations under the License.
 
 public class SendPduChannelClosedException extends SendPduFailedException {
-
+// TODO consider introducing a flag with meaning "closed by this peer or by the remote peer"
   public SendPduChannelClosedException(String message) {
     super(message);
   }

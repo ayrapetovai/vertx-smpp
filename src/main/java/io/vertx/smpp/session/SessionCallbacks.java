@@ -33,4 +33,6 @@ public interface SessionCallbacks {
   void onBindReceived(Function<BindInfo, Integer> onBindReceived);
   void onForbiddenRequest(Handler<PduRequestContext<?>> onForbiddenRequest);
   void onForbiddenResponse(Handler<PduResponseContext> onForbiddenResponse);
+  void onOverflowed(Handler<Void> onOverflowed);
+  void onDrained(Handler<Void> onDrained);
 }

@@ -77,6 +77,7 @@ public class Window {
     }
   }
 
+  // TODO this procedure must not be O(n)
   public synchronized void purgeAllExpired(Consumer<RequestRecord> promiseHandler) {
     if (expirationInProgress) {
       return;

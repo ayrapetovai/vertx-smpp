@@ -36,6 +36,8 @@ public interface SessionOptionsView {
   long getWindowWaitTimeout();
   long getWindowMonitorInterval();
   long getWriteTimeout();
+  int getWriteQueueSize();
+  long getOverflowMonitorInterval();
   boolean getCountersEnabled();
   boolean getLogPduBody();
 
@@ -51,6 +53,8 @@ public interface SessionOptionsView {
   void setWindowWaitTimeout(long windowWaitTimeout);
   void setWindowMonitorInterval(long windowMonitorInterval);
 //  void setWriteTimeout(long writeTimeout); // cannot be changed after connection is established, value was passed to the channel
+  void setWriteQueueSize(int writeQueueSize);
+  void setOverflowMonitorInterval(long overflowMonitorInterval);
   void setCountersEnabled(boolean countersEnabled);
   void setLogPduBody(boolean logPduBody);
 
