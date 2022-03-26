@@ -62,108 +62,129 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   private Handler<Void> onDrained = __ -> {};
 
   @Override
-  public void setBindType(SmppBindType bindType) {
+  public SmppSessionOptions setBindType(SmppBindType bindType) {
     this.bindType = bindType;
+    return this;
   }
 
   @Override
-  public void setSystemId(String systemId) {
+  public SmppSessionOptions setSystemId(String systemId) {
     this.systemId = systemId;
+    return this;
   }
 
   @Override
-  public void setPassword(String password) {
+  public SmppSessionOptions setPassword(String password) {
     this.password = password;
+    return this;
   }
 
   @Override
-  public void setSystemType(String systemType) {
+  public SmppSessionOptions setSystemType(String systemType) {
     this.systemType = systemType;
+    return this;
   }
 
   @Override
-  public void setAddressRange(Address addressRange) {
+  public SmppSessionOptions setAddressRange(Address addressRange) {
     this.addressRange = addressRange;
+    return this;
   }
 
   @Override
-  public void setDiscardAllOnUnbind(boolean discardAllOnUnbind) {
+  public SmppSessionOptions setDiscardAllOnUnbind(boolean discardAllOnUnbind) {
     this.discardAllOnUnbind = discardAllOnUnbind;
+    return this;
   }
 
   @Override
-  public void setReplyToUnbind(boolean replyToUnbind) {
+  public SmppSessionOptions setReplyToUnbind(boolean replyToUnbind) {
     this.replyToUnbind = replyToUnbind;
+    return this;
   }
 
   @Override
-  public void setSendUnbindOnClose(boolean sendUnbindOnClose) {
+  public SmppSessionOptions setSendUnbindOnClose(boolean sendUnbindOnClose) {
     this.sendUnbindOnClose = sendUnbindOnClose;
+    return this;
   }
 
   @Override
-  public void setAwaitUnbindResp(boolean awaitUnbindResp) {
+  public SmppSessionOptions setAwaitUnbindResp(boolean awaitUnbindResp) {
     this.awaitUnbindResp = awaitUnbindResp;
+    return this;
   }
 
   @Override
-  public void setDiscardTimeout(long discardTimeout) {
+  public SmppSessionOptions setDiscardTimeout(long discardTimeout) {
     this.discardTimeout = discardTimeout;
+    return this;
   }
 
   @Override
-  public void setBindTimeout(long bindTimeout) {
+  public SmppSessionOptions setBindTimeout(long bindTimeout) {
     this.bindTimeout = bindTimeout;
+    return this;
   }
 
   @Override
-  public void setUnbindTimeout(long unbindTimeout) {
+  public SmppSessionOptions setUnbindTimeout(long unbindTimeout) {
     this.unbindTimeout = unbindTimeout;
+    return this;
   }
 
   @Override
-  public void setRequestExpiryTimeout(long requestExpiryTimeout) {
+  public SmppSessionOptions setRequestExpiryTimeout(long requestExpiryTimeout) {
     this.requestExpiryTimeout = requestExpiryTimeout;
+    return this;
   }
 
   @Override
-  public void setWindowSize(int windowSize) {
+  public SmppSessionOptions setWindowSize(int windowSize) {
     this.windowSize = windowSize;
+    return this;
   }
 
   @Override
-  public void setWindowWaitTimeout(long windowWaitTimeout) {
+  public SmppSessionOptions setWindowWaitTimeout(long windowWaitTimeout) {
     this.windowWaitTimeout = windowWaitTimeout;
+    return this;
   }
 
   @Override
-  public void setWindowMonitorInterval(long windowMonitorInterval) {
+  public SmppSessionOptions setWindowMonitorInterval(long windowMonitorInterval) {
     this.windowMonitorInterval = windowMonitorInterval;
+    return this;
   }
 
   @Override
-  public void setWriteQueueSize(int writeQueueSize) {
+  public SmppSessionOptions setWriteQueueSize(int writeQueueSize) {
     this.writeQueueSize = writeQueueSize;
+    return this;
   }
 
   @Override
-  public void setOverflowMonitorInterval(long overflowMonitorInterval) {
+  public SmppSessionOptions setOverflowMonitorInterval(long overflowMonitorInterval) {
     this.overflowMonitorInterval = overflowMonitorInterval;
+    return this;
   }
 
   @Override
-  public void setWriteTimeout(long writeTimeout) {
+  public SmppSessionOptions setWriteTimeout(long writeTimeout) {
     this.writeTimeout = writeTimeout;
+    return this;
   }
 
   @Override
-  public void setCountersEnabled(boolean countersEnabled) {
+  public SmppSessionOptions setCountersEnabled(boolean countersEnabled) {
     this.countersEnabled = countersEnabled;
+    return this;
   }
 
   @Override
-  public void setLogPduBody(boolean logPduBody) {
+  public SmppSessionOptions setLogPduBody(boolean logPduBody) {
     this.logPduBody = logPduBody;
+    return this;
   }
 
   @Override
@@ -272,53 +293,63 @@ public class SmppSessionOptions implements ServerSessionConfigurator, ClientSess
   }
 
   @Override
-  public void onCreated(Handler<SmppSession> createdHandler) {
+  public SmppSessionOptions onCreated(Handler<SmppSession> createdHandler) {
     this.createdHandler = createdHandler;
+    return this;
   }
 
   @Override
-  public void onRequest(Handler<PduRequestContext<?>> requestHandler) {
+  public SmppSessionOptions onRequest(Handler<PduRequestContext<?>> requestHandler) {
     this.requestHandler = requestHandler;
+    return this;
   }
 
   @Override
-  public void onUnexpectedResponse(Handler<PduResponseContext> unexpectedResponseHandler) {
+  public SmppSessionOptions onUnexpectedResponse(Handler<PduResponseContext> unexpectedResponseHandler) {
     this.unexpectedResponseHandler = unexpectedResponseHandler;
+    return this;
   }
 
   @Override
-  public void onClosed(Handler<SmppSession> closedHandler) {
+  public SmppSessionOptions onClosed(Handler<SmppSession> closedHandler) {
     this.closedHandler = closedHandler;
+    return this;
   }
 
   @Override
-  public void onUnexpectedClose(Handler<SmppSession> unexpectedCloseHandler) {
+  public SmppSessionOptions onUnexpectedClose(Handler<SmppSession> unexpectedCloseHandler) {
     this.unexpectedCloseHandler = unexpectedCloseHandler;
+    return this;
   }
 
   @Override
-  public void onBindReceived(Function<BindInfo, Integer> onBindReceived) {
+  public SmppSessionOptions onBindReceived(Function<BindInfo, Integer> onBindReceived) {
     this.onBindReceived = onBindReceived;
+    return this;
   }
 
   @Override
-  public void onForbiddenRequest(Handler<PduRequestContext<?>> onForbiddenRequest) {
+  public SmppSessionOptions onForbiddenRequest(Handler<PduRequestContext<?>> onForbiddenRequest) {
     this.onForbiddenRequest = onForbiddenRequest;
+    return this;
   }
 
   @Override
-  public void onForbiddenResponse(Handler<PduResponseContext> onForbiddenResponse) {
+  public SmppSessionOptions onForbiddenResponse(Handler<PduResponseContext> onForbiddenResponse) {
     this.onForbiddenResponse = onForbiddenResponse;
+    return this;
   }
 
   @Override
-  public void onOverflowed(Handler<Void> onOverflowed) {
+  public SmppSessionOptions onOverflowed(Handler<Void> onOverflowed) {
     this.onOverflowed = onOverflowed;
+    return this;
   }
 
   @Override
-  public void onDrained(Handler<Void> onDrained) {
+  public SmppSessionOptions onDrained(Handler<Void> onDrained) {
     this.onDrained = onDrained;
+    return this;
   }
 
   public Handler<SmppSession> getOnCreated() {

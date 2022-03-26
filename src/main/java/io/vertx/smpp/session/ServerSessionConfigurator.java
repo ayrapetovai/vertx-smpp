@@ -14,21 +14,41 @@ package io.vertx.smpp.session;
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-public interface ServerSessionConfigurator extends SessionCallbacks {
-  void setSystemId(String systemId);
-  void setDiscardAllOnUnbind(boolean dropAllOnUnbind);
-  void setReplyToUnbind(boolean replyToUnbind);
-  void setSendUnbindOnClose(boolean sendUnbindOnClose);
-  void setAwaitUnbindResp(boolean awaitUnbindResp);
-  void setBindTimeout(long bindTimeout);
-  void setUnbindTimeout(long unbindTimeout);
-  void setRequestExpiryTimeout(long requestExpiryTimeout);
-  void setWindowSize(int windowSize);
-  void setWindowWaitTimeout(long windowWaitTimeout);
-  void setWindowMonitorInterval(long windowMonitorInterval);
-  void setWriteTimeout(long writeTimeout);
-  void setWriteQueueSize(int writeQueueSize);
-  void setOverflowMonitorInterval(long overflowMonitorInterval);
-  void setCountersEnabled(boolean countersEnabled);
-  void setLogPduBody(boolean logBytes);
+import io.vertx.core.Handler;
+import io.vertx.smpp.types.BindInfo;
+import io.vertx.smpp.types.PduRequestContext;
+import io.vertx.smpp.types.PduResponseContext;
+
+import java.util.function.Function;
+
+// TODO
+//  public boolean sniffInbound(Pdu pdu);
+//  public boolean sniffOutbound(Pdu pdu);
+public interface ServerSessionConfigurator {
+  ServerSessionConfigurator setSystemId(String systemId);
+  ServerSessionConfigurator setDiscardAllOnUnbind(boolean dropAllOnUnbind);
+  ServerSessionConfigurator setReplyToUnbind(boolean replyToUnbind);
+  ServerSessionConfigurator setSendUnbindOnClose(boolean sendUnbindOnClose);
+  ServerSessionConfigurator setAwaitUnbindResp(boolean awaitUnbindResp);
+  ServerSessionConfigurator setBindTimeout(long bindTimeout);
+  ServerSessionConfigurator setUnbindTimeout(long unbindTimeout);
+  ServerSessionConfigurator setRequestExpiryTimeout(long requestExpiryTimeout);
+  ServerSessionConfigurator setWindowSize(int windowSize);
+  ServerSessionConfigurator setWindowWaitTimeout(long windowWaitTimeout);
+  ServerSessionConfigurator setWindowMonitorInterval(long windowMonitorInterval);
+  ServerSessionConfigurator setWriteTimeout(long writeTimeout);
+  ServerSessionConfigurator setWriteQueueSize(int writeQueueSize);
+  ServerSessionConfigurator setOverflowMonitorInterval(long overflowMonitorInterval);
+  ServerSessionConfigurator setCountersEnabled(boolean countersEnabled);
+  ServerSessionConfigurator setLogPduBody(boolean logBytes);
+  ServerSessionConfigurator onCreated(Handler<SmppSession> createdHandler);
+  ServerSessionConfigurator onRequest(Handler<PduRequestContext<?>> requestHandler);
+  ServerSessionConfigurator onUnexpectedResponse(Handler<PduResponseContext> unexpectedResponseHandler);
+  ServerSessionConfigurator onClosed(Handler<SmppSession> closedHandler);
+  ServerSessionConfigurator onUnexpectedClose(Handler<SmppSession> unexpectedCloseHandler);
+  ServerSessionConfigurator onBindReceived(Function<BindInfo, Integer> onBindReceived);
+  ServerSessionConfigurator onForbiddenRequest(Handler<PduRequestContext<?>> onForbiddenRequest);
+  ServerSessionConfigurator onForbiddenResponse(Handler<PduResponseContext> onForbiddenResponse);
+  ServerSessionConfigurator onOverflowed(Handler<Void> onOverflowed);
+  ServerSessionConfigurator onDrained(Handler<Void> onDrained);
 }

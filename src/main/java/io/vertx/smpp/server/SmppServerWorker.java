@@ -89,7 +89,6 @@ public class SmppServerWorker implements Handler<Channel> {
 //        pipeline.addLast("logging", new LoggingHandler(options.getActivityLogDataFormat()));
 //      }
 
-    // FIXME sessOpts.writeTimeout is 0, before configurator.handle(sessOpts);
     var writeTimeout = sessOpts.getWriteTimeout();
     if (writeTimeout > 0) {
       WriteTimeoutHandler writeTimeoutHandler = new WriteTimeoutHandler(writeTimeout, TimeUnit.MILLISECONDS);
@@ -107,17 +106,9 @@ public class SmppServerWorker implements Handler<Channel> {
       pipeline.addLast("idle", new IdleStateHandler(readIdleTimeout, writeIdleTimeout, idleTimeout, options.getIdleTimeoutUnit()));
     }
 
-    VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx -> {
-      var sess = pool.add(id -> {
-        return new SmppSessionImpl(pool, id, context, chctx, sessOpts, true);
-      });
-//            context.emit(chctx.handler(), connectionHandler::handle);
-      return sess;
-    });
-    handler.addHandler(conn -> {
-      // FIXME session is not bound yet, boundTo == null
-//      context.emit(conn, sessOpts[0].getOnCreated()::handle);
-    });
+    VertxHandler<SmppSessionImpl> handler = VertxHandler.create(chctx ->
+      pool.add(id -> new SmppSessionImpl(pool, id, context, chctx, sessOpts, true))
+    );
     pipeline.addLast("handler", handler);
     var sess  = handler.getConnection();
   }

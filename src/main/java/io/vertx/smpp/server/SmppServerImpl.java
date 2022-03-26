@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
-// FIXME implement clone()
 public class SmppServerImpl extends NetServerImpl implements Cloneable, SmppServer {
   private static final Logger log = LoggerFactory.getLogger(SmppServerImpl.class);
 
