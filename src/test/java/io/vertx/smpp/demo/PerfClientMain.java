@@ -167,6 +167,7 @@ public class PerfClientMain extends AbstractVerticle {
   private static final int     SESSIONS = 1;
   private static final int     THREADS = 1;
   private static final boolean SSL = false;
+  private static final boolean AWAIT_DELIVERY = true;
   private static final int     WINDOW = 600;
   private static final Encoder ENCODE = NONE;
 //  private static final Encoder ENCODE = Encoder.CLOUDHOPPER_GSM;
@@ -273,7 +274,11 @@ public class PerfClientMain extends AbstractVerticle {
           .compose(v -> submitSmLatch.await(5, TimeUnit.SECONDS))
           .compose(v -> {
             counters.submitEnd = System.currentTimeMillis();
-            return deliverSmRespLatch.await(5, TimeUnit.SECONDS);
+            if (AWAIT_DELIVERY) {
+              return deliverSmRespLatch.await(5, TimeUnit.SECONDS);
+            } else {
+              return Future.succeededFuture();
+            }
           })
           .compose(v -> {
             counters.deliverEnd = System.currentTimeMillis();
