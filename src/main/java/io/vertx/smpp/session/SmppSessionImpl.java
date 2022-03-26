@@ -93,9 +93,9 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       currentWritable = channel().isWritable();
 
       if (previousWritable && !currentWritable) {
-        options.getOnOverflowed().handle(null);
+        context.emit(options.getOnOverflowed());
       } else if (!previousWritable && currentWritable) {
-        options.getOnDrained().handle(null);
+        context.emit(options.getOnDrained());
       }
     });
   }
