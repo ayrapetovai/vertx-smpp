@@ -5,11 +5,10 @@ image:https://img.shields.io/badge/vert.x-4.2.5-purple.svg[link="https://vertx.i
 image:https://img.shields.io/badge/java-11-purple[]
 image:https://img.shields.io/badge/production-not%20ready-red[]
 
-SMPP client and server based on 'Cloudhooper by Twitter' (https://github.com/fizzed/cloudhopper-smpp/tree/netty4[repo]) source code, adapted to Vert.x, and it is not production ready yet.
+SMPP client and server based on 'Cloudhooper by Twitter' https://github.com/fizzed/cloudhopper-smpp/tree/netty4[source code] ported to netty4 by *fizzed*. This version is adapted to Vert.x, it is not production ready yet.
 
-Server example (https://github.com/ayrapetovai/vertx-smpp/blob/main/src/test/java/io/vertx/smpp/demo/EchoServerMain.java[in this repo]).
-
-Client example (https://github.com/ayrapetovai/vertx-smpp/blob/main/src/test/java/io/vertx/smpp/demo/PerfClientMain.java[in this repo]).
+Server https://github.com/ayrapetovai/vertx-smpp/blob/main/src/test/java/io/vertx/smpp/demo/EchoServerMain.java[example].
+Client https://github.com/ayrapetovai/vertx-smpp/blob/main/src/test/java/io/vertx/smpp/demo/PerfClientMain.java[example].
 
 This project needs help and wants to be a part of Vert.x.
 
@@ -23,28 +22,6 @@ Server: 1 thread, 1 sessions, window size 600, ssl=off; sends submit_sm_resp, de
         | requests | responses | throughput | latency,ms | time,ms
  submit |  5000000 |   5000000 |     132597 |      0.271 |   37708
 deliver |  5000000 |   5000000 |     132597 |      0.067 |   37708
-
-== TODO
-- Since password is set to SmppSessionOptions it lives in memory until the session closes, remove it some how?
-- Refactor package names.
-- Document numerical and boolean options.
-- Implement metrics for Server, Client, Session in the most vertx-friendly way.
-- Request expiry should not corrupt other requests in channel (not knowing is it so or not in an AS IS code).
-- Implement request.createGenarickNack() next to the request.createResponse() operation.
-- Implement Outbind?
-- Implement JMX?
-- Client and Server config should have an ability to be updated in runtime.
-- Chaos testing: make a docker-image with echo-server and use on it `pumba netem --duration 60s --tc-image giadocker/iproute2 delay --destribution pareto --time 1000 --jetter 500 my-container-with-smmpp-echo-server`
-- Find out how to scale client and server or several threads and connection such a way they would not lose performance.
-- Reference and utility implementations:
-    * (utility) testcontainers analogue for smpp-server with scenarios.
-    * (reference) smpp-client and server with non-event-loop-threads.
-    * (utility) ismpp, interactive smpp-client with interactive shell.
-    * (reference) simple-smpp-server, able to send deliver_sm to RECEIVER session and client with TRANSMITTER and RECEIVER sessions.
-    * (reference) email gateway, smpp -> EG -> smtp
-    * (utility) smpp multiplexer, {smpp_1, smpp_2, ..., smpp_n} -> smpp-mux -> smpp-server
-    * (utility) smpp-server-mock, can play scenarios.
-    * (utility) smpp-client-mock, can play scenarios.
 
 == Client Features
 Legend: [v] done, [0] partially done, [-] not done.
@@ -91,8 +68,6 @@ Legend: [v] done, [0] partially done, [-] not done.
 == Usage
 User code manages client/server session objects by their self's.
 
-JVM command line argument for ssl debugging `-Djavax.net.debug=ssl`.
-
 == Building
 To package library:
 [source,bash]
@@ -114,4 +89,4 @@ jmeter -n -t {$PROJECT_DIR}/src/test/resources/JmeterSmppGateway.jmx
 * https://groups.google.com/forum/?fromgroups#!forum/vertx[Vert.x User Group]
 * https://gitter.im/eclipse-vertx/vertx-users[Vert.x Gitter]
 
-
+Consider link:TODO.adoc[todo]
