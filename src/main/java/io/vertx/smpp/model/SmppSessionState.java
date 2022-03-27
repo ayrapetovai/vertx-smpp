@@ -96,6 +96,7 @@ public enum SmppSessionState {
           case SmppConstants.CMD_ID_QUERY_BROADCAST_SM_RESP:
           case SmppConstants.CMD_ID_QUERY_SM_RESP:
           case SmppConstants.CMD_ID_SUBMIT_MULTI_RESP:
+          case SmppConstants.CMD_ID_SUBMIT_SM_RESP:
           case SmppConstants.CMD_ID_UNBIND:
           case SmppConstants.CMD_ID_UNBIND_RESP:
             return true;
@@ -114,6 +115,7 @@ public enum SmppSessionState {
           case SmppConstants.CMD_ID_QUERY_BROADCAST_SM:
           case SmppConstants.CMD_ID_QUERY_SM:
           case SmppConstants.CMD_ID_SUBMIT_MULTI:
+          case SmppConstants.CMD_ID_SUBMIT_SM:
           case SmppConstants.CMD_ID_UNBIND:
           case SmppConstants.CMD_ID_UNBIND_RESP:
             return true;
@@ -137,6 +139,7 @@ public enum SmppSessionState {
           case SmppConstants.CMD_ID_QUERY_BROADCAST_SM:
           case SmppConstants.CMD_ID_QUERY_SM:
           case SmppConstants.CMD_ID_SUBMIT_MULTI:
+          case SmppConstants.CMD_ID_SUBMIT_SM:
           case SmppConstants.CMD_ID_UNBIND:
           case SmppConstants.CMD_ID_UNBIND_RESP:
             return true;
@@ -155,6 +158,7 @@ public enum SmppSessionState {
           case SmppConstants.CMD_ID_QUERY_BROADCAST_SM_RESP:
           case SmppConstants.CMD_ID_QUERY_SM_RESP:
           case SmppConstants.CMD_ID_SUBMIT_MULTI_RESP:
+          case SmppConstants.CMD_ID_SUBMIT_SM_RESP:
           case SmppConstants.CMD_ID_UNBIND:
           case SmppConstants.CMD_ID_UNBIND_RESP:
             return true;

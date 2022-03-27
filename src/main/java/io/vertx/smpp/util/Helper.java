@@ -95,4 +95,15 @@ public class Helper {
       bindResp.addOptionalParameter(interfaceVersionTlv);
     }
   }
+
+  public static SmppBindType bindTypeByCommandId(BaseBind<?> bindRequest) {
+    var commandId = bindRequest.getCommandId();
+    switch (commandId) {
+      case SmppConstants.CMD_ID_BIND_TRANSMITTER: return SmppBindType.TRANSMITTER;
+      case SmppConstants.CMD_ID_BIND_RECEIVER: return SmppBindType.RECEIVER;
+      case SmppConstants.CMD_ID_BIND_TRANSCEIVER: return SmppBindType.TRANSCEIVER;
+      default:
+        throw new IllegalStateException("command id does not correspond to bind type, got " + commandId);
+    }
+  }
 }

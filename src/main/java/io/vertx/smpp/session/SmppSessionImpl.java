@@ -56,6 +56,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   private Object referenceObject;
   private boolean previousWritable;
   private boolean currentWritable;
+  private boolean paused;
 
   public SmppSessionImpl(Pool pool, Long id, ContextInternal context, ChannelHandlerContext chctx, SmppSessionOptions options, boolean isServer) {
     super(context, chctx);
@@ -135,6 +136,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
         var bindRequest = (BaseBind<? extends BaseBindResp>) pdu;
         var respCmdStatus = options.getOnBindReceived()
             .apply(new BindInfo(bindRequest)); // TODO check returned status (it must be enum)
+        this.options.setBindType(Helper.bindTypeByCommandId(bindRequest));
         var bindResp = bindRequest.createResponse();
         Helper.addInterfaceVersionTlv(bindResp, getThisInterfaceVersion(), bindRequest.getInterfaceVersion());
         bindResp.setSystemId(options.getSystemId());
@@ -398,6 +400,23 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   }
 
   @Override
+  public boolean isPaused() {
+    return paused;
+  }
+
+  @Override
+  public void doPause() {
+    paused = true;
+    super.doPause();
+  }
+
+  @Override
+  public void doResume() {
+    paused = false;
+    super.doResume();
+  }
+
+  @Override
   public Long getId() {
     return this.id;
   }
@@ -446,6 +465,11 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
   @Override
   public boolean canReceive(int commandId) {
     return this.state.canReceive(isServer, commandId);
+  }
+
+  @Override
+  public int getWindowSize() {
+    return window.size();
   }
 
   @Override
