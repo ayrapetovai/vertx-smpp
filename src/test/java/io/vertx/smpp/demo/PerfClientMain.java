@@ -30,116 +30,10 @@ import java.util.stream.Collectors;
 
 import static io.vertx.smpp.demo.PerfClientMain.Encoder.NONE;
 
-//==================================
-//23:33:35.789 - done: threads=4, sessions=4, window=600, text(none), this=vertx-smpp-client, that=vertx-smpp-server, ssl=off
-//23:33:35.789 - submitSm=2000000, submitSmResp=2000000, throughput=94643.1951542684
-//23:33:35.789 - submitSm latency=0.7106796106344999
-//23:33:35.789 - submit_sm time=21132ms
-//23:33:35.789 - deliverSm=2000000, deliverSmResp=2000000, throughput=94643.1951542684
-//23:33:35.789 - deliverSmResp latency=0.0924942272955
-//23:33:35.789 - deliver_sm time=21132.0ms
-//23:33:35.789 - Overall throughput=189286.3903085368
-
-//==================================
-
-//23:17:30.585 - done: threads=1, sessions=1, window=600, text(none), this=vertx-smpp-client, that=vertx-smpp-server, ssl=off
-//23:17:30.589 - submitSm=2000000, submitSmResp=2000000, throughput=164460.15952635475
-//23:17:30.590 - submitSm latency=0.22241932045549997
-//23:17:30.591 - submit_sm time=12161ms
-//23:17:30.591 - deliverSm=2000000, deliverSmResp=2000000, throughput=164460.15952635475
-//23:17:30.591 - deliverSmResp latency=0.05109675399349999
-//23:17:30.591 - deliver_sm time=12161.0ms
-//23:17:30.591 - Overall throughput=328920.3190527095
-
-//==================================
-
-// vertx-smpp(4), no text, each
-//15:47:54.270 - submitSm=1000000, submitSmResp=1000000, throughput=87260.03490401396
-//15:47:54.270 - submitSm latency=1.3886247809849999
-//15:47:54.270 - deliverSm=1000001, deliverSmResp=1000001, throughput=87260.12216404887
-//15:47:54.270 - deliverSmResp latency=0.16470121744778254
-//15:47:54.270 - Overall throughput=174520.1570680628
-//15:47:54.270 - Time=11460ms
-//throughput 700000
-
-// cloudhopper(4), no text, sum
-//16:03:23.434 - submitSm=1000000, submitSmResp=1000000, throughput=18183.80186929483
-//16:03:23.434 - submitSm latency=35.967412587631
-//16:03:23.434 - deliverSm=548472, deliverSmResp=548472, throughput=9971.492982328558
-//16:03:23.434 - deliverSmResp latency=0.15386301283019005
-//16:03:23.434 - Overall throughput=28155.29485162339
-//16:03:23.434 - Time=54994ms
-
-//==================================
-
-// vertx-smpp(4), text(cloudhopper.CHARSET_GSM), each, window(600)
-//18:56:07.903 - submitSm=2000000, submitSmResp=2000000, throughput=32591.337222566242
-//18:56:07.903 - submitSm latency=1.293296398087
-//18:56:07.903 - submit_sm time=61366ms
-//18:56:07.903 - deliverSm=2000000, deliverSmResp=2000000, throughput=32591.337222566242
-//18:56:07.903 - deliverSmResp latency=0.093746191569
-//18:56:07.903 - deliver_sm time=61366ms
-//18:56:07.903 - Overall throughput=65182.674445132485
-//throughput 260000
-
-// vertx-smpp(4), text(Gsm7BitCharset), each, window(600)
-//19:00:31.635 - submitSm=2000000, submitSmResp=2000000, throughput=71813.28545780969
-//19:00:31.635 - submitSm latency=1.0924684289770001
-//19:00:31.635 - submit_sm time=27850ms
-//19:00:31.635 - deliverSm=2000000, deliverSmResp=2000000, throughput=71810.70697641019
-//19:00:31.635 - deliverSmResp latency=0.109346238805
-//19:00:31.635 - deliver_sm time=27851ms
-//19:00:31.635 - Overall throughput=143623.99243421986
-//throughput 547000
-
-//==================================
-
-// vertx-smpp(1), text(cloudhopper.CHARSET_GSM)
-//submitSm=1000000, submitSmResp=1000000, throughput=47947.83275795934
-//submitSm latency=0.7100937028389999
-//deliverSm=1000001, deliverSmResp=1000001, throughput=47945.58181905356
-//deliverSmResp latency=0.05510074804025196
-//Overall throughput=95893.4145770129
-//Time=20856ms
-
-// cloudhopper(1), text(cloudhopper.CHARSET_GSM)
-//submitSm=1000000, submitSmResp=1000000, throughput=47959.330487746396
-//submitSm latency=0.692746395918
-//deliverSm=788751, deliverSmResp=788751, throughput=37822.528052172245
-//deliverSmResp latency=0.04484290301628777
-//Overall throughput=85781.85853991864
-//Time=20851ms
-
-//==================================
-
-// vertx-smpp(1), no text
-//22:48:24.476 - submitSm=2000000, submitSmResp=2000000, throughput=136407.0386031919
-//22:48:24.477 - submitSm latency=0.2502508931195
-//22:48:24.478 - submit_sm time=14662ms
-//22:48:24.478 - deliverSm=2000000, deliverSmResp=2000000, throughput=136407.0386031919
-//22:48:24.478 - deliverSmResp latency=0.05146083862
-//22:48:24.478 - deliver_sm time=14662ms
-//22:48:24.478 - Overall throughput=272814.0772063838
-
-// cloudhopper(1), no text
-//22:52:08.558 - submitSm=2000000, submitSmResp=2000000, throughput=147775.97162701344
-//22:52:08.559 - submitSm latency=0.30968050239899997
-//22:52:08.560 - submit_sm time=13534ms
-//22:52:08.560 - deliverSm=234471, deliverSmResp=234471, throughput=-1.4238244491955677E-4
-//22:52:08.560 - deliverSmResp latency=0.02519616518887197
-//22:52:08.561 - deliver_sm time=-1646769025019ms
-//22:52:08.561 - Overall throughput=147775.97148463098
-
-//==================================
-
-//20:18:01.227 - done: threads=1, sessions=1, window=600, text(NONE), this=vertx-smpp-client, that=vertx-smpp-server, ssl=off
-//20:18:01.230 - submitSm=100000000, submitSmResp=1.0E8, throughput=158588.1845458986
-//20:18:01.231 - submitSm latency=0.22691762997125
-//20:18:01.232 - submit_sm time=630564.0ms
-//20:18:01.232 - deliverSm=100000000, deliverSmResp=1.0E8, throughput=158588.1845458986
-//20:18:01.232 - deliverSmResp latency=0.05354155271269
-//20:18:01.232 - deliver_sm time=630564.0ms
-//20:18:01.232 - Overall throughput=317176.3690917972
+//|> threads=1, sessions=1, window=600(mean 38, max 365), text(CUSTOM_GSM8), this=vertx-smpp-client, that=vertx-smpp-server, ssl=off
+//        |   requests | responses | throughput | latency,ms |  time,ms | failures | rTimeout |  discard | onClosed |  wrongOp | oTimeout | overflowed
+// submit |    5000000 |   5000000 |     132597 |      0,271 | 37708,00 |        0 |        0 |        0 |        0 |        0 |        0 |          0
+//deliver |    5000000 |   5000000 |     132597 |      0,067 | 37708,00 |       -1 |       -1 |       -1 |       -1 |       -1 |       -1 |         -1
 
 public class PerfClientMain extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(PerfClientMain.class);
@@ -171,11 +65,11 @@ public class PerfClientMain extends AbstractVerticle {
   private static final boolean SSL = false;
   private static final boolean AWAIT_DELIVERY = true;
   private static final int     WINDOW = 600;
-  private static final Encoder ENCODE = NONE;
+//  private static final Encoder ENCODE = NONE;
 //  private static final Encoder ENCODE = Encoder.CLOUDHOPPER_GSM;
 //  private static final Encoder ENCODE = Encoder.CLOUDHOPPER_GSM7;
 //  private static final Encoder ENCODE = Encoder.CLOUDHOPPER_UCS_2;
-//  private static final Encoder ENCODE = Encoder.CUSTOM_GSM8;
+  private static final Encoder ENCODE = Encoder.CUSTOM_GSM8;
 //  private static final Encoder ENCODE = Encoder.CUSTOM_GSM7;
 //  private static final Encoder ENCODE = Encoder.PLAIN_UTF8;
   private static final int     SUBMIT_SM_NUMBER = 1_000_000;
