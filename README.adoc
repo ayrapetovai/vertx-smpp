@@ -15,9 +15,9 @@ This project needs help and wants to be a part of Vert.x.
 == Performance
 Hardware: Intel Core i7 2.6 GHz, 6 cores, L2 256 Kb, L3 9 Mb, 2x8 Gb RAM 2.4 GHz.
 
-Client: 1 thread, 1 session, window size 600 (mean 38, max 365), with text (GSM8 encoded) of 160 chars, ssl=off; bind TRANCEIVER, sends submit_sm, deliver_sm_resp.
+Client: 1 thread, 1 session, window size 600 (mean 38, max 365), with text (GSM8 encoded) of 160 chars in each submit_sm request, SSL is off; bind TRANCEIVER, sends submit_sm, deliver_sm_resp.
 
-Server: 1 thread, 1 sessions, window size 600, ssl=off; sends submit_sm_resp, deliver_sm.
+Server: 1 thread, 1 session, window size 600, SSL is off; sends submit_sm_resp, deliver_sm.
 
         | requests | responses | throughput | latency,ms | time,ms
  submit |  5000000 |   5000000 |     132597 |      0.271 |   37708
@@ -66,7 +66,7 @@ Legend: [v] done, [0] partially done, [-] not done.
 . [-] Each session keeps track of metrics, available to user.
 
 == Usage
-User code manages client/server session objects by their self's.
+User code manages client/server session objects by itself.
 
 == Building
 To package library:
