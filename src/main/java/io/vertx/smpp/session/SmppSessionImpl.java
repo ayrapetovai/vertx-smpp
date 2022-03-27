@@ -136,6 +136,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
         var bindRequest = (BaseBind<? extends BaseBindResp>) pdu;
         var respCmdStatus = options.getOnBindReceived()
             .apply(new BindInfo(bindRequest)); // TODO check returned status (it must be enum)
+        this.options.setBindType(Helper.bindTypeByCommandId(bindRequest));
         var bindResp = bindRequest.createResponse();
         Helper.addInterfaceVersionTlv(bindResp, getThisInterfaceVersion(), bindRequest.getInterfaceVersion());
         bindResp.setSystemId(options.getSystemId());
