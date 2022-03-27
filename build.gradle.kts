@@ -21,7 +21,6 @@ dependencies {
   implementation("io.vertx:vertx-core")
 
   // misc
-  implementation("joda-time:joda-time:2.10.13") // needed by coludhopper classes
   // TODO remove
   implementation("com.cloudhopper:ch-commons-charset:3.0.2")
 
