@@ -1,6 +1,9 @@
 = vertx-smpp
 
+image:https://img.shields.io/badge/smpp-3.4-blue[]
 image:https://img.shields.io/badge/vert.x-4.2.5-purple.svg[link="https://vertx.io"]
+image:https://img.shields.io/badge/java-11-purple[]
+image:https://img.shields.io/badge/production-not%20ready-red[]
 
 SMPP client and server based on 'Cloudhooper by Twitter' (https://github.com/fizzed/cloudhopper-smpp/tree/netty4[repo]) source code, adapted to Vert.x, and it is not production ready yet.
 
@@ -11,6 +14,7 @@ Client example (https://github.com/ayrapetovai/vertx-smpp/blob/main/src/test/jav
 This project needs help and wants to be a part of Vert.x.
 
 == TODO
+- Since password is set to SmppSessionOptions it lives in memory until the session closes, remove it some how?
 - Refactor package names.
 - Document numerical and boolean options.
 - Add tests for pdu.
@@ -35,6 +39,7 @@ This project needs help and wants to be a part of Vert.x.
 == Client Features
 Legend: [v] done, [0] partially done, [-] not done.
 
+. [v] Supports SSL, but does not support Server Name Indication (using several ssl-certificates on the same host).
 . [v] Bind to MC as `Transmitter`, `Receiver`, `Tranceiver` by calling bind method and pass host and port to it.
     .. [v] User can send `SystemId`, `Password`, `SystemType`, `Address` in bind_request.
     .. [v] User can specify ClientSessionConfigurator *onCreated* callback to be notified when connection is established and session is created and ready for use, it fires before BindFuture *onSuccess* but provides the same session instance.
