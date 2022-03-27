@@ -22,121 +22,123 @@ package io.vertx.smpp.util;
 
 // third party imports
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  * Assetions symplifyed by Artem Ayrapetov
+ * junit5 by Artem Ayrapetov
  */
 public class SmppUtilTest {
 
     @Test
     public void isUserDataHeaderIndicatorEnabled() {
-        Assert.assertFalse(SmppUtil.isUserDataHeaderIndicatorEnabled((byte) 0x00));
-        Assert.assertFalse(SmppUtil.isUserDataHeaderIndicatorEnabled((byte) 0x01));
-        Assert.assertFalse(SmppUtil.isUserDataHeaderIndicatorEnabled((byte) 0x90));
-        Assert.assertFalse(SmppUtil.isUserDataHeaderIndicatorEnabled((byte) 0x80));
-        Assert.assertTrue(SmppUtil.isUserDataHeaderIndicatorEnabled((byte) 0x40));
-        Assert.assertTrue(SmppUtil.isUserDataHeaderIndicatorEnabled((byte) 0x41));
-        Assert.assertTrue(SmppUtil.isUserDataHeaderIndicatorEnabled((byte) 0xC0));
+        assertFalse(SmppUtil.isUserDataHeaderIndicatorEnabled((byte) 0x00));
+        assertFalse(SmppUtil.isUserDataHeaderIndicatorEnabled((byte) 0x01));
+        assertFalse(SmppUtil.isUserDataHeaderIndicatorEnabled((byte) 0x90));
+        assertFalse(SmppUtil.isUserDataHeaderIndicatorEnabled((byte) 0x80));
+        assertTrue(SmppUtil.isUserDataHeaderIndicatorEnabled((byte) 0x40));
+        assertTrue(SmppUtil.isUserDataHeaderIndicatorEnabled((byte) 0x41));
+        assertTrue(SmppUtil.isUserDataHeaderIndicatorEnabled((byte) 0xC0));
     }
 
     @Test
     public void isReplyPathEnabled() {
-        Assert.assertFalse(SmppUtil.isReplyPathEnabled((byte) 0x00));
-        Assert.assertFalse(SmppUtil.isReplyPathEnabled((byte) 0x01));
-        Assert.assertTrue(SmppUtil.isReplyPathEnabled((byte) 0x90));
-        Assert.assertTrue(SmppUtil.isReplyPathEnabled((byte) 0xC0));
-        Assert.assertTrue(SmppUtil.isReplyPathEnabled((byte) 0x80));
-        Assert.assertFalse(SmppUtil.isReplyPathEnabled((byte) 0x40));
-        Assert.assertTrue(SmppUtil.isReplyPathEnabled((byte) 0x81));
+        assertFalse(SmppUtil.isReplyPathEnabled((byte) 0x00));
+        assertFalse(SmppUtil.isReplyPathEnabled((byte) 0x01));
+        assertTrue(SmppUtil.isReplyPathEnabled((byte) 0x90));
+        assertTrue(SmppUtil.isReplyPathEnabled((byte) 0xC0));
+        assertTrue(SmppUtil.isReplyPathEnabled((byte) 0x80));
+        assertFalse(SmppUtil.isReplyPathEnabled((byte) 0x40));
+        assertTrue(SmppUtil.isReplyPathEnabled((byte) 0x81));
     }
 
     @Test
     public void isMessageTypeSmscDeliveryReceipt() {
-        Assert.assertFalse(SmppUtil.isMessageTypeSmscDeliveryReceipt((byte) 0x00));
-        Assert.assertTrue(SmppUtil.isMessageTypeSmscDeliveryReceipt((byte) 0x04));
+        assertFalse(SmppUtil.isMessageTypeSmscDeliveryReceipt((byte) 0x00));
+        assertTrue(SmppUtil.isMessageTypeSmscDeliveryReceipt((byte) 0x04));
         // set both intermediate AND dlr
-        Assert.assertTrue(SmppUtil.isMessageTypeSmscDeliveryReceipt((byte) 0x24));
+        assertTrue(SmppUtil.isMessageTypeSmscDeliveryReceipt((byte) 0x24));
         // intermediate set, but esme receipt
-        Assert.assertFalse(SmppUtil.isMessageTypeSmscDeliveryReceipt((byte) 0x28));
+        assertFalse(SmppUtil.isMessageTypeSmscDeliveryReceipt((byte) 0x28));
         // udh set & intermediate & dlr
-        Assert.assertTrue(SmppUtil.isMessageTypeSmscDeliveryReceipt((byte) 0x64));
+        assertTrue(SmppUtil.isMessageTypeSmscDeliveryReceipt((byte) 0x64));
     }
 
     @Test
     public void isMessageTypeIntermediateDeliveryReceipt() {
-        Assert.assertFalse(SmppUtil.isMessageTypeIntermediateDeliveryReceipt((byte) 0x00));
-        Assert.assertFalse(SmppUtil.isMessageTypeIntermediateDeliveryReceipt((byte) 0x04));
+        assertFalse(SmppUtil.isMessageTypeIntermediateDeliveryReceipt((byte) 0x00));
+        assertFalse(SmppUtil.isMessageTypeIntermediateDeliveryReceipt((byte) 0x04));
         // set both intermediate AND dlr
-        Assert.assertTrue(SmppUtil.isMessageTypeIntermediateDeliveryReceipt((byte) 0x24));
+        assertTrue(SmppUtil.isMessageTypeIntermediateDeliveryReceipt((byte) 0x24));
         // intermediate set, but esme receipt
-        Assert.assertTrue(SmppUtil.isMessageTypeIntermediateDeliveryReceipt((byte) 0x28));
+        assertTrue(SmppUtil.isMessageTypeIntermediateDeliveryReceipt((byte) 0x28));
         // udh set & intermediate & dlr
-        Assert.assertTrue(SmppUtil.isMessageTypeIntermediateDeliveryReceipt((byte) 0x64));
+        assertTrue(SmppUtil.isMessageTypeIntermediateDeliveryReceipt((byte) 0x64));
     }
 
     @Test
     public void isMessageTypeEsmeDeliveryReceipt() {
-        Assert.assertFalse(SmppUtil.isMessageTypeEsmeDeliveryReceipt((byte) 0x00));
-        Assert.assertFalse(SmppUtil.isMessageTypeEsmeDeliveryReceipt((byte) 0x04));
-        Assert.assertTrue(SmppUtil.isMessageTypeEsmeDeliveryReceipt((byte) 0x08));
+        assertFalse(SmppUtil.isMessageTypeEsmeDeliveryReceipt((byte) 0x00));
+        assertFalse(SmppUtil.isMessageTypeEsmeDeliveryReceipt((byte) 0x04));
+        assertTrue(SmppUtil.isMessageTypeEsmeDeliveryReceipt((byte) 0x08));
         // set both intermediate AND dlr
-        Assert.assertFalse(SmppUtil.isMessageTypeEsmeDeliveryReceipt((byte) 0x24));
+        assertFalse(SmppUtil.isMessageTypeEsmeDeliveryReceipt((byte) 0x24));
         // intermediate set, but esme receipt
-        Assert.assertTrue(SmppUtil.isMessageTypeEsmeDeliveryReceipt((byte) 0x28));
+        assertTrue(SmppUtil.isMessageTypeEsmeDeliveryReceipt((byte) 0x28));
         // udh set & intermediate & dlr
-        Assert.assertFalse(SmppUtil.isMessageTypeEsmeDeliveryReceipt((byte) 0x64));
+        assertFalse(SmppUtil.isMessageTypeEsmeDeliveryReceipt((byte) 0x64));
     }
 
     @Test
     public void isMessageTypeAnyDeliveryReceipt() {
-        Assert.assertFalse(SmppUtil.isMessageTypeAnyDeliveryReceipt((byte) 0x00));
-        Assert.assertTrue(SmppUtil.isMessageTypeAnyDeliveryReceipt((byte) 0x04));
-        Assert.assertTrue(SmppUtil.isMessageTypeAnyDeliveryReceipt((byte) 0x08));
+        assertFalse(SmppUtil.isMessageTypeAnyDeliveryReceipt((byte) 0x00));
+        assertTrue(SmppUtil.isMessageTypeAnyDeliveryReceipt((byte) 0x04));
+        assertTrue(SmppUtil.isMessageTypeAnyDeliveryReceipt((byte) 0x08));
         // set both intermediate AND dlr
-        Assert.assertTrue(SmppUtil.isMessageTypeAnyDeliveryReceipt((byte) 0x24));
+        assertTrue(SmppUtil.isMessageTypeAnyDeliveryReceipt((byte) 0x24));
         // intermediate set, but esme receipt
-        Assert.assertTrue(SmppUtil.isMessageTypeAnyDeliveryReceipt((byte) 0x28));
+        assertTrue(SmppUtil.isMessageTypeAnyDeliveryReceipt((byte) 0x28));
         // udh set & intermediate & dlr
-        Assert.assertTrue(SmppUtil.isMessageTypeAnyDeliveryReceipt((byte) 0x64));
+        assertTrue(SmppUtil.isMessageTypeAnyDeliveryReceipt((byte) 0x64));
     }
 
 
     @Test
     public void isSmscDeliveryReceiptRequested() {
-        Assert.assertFalse(SmppUtil.isSmscDeliveryReceiptRequested((byte) 0x00));
-        Assert.assertTrue(SmppUtil.isSmscDeliveryReceiptRequested((byte) 0x01));
-        Assert.assertTrue(SmppUtil.isSmscDeliveryReceiptRequested((byte) 0x21));
-        Assert.assertFalse(SmppUtil.isSmscDeliveryReceiptRequested((byte) 0x20));
-        Assert.assertFalse(SmppUtil.isSmscDeliveryReceiptRequested((byte) 0x02));
+        assertFalse(SmppUtil.isSmscDeliveryReceiptRequested((byte) 0x00));
+        assertTrue(SmppUtil.isSmscDeliveryReceiptRequested((byte) 0x01));
+        assertTrue(SmppUtil.isSmscDeliveryReceiptRequested((byte) 0x21));
+        assertFalse(SmppUtil.isSmscDeliveryReceiptRequested((byte) 0x20));
+        assertFalse(SmppUtil.isSmscDeliveryReceiptRequested((byte) 0x02));
     }
 
     @Test
     public void isSmscDeliveryReceiptOnFailureRequested() {
-        Assert.assertFalse(SmppUtil.isSmscDeliveryReceiptOnFailureRequested((byte) 0x00));
-        Assert.assertFalse(SmppUtil.isSmscDeliveryReceiptOnFailureRequested((byte) 0x01));
-        Assert.assertTrue(SmppUtil.isSmscDeliveryReceiptOnFailureRequested((byte) 0x22));
-        Assert.assertFalse(SmppUtil.isSmscDeliveryReceiptOnFailureRequested((byte) 0x20));
-        Assert.assertTrue(SmppUtil.isSmscDeliveryReceiptOnFailureRequested((byte) 0x02));
+        assertFalse(SmppUtil.isSmscDeliveryReceiptOnFailureRequested((byte) 0x00));
+        assertFalse(SmppUtil.isSmscDeliveryReceiptOnFailureRequested((byte) 0x01));
+        assertTrue(SmppUtil.isSmscDeliveryReceiptOnFailureRequested((byte) 0x22));
+        assertFalse(SmppUtil.isSmscDeliveryReceiptOnFailureRequested((byte) 0x20));
+        assertTrue(SmppUtil.isSmscDeliveryReceiptOnFailureRequested((byte) 0x02));
     }
 
     @Test
     public void isIntermediateReceiptRequested() {
-        Assert.assertFalse(SmppUtil.isIntermediateReceiptRequested((byte) 0x00));
-        Assert.assertFalse(SmppUtil.isIntermediateReceiptRequested((byte) 0x01));
-        Assert.assertTrue(SmppUtil.isIntermediateReceiptRequested((byte) 0x12));
+        assertFalse(SmppUtil.isIntermediateReceiptRequested((byte) 0x00));
+        assertFalse(SmppUtil.isIntermediateReceiptRequested((byte) 0x01));
+        assertTrue(SmppUtil.isIntermediateReceiptRequested((byte) 0x12));
         // this is actually bit 4 not bit 5 (SMPP 3.4 specs originally had both bits mentioned)
-        Assert.assertTrue(SmppUtil.isIntermediateReceiptRequested((byte) 0x10));
-        Assert.assertFalse(SmppUtil.isIntermediateReceiptRequested((byte) 0x02));
+        assertTrue(SmppUtil.isIntermediateReceiptRequested((byte) 0x10));
+        assertFalse(SmppUtil.isIntermediateReceiptRequested((byte) 0x02));
     }
 
     @Test
     public void toInterfaceVersionString() {
-        Assert.assertEquals("3.4", SmppUtil.toInterfaceVersionString((byte)0x34));
-        Assert.assertEquals("0.3", SmppUtil.toInterfaceVersionString((byte)0x03));
+        assertEquals("3.4", SmppUtil.toInterfaceVersionString((byte)0x34));
+        assertEquals("0.3", SmppUtil.toInterfaceVersionString((byte)0x03));
     }
 
 }

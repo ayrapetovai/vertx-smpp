@@ -34,10 +34,8 @@ dependencies {
   testImplementation("org.subethamail:subethasmtp:3.1.7")
   testImplementation("com.fasterxml.jackson.core:jackson-databind:2.13.2")
 
-  testImplementation("junit:junit:4.13.1")
+  // tests
   testImplementation("org.mockito:mockito-core:4.4.0")
-  testImplementation("io.vertx:vertx-unit:4.2.6")
-
   testImplementation("io.vertx:vertx-junit5")
   testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
 }

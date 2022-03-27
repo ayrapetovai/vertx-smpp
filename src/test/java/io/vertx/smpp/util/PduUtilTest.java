@@ -25,10 +25,11 @@ package io.vertx.smpp.util;
 
 import io.vertx.smpp.SmppConstants;
 import io.vertx.smpp.types.Address;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 // my imports
 
@@ -42,61 +43,61 @@ public class PduUtilTest {
 
     @Test
     public void isRequestCommandId() {
-        Assert.assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_BIND_TRANSMITTER));
-        Assert.assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_BIND_RECEIVER));
-        Assert.assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_BIND_TRANSCEIVER));
-        Assert.assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_CANCEL_SM));
-        Assert.assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_DATA_SM));
-        Assert.assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_ENQUIRE_LINK));
-        Assert.assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_SUBMIT_SM));
-        Assert.assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_DELIVER_SM));
-        Assert.assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_UNBIND));
-        Assert.assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_GENERIC_NACK));
-        Assert.assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_BIND_TRANSMITTER_RESP));
-        Assert.assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_BIND_RECEIVER_RESP));
-        Assert.assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_BIND_TRANSCEIVER_RESP));
-        Assert.assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_CANCEL_SM_RESP));
-        Assert.assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_DATA_SM_RESP));
-        Assert.assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_ENQUIRE_LINK_RESP));
-        Assert.assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_SUBMIT_SM_RESP));
-        Assert.assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_DELIVER_SM_RESP));
-        Assert.assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_UNBIND_RESP));
+        assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_BIND_TRANSMITTER));
+        assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_BIND_RECEIVER));
+        assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_BIND_TRANSCEIVER));
+        assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_CANCEL_SM));
+        assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_DATA_SM));
+        assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_ENQUIRE_LINK));
+        assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_SUBMIT_SM));
+        assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_DELIVER_SM));
+        assertTrue(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_UNBIND));
+        assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_GENERIC_NACK));
+        assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_BIND_TRANSMITTER_RESP));
+        assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_BIND_RECEIVER_RESP));
+        assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_BIND_TRANSCEIVER_RESP));
+        assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_CANCEL_SM_RESP));
+        assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_DATA_SM_RESP));
+        assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_ENQUIRE_LINK_RESP));
+        assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_SUBMIT_SM_RESP));
+        assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_DELIVER_SM_RESP));
+        assertFalse(PduUtil.isRequestCommandId(SmppConstants.CMD_ID_UNBIND_RESP));
     }
 
     @Test
     public void isResponseCommandId() {
-        Assert.assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_BIND_TRANSMITTER));
-        Assert.assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_BIND_RECEIVER));
-        Assert.assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_BIND_TRANSCEIVER));
-        Assert.assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_CANCEL_SM));
-        Assert.assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_DATA_SM));
-        Assert.assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_ENQUIRE_LINK));
-        Assert.assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_SUBMIT_SM));
-        Assert.assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_DELIVER_SM));
-        Assert.assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_UNBIND));
-        Assert.assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_GENERIC_NACK));
-        Assert.assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_BIND_TRANSMITTER_RESP));
-        Assert.assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_BIND_RECEIVER_RESP));
-        Assert.assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_BIND_TRANSCEIVER_RESP));
-        Assert.assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_CANCEL_SM_RESP));
-        Assert.assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_DATA_SM_RESP));
-        Assert.assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_ENQUIRE_LINK_RESP));
-        Assert.assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_SUBMIT_SM_RESP));
-        Assert.assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_DELIVER_SM_RESP));
-        Assert.assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_UNBIND_RESP));
+        assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_BIND_TRANSMITTER));
+        assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_BIND_RECEIVER));
+        assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_BIND_TRANSCEIVER));
+        assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_CANCEL_SM));
+        assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_DATA_SM));
+        assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_ENQUIRE_LINK));
+        assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_SUBMIT_SM));
+        assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_DELIVER_SM));
+        assertFalse(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_UNBIND));
+        assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_GENERIC_NACK));
+        assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_BIND_TRANSMITTER_RESP));
+        assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_BIND_RECEIVER_RESP));
+        assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_BIND_TRANSCEIVER_RESP));
+        assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_CANCEL_SM_RESP));
+        assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_DATA_SM_RESP));
+        assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_ENQUIRE_LINK_RESP));
+        assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_SUBMIT_SM_RESP));
+        assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_DELIVER_SM_RESP));
+        assertTrue(PduUtil.isResponseCommandId(SmppConstants.CMD_ID_UNBIND_RESP));
     }
 
     @Test
     public void calculateByteSizeOfAddress() {
-        Assert.assertEquals(3, PduUtil.calculateByteSizeOfAddress(null));
-        Assert.assertEquals(3, PduUtil.calculateByteSizeOfAddress(new Address()));
-        Assert.assertEquals(4, PduUtil.calculateByteSizeOfAddress(new Address((byte)0x01, (byte)0x01, "A")));
+        assertEquals(3, PduUtil.calculateByteSizeOfAddress(null));
+        assertEquals(3, PduUtil.calculateByteSizeOfAddress(new Address()));
+        assertEquals(4, PduUtil.calculateByteSizeOfAddress(new Address((byte)0x01, (byte)0x01, "A")));
     }
 
     @Test
     public void calculateByteSizeOfNullTerminatedString() {
-        Assert.assertEquals(1, PduUtil.calculateByteSizeOfNullTerminatedString(null));
-        Assert.assertEquals(1, PduUtil.calculateByteSizeOfNullTerminatedString(""));
-        Assert.assertEquals(2, PduUtil.calculateByteSizeOfNullTerminatedString("A"));
+        assertEquals(1, PduUtil.calculateByteSizeOfNullTerminatedString(null));
+        assertEquals(1, PduUtil.calculateByteSizeOfNullTerminatedString(""));
+        assertEquals(2, PduUtil.calculateByteSizeOfNullTerminatedString("A"));
     }
 }

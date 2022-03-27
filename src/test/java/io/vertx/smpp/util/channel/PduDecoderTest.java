@@ -31,13 +31,14 @@ import io.vertx.smpp.types.TerminatingNullByteNotFoundException;
 import io.vertx.smpp.types.UnknownCommandIdException;
 import io.vertx.smpp.types.UnrecoverablePduException;
 import io.vertx.smpp.util.HexUtil;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 // my imports
 
@@ -45,6 +46,7 @@ import java.nio.charset.StandardCharsets;
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  * Assetions symplifyed by Artem Ayrapetov
+ * junit5 by Artem Ayrapetov
  */
 public class PduDecoderTest {
     private static final Logger logger = LoggerFactory.getLogger(PduDecoderTest.class);
@@ -62,9 +64,9 @@ public class PduDecoderTest {
         ByteBuf buffer = BufferHelper.createBuffer("000000");
 
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
-        Assert.assertNull(pdu0);
+        assertNull(pdu0);
         // make sure the entire buffer is still there we started with
-        Assert.assertEquals(3, buffer.readableBytes());
+        assertEquals(3, buffer.readableBytes());
     }
 
     @Test
@@ -72,9 +74,9 @@ public class PduDecoderTest {
         ByteBuf buffer = BufferHelper.createBuffer("00000010");
 
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
-        Assert.assertNull(pdu0);
+        assertNull(pdu0);
         // make sure the entire buffer is still there we started with
-        Assert.assertEquals(4, buffer.readableBytes());
+        assertEquals(4, buffer.readableBytes());
     }
 
     @Test
@@ -82,9 +84,9 @@ public class PduDecoderTest {
         ByteBuf buffer = BufferHelper.createBuffer("0000001000000015000000000a342e");
 
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
-        Assert.assertNull(pdu0);
+        assertNull(pdu0);
         // make sure the entire buffer is still there we started with
-        Assert.assertEquals(15, buffer.readableBytes());
+        assertEquals(15, buffer.readableBytes());
     }
 
     @Test
@@ -93,13 +95,13 @@ public class PduDecoderTest {
 
         try {
             EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
-            Assert.fail();
+            fail();
         } catch (UnknownCommandIdException e) {
             // correct behavior
         }
 
         // an unsupported command id is recoverable and all the bytes should have been read
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -108,13 +110,13 @@ public class PduDecoderTest {
 
         try {
             EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
-            Assert.fail();
+            fail();
         } catch (UnknownCommandIdException e) {
             // correct behavior
         }
 
         // an unsupported command id is recoverable and all the bytes should have been read
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -123,7 +125,7 @@ public class PduDecoderTest {
 
         try {
             EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
-            Assert.fail();
+            fail();
         } catch (UnknownCommandIdException e) {
             // correct behavior (this should fail)
         }
@@ -132,13 +134,13 @@ public class PduDecoderTest {
         // read the entire PDU and the next PDU was able to be parsed okay
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
 
-        Assert.assertEquals(16, pdu0.getCommandLength());
-        Assert.assertEquals(0x00000015, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(171192039, pdu0.getSequenceNumber());
+        assertEquals(16, pdu0.getCommandLength());
+        assertEquals(0x00000015, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(171192039, pdu0.getSequenceNumber());
 
         // an unsupported command id is recoverable and all the bytes should have been read
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -146,7 +148,7 @@ public class PduDecoderTest {
         ByteBuf buffer = BufferHelper.createBuffer("F000001100000110000000000a342ee7");
         try {
             EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
-            Assert.fail();
+            fail();
         } catch (UnrecoverablePduException e) {
             // correct behavior (this should fail)
         }
@@ -158,12 +160,12 @@ public class PduDecoderTest {
 
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
 
-        Assert.assertEquals(16, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_ENQUIRE_LINK, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(2147483647, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(16, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_ENQUIRE_LINK, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(2147483647, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -174,11 +176,11 @@ public class PduDecoderTest {
             EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
             // this should work now that we support 32 bits for a sequence number
         } catch (UnrecoverablePduException e) {
-            Assert.fail();
+            fail();
         }
 
         // despite having too large a sequence number, all the bytes should have been read
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -193,18 +195,18 @@ public class PduDecoderTest {
     public void decodeSequenceNumberOfOne() throws Exception {
         ByteBuf buffer = BufferHelper.createBuffer("00000010000000150000000000000001");
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
-        Assert.assertEquals(1, pdu0.getSequenceNumber());
+        assertEquals(1, pdu0.getSequenceNumber());
         // despite having too large a sequence number, all the bytes should have been read
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
     public void decodeSequenceNumberMaxValue() throws Exception {
         ByteBuf buffer = BufferHelper.createBuffer("0000001000000015000000007fffffff");
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
-        Assert.assertEquals(0x7fffffff, pdu0.getSequenceNumber());
+        assertEquals(0x7fffffff, pdu0.getSequenceNumber());
         // despite having too large a sequence number, all the bytes should have been read
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -213,13 +215,13 @@ public class PduDecoderTest {
 
         EnquireLink pdu0 = (EnquireLink)transcoder.decode(buffer);
 
-        Assert.assertEquals(16, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_ENQUIRE_LINK, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(171192039, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
+        assertEquals(16, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_ENQUIRE_LINK, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(171192039, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
 
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -228,13 +230,13 @@ public class PduDecoderTest {
 
         EnquireLinkResp pdu0 = (EnquireLinkResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(16, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_ENQUIRE_LINK_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(171192045, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
+        assertEquals(16, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_ENQUIRE_LINK_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(171192045, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
 
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -244,19 +246,19 @@ public class PduDecoderTest {
 
         EnquireLinkResp pdu0 = (EnquireLinkResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(16, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_ENQUIRE_LINK_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(171192045, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
+        assertEquals(16, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_ENQUIRE_LINK_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(171192045, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
 
-        Assert.assertEquals(15, buffer.readableBytes());
+        assertEquals(15, buffer.readableBytes());
 
         // second enquireLink response (but missing 1 byte)
         pdu0 = (EnquireLinkResp)transcoder.decode(buffer);
-        Assert.assertNull(pdu0);
+        assertNull(pdu0);
 
-        Assert.assertEquals(15, buffer.readableBytes());
+        assertEquals(15, buffer.readableBytes());
 
         // add 1 more byte (should finish the byte array off)
         ByteBuf buffer0 = BufferHelper.createBuffer("f1");
@@ -264,13 +266,13 @@ public class PduDecoderTest {
 
         pdu0 = (EnquireLinkResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(16, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_ENQUIRE_LINK_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(171192049, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
+        assertEquals(16, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_ENQUIRE_LINK_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(171192049, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
 
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -279,15 +281,15 @@ public class PduDecoderTest {
 
         SubmitSmResp pdu0 = (SubmitSmResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(28, pdu0.getCommandLength());
-        Assert.assertEquals(0x80000004, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(171192033, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
+        assertEquals(28, pdu0.getCommandLength());
+        assertEquals(0x80000004, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(171192033, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
         // messageId 94258431594
-        Assert.assertEquals("94258431594", pdu0.getMessageId());
+        assertEquals("94258431594", pdu0.getMessageId());
 
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -296,14 +298,14 @@ public class PduDecoderTest {
 
         SubmitSmResp pdu0 = (SubmitSmResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(16, pdu0.getCommandLength());
-        Assert.assertEquals(0x80000004, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(171192033, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertNull(pdu0.getMessageId());
+        assertEquals(16, pdu0.getCommandLength());
+        assertEquals(0x80000004, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(171192033, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertNull(pdu0.getMessageId());
 
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -312,14 +314,14 @@ public class PduDecoderTest {
 
         SubmitSmResp pdu0 = (SubmitSmResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(17, pdu0.getCommandLength());
-        Assert.assertEquals(0x80000004, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(171192033, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertEquals("", pdu0.getMessageId());
+        assertEquals(17, pdu0.getCommandLength());
+        assertEquals(0x80000004, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(171192033, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertEquals("", pdu0.getMessageId());
 
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -329,19 +331,19 @@ public class PduDecoderTest {
         SubmitSmResp pdu0;
         try {
             pdu0 = (SubmitSmResp)transcoder.decode(buffer);
-            Assert.fail();
+            fail();
         } catch (TerminatingNullByteNotFoundException e) {
             // correct behavior (should still be able to get partial PDU
             pdu0 = (SubmitSmResp)e.getPartialPdu();
         }
 
-        Assert.assertEquals(17, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_SUBMIT_SM_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(171192033, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertNull(pdu0.getMessageId());
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(17, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_SUBMIT_SM_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(171192033, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertNull(pdu0.getMessageId());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -350,13 +352,13 @@ public class PduDecoderTest {
 
         DeliverSmResp pdu0 = (DeliverSmResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(28, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DELIVER_SM_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(1141447, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertEquals("94258431594", pdu0.getMessageId());
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(28, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DELIVER_SM_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(1141447, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertEquals("94258431594", pdu0.getMessageId());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -365,13 +367,13 @@ public class PduDecoderTest {
 
         DeliverSmResp pdu0 = (DeliverSmResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(17, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DELIVER_SM_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(1141447, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertEquals("", pdu0.getMessageId());
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(17, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DELIVER_SM_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(1141447, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertEquals("", pdu0.getMessageId());
+        assertEquals(0, buffer.readableBytes());
     }
     
     @Test
@@ -380,13 +382,13 @@ public class PduDecoderTest {
 
         DeliverSmResp pdu0 = (DeliverSmResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(16, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DELIVER_SM_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(1141447, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertNull(pdu0.getMessageId());
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(16, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DELIVER_SM_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(1141447, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertNull(pdu0.getMessageId());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -395,13 +397,13 @@ public class PduDecoderTest {
 
         DataSmResp pdu0 = (DataSmResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(28, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DATA_SM_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(1141447, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertEquals("94258431594", pdu0.getMessageId());
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(28, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DATA_SM_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(1141447, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertEquals("94258431594", pdu0.getMessageId());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -410,13 +412,13 @@ public class PduDecoderTest {
 
         DataSmResp pdu0 = (DataSmResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(17, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DATA_SM_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(1141447, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertEquals("", pdu0.getMessageId());
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(17, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DATA_SM_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(1141447, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertEquals("", pdu0.getMessageId());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -425,13 +427,13 @@ public class PduDecoderTest {
 
         DataSmResp pdu0 = (DataSmResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(16, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DATA_SM_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(1141447, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertNull(pdu0.getMessageId());
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(16, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DATA_SM_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(1141447, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertNull(pdu0.getMessageId());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -440,15 +442,15 @@ public class PduDecoderTest {
 
         BindTransceiverResp pdu0 = (BindTransceiverResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(31, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_BIND_TRANSCEIVER_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(235857, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertEquals("Smsc Simulator", pdu0.getSystemId());
+        assertEquals(31, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_BIND_TRANSCEIVER_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(235857, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertEquals("Smsc Simulator", pdu0.getSystemId());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -458,15 +460,15 @@ public class PduDecoderTest {
 
         BindTransceiverResp pdu0 = (BindTransceiverResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(21, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_BIND_TRANSCEIVER_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0x0000000e, pdu0.getCommandStatus());
-        Assert.assertEquals(19891, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertEquals("SMSC", pdu0.getSystemId());
+        assertEquals(21, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_BIND_TRANSCEIVER_RESP, pdu0.getCommandId());
+        assertEquals(0x0000000e, pdu0.getCommandStatus());
+        assertEquals(19891, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertEquals("SMSC", pdu0.getSystemId());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
     
     @Test
@@ -475,20 +477,20 @@ public class PduDecoderTest {
 
         BindTransceiverResp pdu0 = (BindTransceiverResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(29, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_BIND_TRANSCEIVER_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(235843, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertEquals("Smsc GW", pdu0.getSystemId());
-        Assert.assertEquals(1, pdu0.getOptionalParameters().size());
-        Assert.assertTrue(pdu0.hasOptionalParameter(SmppConstants.TAG_SC_INTERFACE_VERSION));
-        Assert.assertEquals(SmppConstants.TAG_SC_INTERFACE_VERSION, pdu0.getOptionalParameters().get(0).getTag());
-        Assert.assertEquals(1, pdu0.getOptionalParameters().get(0).getLength());
-        Assert.assertArrayEquals(new byte[] {(byte)0x34}, pdu0.getOptionalParameters().get(0).getValue());
+        assertEquals(29, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_BIND_TRANSCEIVER_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(235843, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertEquals("Smsc GW", pdu0.getSystemId());
+        assertEquals(1, pdu0.getOptionalParameters().size());
+        assertTrue(pdu0.hasOptionalParameter(SmppConstants.TAG_SC_INTERFACE_VERSION));
+        assertEquals(SmppConstants.TAG_SC_INTERFACE_VERSION, pdu0.getOptionalParameters().get(0).getTag());
+        assertEquals(1, pdu0.getOptionalParameters().get(0).getLength());
+        assertArrayEquals(new byte[] {(byte)0x34}, pdu0.getOptionalParameters().get(0).getValue());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -497,20 +499,20 @@ public class PduDecoderTest {
 
         BindTransmitterResp pdu0 = (BindTransmitterResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(29, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_BIND_TRANSMITTER_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(235871, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertEquals("TWITTER", pdu0.getSystemId());
-        Assert.assertEquals(1, pdu0.getOptionalParameters().size());
-        Assert.assertTrue(pdu0.hasOptionalParameter(SmppConstants.TAG_SC_INTERFACE_VERSION));
-        Assert.assertEquals(SmppConstants.TAG_SC_INTERFACE_VERSION, pdu0.getOptionalParameters().get(0).getTag());
-        Assert.assertEquals(1, pdu0.getOptionalParameters().get(0).getLength());
-        Assert.assertArrayEquals(new byte[] {(byte)0x34}, pdu0.getOptionalParameters().get(0).getValue());
+        assertEquals(29, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_BIND_TRANSMITTER_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(235871, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertEquals("TWITTER", pdu0.getSystemId());
+        assertEquals(1, pdu0.getOptionalParameters().size());
+        assertTrue(pdu0.hasOptionalParameter(SmppConstants.TAG_SC_INTERFACE_VERSION));
+        assertEquals(SmppConstants.TAG_SC_INTERFACE_VERSION, pdu0.getOptionalParameters().get(0).getTag());
+        assertEquals(1, pdu0.getOptionalParameters().get(0).getLength());
+        assertArrayEquals(new byte[] {(byte)0x34}, pdu0.getOptionalParameters().get(0).getValue());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -519,21 +521,21 @@ public class PduDecoderTest {
 
         BindReceiverResp pdu0 = (BindReceiverResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(29, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_BIND_RECEIVER_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(235874, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertEquals("twitter", pdu0.getSystemId());
-        Assert.assertEquals(1, pdu0.getOptionalParameters().size());
-        Assert.assertTrue(pdu0.hasOptionalParameter(SmppConstants.TAG_SC_INTERFACE_VERSION));
+        assertEquals(29, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_BIND_RECEIVER_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(235874, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertEquals("twitter", pdu0.getSystemId());
+        assertEquals(1, pdu0.getOptionalParameters().size());
+        assertTrue(pdu0.hasOptionalParameter(SmppConstants.TAG_SC_INTERFACE_VERSION));
         Tlv tlv0 = pdu0.getOptionalParameter(SmppConstants.TAG_SC_INTERFACE_VERSION);
-        Assert.assertEquals(SmppConstants.TAG_SC_INTERFACE_VERSION, tlv0.getTag());
-        Assert.assertEquals(1, tlv0.getLength());
-        Assert.assertArrayEquals(new byte[] { (byte)0x34 }, tlv0.getValue());
+        assertEquals(SmppConstants.TAG_SC_INTERFACE_VERSION, tlv0.getTag());
+        assertEquals(1, tlv0.getLength());
+        assertArrayEquals(new byte[] { (byte)0x34 }, tlv0.getValue());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -542,21 +544,21 @@ public class PduDecoderTest {
 
         BindTransceiver pdu0 = (BindTransceiver)transcoder.decode(buffer);
 
-        Assert.assertEquals(35, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_BIND_TRANSCEIVER, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(235857, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("ALL_TW", pdu0.getSystemId());
-        Assert.assertEquals("ALL_TW", pdu0.getPassword());
-        Assert.assertEquals("", pdu0.getSystemType());
-        Assert.assertEquals((byte)0x34, pdu0.getInterfaceVersion());
-        Assert.assertEquals((byte)0x01, pdu0.getAddressRange().getTon());
-        Assert.assertEquals((byte)0x02, pdu0.getAddressRange().getNpi());
-        Assert.assertEquals("", pdu0.getAddressRange().getAddress());
+        assertEquals(35, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_BIND_TRANSCEIVER, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(235857, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("ALL_TW", pdu0.getSystemId());
+        assertEquals("ALL_TW", pdu0.getPassword());
+        assertEquals("", pdu0.getSystemType());
+        assertEquals((byte)0x34, pdu0.getInterfaceVersion());
+        assertEquals((byte)0x01, pdu0.getAddressRange().getTon());
+        assertEquals((byte)0x02, pdu0.getAddressRange().getNpi());
+        assertEquals("", pdu0.getAddressRange().getAddress());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -565,21 +567,21 @@ public class PduDecoderTest {
 
         BindTransmitter pdu0 = (BindTransmitter)transcoder.decode(buffer);
 
-        Assert.assertEquals(37, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_BIND_TRANSMITTER, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(235871, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("twitter", pdu0.getSystemId());
-        Assert.assertEquals("twitter", pdu0.getPassword());
-        Assert.assertEquals("", pdu0.getSystemType());
-        Assert.assertEquals((byte)0x34, pdu0.getInterfaceVersion());
-        Assert.assertEquals((byte)0x00, pdu0.getAddressRange().getTon());
-        Assert.assertEquals((byte)0x00, pdu0.getAddressRange().getNpi());
-        Assert.assertEquals("", pdu0.getAddressRange().getAddress());
+        assertEquals(37, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_BIND_TRANSMITTER, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(235871, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("twitter", pdu0.getSystemId());
+        assertEquals("twitter", pdu0.getPassword());
+        assertEquals("", pdu0.getSystemType());
+        assertEquals((byte)0x34, pdu0.getInterfaceVersion());
+        assertEquals((byte)0x00, pdu0.getAddressRange().getTon());
+        assertEquals((byte)0x00, pdu0.getAddressRange().getNpi());
+        assertEquals("", pdu0.getAddressRange().getAddress());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -588,21 +590,21 @@ public class PduDecoderTest {
 
         BindReceiver pdu0 = (BindReceiver)transcoder.decode(buffer);
 
-        Assert.assertEquals(37, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_BIND_RECEIVER, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(235873, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("twitter", pdu0.getSystemId());
-        Assert.assertEquals("twitter", pdu0.getPassword());
-        Assert.assertEquals("", pdu0.getSystemType());
-        Assert.assertEquals((byte)0x34, pdu0.getInterfaceVersion());
-        Assert.assertEquals((byte)0x00, pdu0.getAddressRange().getTon());
-        Assert.assertEquals((byte)0x00, pdu0.getAddressRange().getNpi());
-        Assert.assertEquals("", pdu0.getAddressRange().getAddress());
+        assertEquals(37, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_BIND_RECEIVER, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(235873, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("twitter", pdu0.getSystemId());
+        assertEquals("twitter", pdu0.getPassword());
+        assertEquals("", pdu0.getSystemType());
+        assertEquals((byte)0x34, pdu0.getInterfaceVersion());
+        assertEquals((byte)0x00, pdu0.getAddressRange().getTon());
+        assertEquals((byte)0x00, pdu0.getAddressRange().getNpi());
+        assertEquals("", pdu0.getAddressRange().getAddress());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -611,38 +613,38 @@ public class PduDecoderTest {
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
-        Assert.assertEquals(64, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(3, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("", pdu0.getServiceType());
-        Assert.assertEquals(0x02, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("87654321", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals(0x04, pdu0.getDestAddress().getTon());
-        Assert.assertEquals(0x09, pdu0.getDestAddress().getNpi());
-        Assert.assertEquals("40404", pdu0.getDestAddress().getAddress());
-        Assert.assertEquals(0x00, pdu0.getEsmClass());
-        Assert.assertEquals(0x00, pdu0.getProtocolId());
-        Assert.assertEquals(0x00, pdu0.getPriority());
-        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
-        Assert.assertEquals("", pdu0.getValidityPeriod());
-        Assert.assertEquals(0x00, pdu0.getRegisteredDelivery());
-        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
-        Assert.assertEquals(0x00, pdu0.getDataCoding());
-        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
-        Assert.assertEquals(8, pdu0.getShortMessage().length);
-        Assert.assertArrayEquals(HexUtil.toByteArray("4024232125262f3a"), pdu0.getShortMessage());
+        assertEquals(64, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(3, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("", pdu0.getServiceType());
+        assertEquals(0x02, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("87654321", pdu0.getSourceAddress().getAddress());
+        assertEquals(0x04, pdu0.getDestAddress().getTon());
+        assertEquals(0x09, pdu0.getDestAddress().getNpi());
+        assertEquals("40404", pdu0.getDestAddress().getAddress());
+        assertEquals(0x00, pdu0.getEsmClass());
+        assertEquals(0x00, pdu0.getProtocolId());
+        assertEquals(0x00, pdu0.getPriority());
+        assertEquals("", pdu0.getScheduleDeliveryTime());
+        assertEquals("", pdu0.getValidityPeriod());
+        assertEquals(0x00, pdu0.getRegisteredDelivery());
+        assertEquals(0x00, pdu0.getReplaceIfPresent());
+        assertEquals(0x00, pdu0.getDataCoding());
+        assertEquals(0x00, pdu0.getDefaultMsgId());
+        assertEquals(8, pdu0.getShortMessage().length);
+        assertArrayEquals(HexUtil.toByteArray("4024232125262f3a"), pdu0.getShortMessage());
 
-        Assert.assertEquals(2, pdu0.getOptionalParameters().size());
+        assertEquals(2, pdu0.getOptionalParameters().size());
         Tlv tlv0 = pdu0.getOptionalParameter(SmppConstants.TAG_SOURCE_NETWORK_TYPE);
-        Assert.assertEquals(0x01, tlv0.getValueAsByte());
+        assertEquals(0x01, tlv0.getValueAsByte());
         Tlv tlv1 = pdu0.getOptionalParameter(SmppConstants.TAG_DEST_NETWORK_TYPE);
-        Assert.assertEquals(0x01, tlv1.getValueAsByte());
+        assertEquals(0x01, tlv1.getValueAsByte());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -651,42 +653,42 @@ public class PduDecoderTest {
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
-        Assert.assertEquals(186, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(2, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("", pdu0.getServiceType());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("44951361920", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals(0x01, pdu0.getDestAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getDestAddress().getNpi());
-        Assert.assertEquals("40404", pdu0.getDestAddress().getAddress());
-        Assert.assertEquals(0x04, pdu0.getEsmClass());
-        Assert.assertEquals(0x00, pdu0.getProtocolId());
-        Assert.assertEquals(0x00, pdu0.getPriority());
-        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
-        Assert.assertEquals("", pdu0.getValidityPeriod());
-        Assert.assertEquals(0x00, pdu0.getRegisteredDelivery());
-        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
-        Assert.assertEquals(0x00, pdu0.getDataCoding());
-        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
-        Assert.assertEquals(110, pdu0.getShortMessage().length);
-        Assert.assertArrayEquals(HexUtil.toByteArray("69643a30303539313133393738207375623a30303120646c7672643a303031207375626d697420646174653a3130303231303137333020646f6e6520646174653a3130303231303137333120737461743a44454c49565244206572723a30303020746578743a4024232125262f3a"), pdu0.getShortMessage());
+        assertEquals(186, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(2, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("", pdu0.getServiceType());
+        assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("44951361920", pdu0.getSourceAddress().getAddress());
+        assertEquals(0x01, pdu0.getDestAddress().getTon());
+        assertEquals(0x01, pdu0.getDestAddress().getNpi());
+        assertEquals("40404", pdu0.getDestAddress().getAddress());
+        assertEquals(0x04, pdu0.getEsmClass());
+        assertEquals(0x00, pdu0.getProtocolId());
+        assertEquals(0x00, pdu0.getPriority());
+        assertEquals("", pdu0.getScheduleDeliveryTime());
+        assertEquals("", pdu0.getValidityPeriod());
+        assertEquals(0x00, pdu0.getRegisteredDelivery());
+        assertEquals(0x00, pdu0.getReplaceIfPresent());
+        assertEquals(0x00, pdu0.getDataCoding());
+        assertEquals(0x00, pdu0.getDefaultMsgId());
+        assertEquals(110, pdu0.getShortMessage().length);
+        assertArrayEquals(HexUtil.toByteArray("69643a30303539313133393738207375623a30303120646c7672643a303031207375626d697420646174653a3130303231303137333020646f6e6520646174653a3130303231303137333120737461743a44454c49565244206572723a30303020746578743a4024232125262f3a"), pdu0.getShortMessage());
 
-        Assert.assertEquals(4, pdu0.getOptionalParameters().size());
+        assertEquals(4, pdu0.getOptionalParameters().size());
         Tlv tlv0 = pdu0.getOptionalParameter(SmppConstants.TAG_SOURCE_NETWORK_TYPE);
-        Assert.assertEquals(0x01, tlv0.getValueAsByte());
+        assertEquals(0x01, tlv0.getValueAsByte());
         Tlv tlv1 = pdu0.getOptionalParameter(SmppConstants.TAG_DEST_NETWORK_TYPE);
-        Assert.assertEquals(0x01, tlv1.getValueAsByte());
+        assertEquals(0x01, tlv1.getValueAsByte());
         Tlv tlv2 = pdu0.getOptionalParameter(SmppConstants.TAG_RECEIPTED_MSG_ID);
-        Assert.assertEquals("38601fa", tlv2.getValueAsString());
+        assertEquals("38601fa", tlv2.getValueAsString());
         Tlv tlv3 = pdu0.getOptionalParameter(SmppConstants.TAG_MSG_STATE);
-        Assert.assertEquals(SmppConstants.STATE_DELIVERED, tlv3.getValueAsByte());
+        assertEquals(SmppConstants.STATE_DELIVERED, tlv3.getValueAsByte());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     /*
@@ -700,42 +702,42 @@ public class PduDecoderTest {
 
         DeliverSm pdu0 = (DeliverSm)PduDecoder.decode(buffer);
 
-        Assert.assertEquals(164, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(5, pdu0.getSequenceNumber());
-        Assert.assertEquals(true, pdu0.isRequest());
-        Assert.assertEquals("", pdu0.getServiceType());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("2348033768151", pdu0.getSourceAddress());
-        Assert.assertEquals(0x05, pdu0.getDestAddress().getTon());
-        Assert.assertEquals(0x00, pdu0.getDestAddress().getNpi());
-        Assert.assertEquals("VANSO", pdu0.getDestinationAddress());
-        Assert.assertEquals(0x04, pdu0.getEsmClass());
-        Assert.assertEquals(0x00, pdu0.getProtocolId());
-        Assert.assertEquals(0x00, pdu0.getPriority());
-        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
-        Assert.assertEquals("", pdu0.getValidityPeriod());
-        Assert.assertEquals(0x04, pdu0.getRegisteredDelivery());
-        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
-        Assert.assertEquals(0x00, pdu0.getDataCoding());
-        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
-        Assert.assertEquals(99, pdu0.getShortMessage().length);
-        Assert.assertArrayEquals(StringUtil.fromHexString("69643a30303030303033303035207375623a30303120646c7672643a303031207375626d697420646174653a3130303131383134333120646f6e6520646174653a3130303131383134333120737461743a44454c49565244206572723a303030207465"), pdu0.getShortMessage());
+        assertEquals(164, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(5, pdu0.getSequenceNumber());
+        assertEquals(true, pdu0.isRequest());
+        assertEquals("", pdu0.getServiceType());
+        assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("2348033768151", pdu0.getSourceAddress());
+        assertEquals(0x05, pdu0.getDestAddress().getTon());
+        assertEquals(0x00, pdu0.getDestAddress().getNpi());
+        assertEquals("VANSO", pdu0.getDestinationAddress());
+        assertEquals(0x04, pdu0.getEsmClass());
+        assertEquals(0x00, pdu0.getProtocolId());
+        assertEquals(0x00, pdu0.getPriority());
+        assertEquals("", pdu0.getScheduleDeliveryTime());
+        assertEquals("", pdu0.getValidityPeriod());
+        assertEquals(0x04, pdu0.getRegisteredDelivery());
+        assertEquals(0x00, pdu0.getReplaceIfPresent());
+        assertEquals(0x00, pdu0.getDataCoding());
+        assertEquals(0x00, pdu0.getDefaultMsgId());
+        assertEquals(99, pdu0.getShortMessage().length);
+        assertArrayEquals(StringUtil.fromHexString("69643a30303030303033303035207375623a30303120646c7672643a303031207375626d697420646174653a3130303131383134333120646f6e6520646174653a3130303131383134333120737461743a44454c49565244206572723a303030207465"), pdu0.getShortMessage());
 
-        Assert.assertEquals(4, pdu0.getOptionalParameters().size());
+        assertEquals(4, pdu0.getOptionalParameters().size());
         Tlv tlv0 = pdu0.getOptionalParameter(SmppConstants.TAG_SOURCE_NETWORK_TYPE);
-        Assert.assertEquals(0x01, tlv0.getValueAsByte());
+        assertEquals(0x01, tlv0.getValueAsByte());
         Tlv tlv1 = pdu0.getOptionalParameter(SmppConstants.TAG_DEST_NETWORK_TYPE);
-        Assert.assertEquals(0x01, tlv1.getValueAsByte());
+        assertEquals(0x01, tlv1.getValueAsByte());
         Tlv tlv2 = pdu0.getOptionalParameter(SmppConstants.TAG_RECEIPTED_MSG_ID);
-        Assert.assertEquals("38601fa", tlv2.getValueAsString());
+        assertEquals("38601fa", tlv2.getValueAsString());
         Tlv tlv3 = pdu0.getOptionalParameter(SmppConstants.TAG_MSG_STATE);
-        Assert.assertEquals(SmppConstants.STATE_DELIVERED, tlv3.getValueAsByte());
+        assertEquals(SmppConstants.STATE_DELIVERED, tlv3.getValueAsByte());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
      */
 
@@ -745,34 +747,34 @@ public class PduDecoderTest {
 
         SubmitSm pdu0 = (SubmitSm)transcoder.decode(buffer);
 
-        Assert.assertEquals(57, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_SUBMIT_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(20456, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("", pdu0.getServiceType());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("40404", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals(0x01, pdu0.getDestAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getDestAddress().getNpi());
-        Assert.assertEquals("44951361920", pdu0.getDestAddress().getAddress());
-        Assert.assertEquals(0x00, pdu0.getEsmClass());
-        Assert.assertEquals(0x00, pdu0.getProtocolId());
-        Assert.assertEquals(0x00, pdu0.getPriority());
-        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
-        Assert.assertEquals("", pdu0.getValidityPeriod());
-        Assert.assertEquals(0x01, pdu0.getRegisteredDelivery());
-        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
-        Assert.assertEquals(0x00, pdu0.getDataCoding());
-        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
-        Assert.assertEquals(8, pdu0.getShortMessage().length);
-        Assert.assertArrayEquals(HexUtil.toByteArray("4024232125262f3a"), pdu0.getShortMessage());
+        assertEquals(57, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_SUBMIT_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(20456, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("", pdu0.getServiceType());
+        assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("40404", pdu0.getSourceAddress().getAddress());
+        assertEquals(0x01, pdu0.getDestAddress().getTon());
+        assertEquals(0x01, pdu0.getDestAddress().getNpi());
+        assertEquals("44951361920", pdu0.getDestAddress().getAddress());
+        assertEquals(0x00, pdu0.getEsmClass());
+        assertEquals(0x00, pdu0.getProtocolId());
+        assertEquals(0x00, pdu0.getPriority());
+        assertEquals("", pdu0.getScheduleDeliveryTime());
+        assertEquals("", pdu0.getValidityPeriod());
+        assertEquals(0x01, pdu0.getRegisteredDelivery());
+        assertEquals(0x00, pdu0.getReplaceIfPresent());
+        assertEquals(0x00, pdu0.getDataCoding());
+        assertEquals(0x00, pdu0.getDefaultMsgId());
+        assertEquals(8, pdu0.getShortMessage().length);
+        assertArrayEquals(HexUtil.toByteArray("4024232125262f3a"), pdu0.getShortMessage());
 
-        Assert.assertNull(pdu0.getOptionalParameters());
+        assertNull(pdu0.getOptionalParameters());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -781,12 +783,12 @@ public class PduDecoderTest {
 
         Unbind pdu0 = (Unbind)transcoder.decode(buffer);
 
-        Assert.assertEquals(16, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_UNBIND, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(1, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(16, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_UNBIND, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(1, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -795,12 +797,12 @@ public class PduDecoderTest {
 
         UnbindResp pdu0 = (UnbindResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(16, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_UNBIND_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(1, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(16, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_UNBIND_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(1, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -810,12 +812,12 @@ public class PduDecoderTest {
         GenericNack pdu0 = (GenericNack)transcoder.decode(buffer);
         logger.debug("{}", pdu0);
 
-        Assert.assertEquals(16, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_GENERIC_NACK, pdu0.getCommandId());
-        Assert.assertEquals(SmppConstants.STATUS_INVMSGLEN, pdu0.getCommandStatus());
-        Assert.assertEquals(535159, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(16, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_GENERIC_NACK, pdu0.getCommandId());
+        assertEquals(SmppConstants.STATUS_INVMSGLEN, pdu0.getCommandStatus());
+        assertEquals(535159, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -824,40 +826,40 @@ public class PduDecoderTest {
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
-        Assert.assertEquals(100, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(346091, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("", pdu0.getServiceType());
-        Assert.assertEquals(0x02, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("4495136192", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals(0x04, pdu0.getDestAddress().getTon());
-        Assert.assertEquals(0x09, pdu0.getDestAddress().getNpi());
-        Assert.assertEquals("40404", pdu0.getDestAddress().getAddress());
-        Assert.assertEquals(0x00, pdu0.getEsmClass());
-        Assert.assertEquals(0x00, pdu0.getProtocolId());
-        Assert.assertEquals(0x00, pdu0.getPriority());
-        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
-        Assert.assertEquals("", pdu0.getValidityPeriod());
-        Assert.assertEquals(0x00, pdu0.getRegisteredDelivery());
-        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
-        Assert.assertEquals(0x00, pdu0.getDataCoding());
-        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
-        Assert.assertEquals(0, pdu0.getShortMessageLength());
-        Assert.assertArrayEquals(HexUtil.toByteArray(""), pdu0.getShortMessage());
+        assertEquals(100, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(346091, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("", pdu0.getServiceType());
+        assertEquals(0x02, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("4495136192", pdu0.getSourceAddress().getAddress());
+        assertEquals(0x04, pdu0.getDestAddress().getTon());
+        assertEquals(0x09, pdu0.getDestAddress().getNpi());
+        assertEquals("40404", pdu0.getDestAddress().getAddress());
+        assertEquals(0x00, pdu0.getEsmClass());
+        assertEquals(0x00, pdu0.getProtocolId());
+        assertEquals(0x00, pdu0.getPriority());
+        assertEquals("", pdu0.getScheduleDeliveryTime());
+        assertEquals("", pdu0.getValidityPeriod());
+        assertEquals(0x00, pdu0.getRegisteredDelivery());
+        assertEquals(0x00, pdu0.getReplaceIfPresent());
+        assertEquals(0x00, pdu0.getDataCoding());
+        assertEquals(0x00, pdu0.getDefaultMsgId());
+        assertEquals(0, pdu0.getShortMessageLength());
+        assertArrayEquals(HexUtil.toByteArray(""), pdu0.getShortMessage());
 
-        Assert.assertEquals(3, pdu0.getOptionalParameters().size());
+        assertEquals(3, pdu0.getOptionalParameters().size());
         Tlv tlv0 = pdu0.getOptionalParameter(SmppConstants.TAG_SOURCE_NETWORK_TYPE);
-        Assert.assertEquals(0x01, tlv0.getValueAsByte());
+        assertEquals(0x01, tlv0.getValueAsByte());
         Tlv tlv1 = pdu0.getOptionalParameter(SmppConstants.TAG_DEST_NETWORK_TYPE);
-        Assert.assertEquals(0x01, tlv1.getValueAsByte());
+        assertEquals(0x01, tlv1.getValueAsByte());
         Tlv tlv2 = pdu0.getOptionalParameter(SmppConstants.TAG_MESSAGE_PAYLOAD);
-        Assert.assertArrayEquals(HexUtil.toByteArray("404d616964656e6d616e363634207761732069742073617070793f2026526f6d616e7469633f"), tlv2.getValue());
+        assertArrayEquals(HexUtil.toByteArray("404d616964656e6d616e363634207761732069742073617070793f2026526f6d616e7469633f"), tlv2.getValue());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -866,40 +868,40 @@ public class PduDecoderTest {
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
-        Assert.assertEquals(0x40, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(6651470, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("", pdu0.getServiceType());
-        Assert.assertEquals(0x02, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("4495136192", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals(0x04, pdu0.getDestAddress().getTon());
-        Assert.assertEquals(0x09, pdu0.getDestAddress().getNpi());
-        Assert.assertEquals("40404", pdu0.getDestAddress().getAddress());
-        Assert.assertEquals(0x00, pdu0.getEsmClass());
-        Assert.assertEquals(0x00, pdu0.getProtocolId());
-        Assert.assertEquals(0x00, pdu0.getPriority());
-        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
-        Assert.assertEquals("", pdu0.getValidityPeriod());
-        Assert.assertEquals(0x00, pdu0.getRegisteredDelivery());
-        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
-        Assert.assertEquals(0x00, pdu0.getDataCoding());
-        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
-        Assert.assertEquals(0, pdu0.getShortMessageLength());
-        Assert.assertArrayEquals(HexUtil.toByteArray(""), pdu0.getShortMessage());
+        assertEquals(0x40, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(6651470, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("", pdu0.getServiceType());
+        assertEquals(0x02, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("4495136192", pdu0.getSourceAddress().getAddress());
+        assertEquals(0x04, pdu0.getDestAddress().getTon());
+        assertEquals(0x09, pdu0.getDestAddress().getNpi());
+        assertEquals("40404", pdu0.getDestAddress().getAddress());
+        assertEquals(0x00, pdu0.getEsmClass());
+        assertEquals(0x00, pdu0.getProtocolId());
+        assertEquals(0x00, pdu0.getPriority());
+        assertEquals("", pdu0.getScheduleDeliveryTime());
+        assertEquals("", pdu0.getValidityPeriod());
+        assertEquals(0x00, pdu0.getRegisteredDelivery());
+        assertEquals(0x00, pdu0.getReplaceIfPresent());
+        assertEquals(0x00, pdu0.getDataCoding());
+        assertEquals(0x00, pdu0.getDefaultMsgId());
+        assertEquals(0, pdu0.getShortMessageLength());
+        assertArrayEquals(HexUtil.toByteArray(""), pdu0.getShortMessage());
 
-        Assert.assertEquals(3, pdu0.getOptionalParameters().size());
+        assertEquals(3, pdu0.getOptionalParameters().size());
         Tlv tlv0 = pdu0.getOptionalParameter(SmppConstants.TAG_SOURCE_NETWORK_TYPE);
-        Assert.assertEquals(0x01, tlv0.getValueAsByte());
+        assertEquals(0x01, tlv0.getValueAsByte());
         Tlv tlv1 = pdu0.getOptionalParameter(SmppConstants.TAG_DEST_NETWORK_TYPE);
-        Assert.assertEquals(0x01, tlv1.getValueAsByte());
+        assertEquals(0x01, tlv1.getValueAsByte());
         Tlv tlv2 = pdu0.getOptionalParameter(SmppConstants.TAG_MESSAGE_PAYLOAD);
-        Assert.assertArrayEquals(HexUtil.toByteArray("4f6b"), tlv2.getValue());
+        assertArrayEquals(HexUtil.toByteArray("4f6b"), tlv2.getValue());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -908,40 +910,40 @@ public class PduDecoderTest {
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
-        Assert.assertEquals(0x3F, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(6651470, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("", pdu0.getServiceType());
-        Assert.assertEquals(0x02, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("4495136192", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals(0x04, pdu0.getDestAddress().getTon());
-        Assert.assertEquals(0x09, pdu0.getDestAddress().getNpi());
-        Assert.assertEquals("40404", pdu0.getDestAddress().getAddress());
-        Assert.assertEquals(0x00, pdu0.getEsmClass());
-        Assert.assertEquals(0x00, pdu0.getProtocolId());
-        Assert.assertEquals(0x00, pdu0.getPriority());
-        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
-        Assert.assertEquals("", pdu0.getValidityPeriod());
-        Assert.assertEquals(0x00, pdu0.getRegisteredDelivery());
-        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
-        Assert.assertEquals(0x00, pdu0.getDataCoding());
-        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
-        Assert.assertEquals(0, pdu0.getShortMessageLength());
-        Assert.assertArrayEquals(HexUtil.toByteArray(""), pdu0.getShortMessage());
+        assertEquals(0x3F, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(6651470, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("", pdu0.getServiceType());
+        assertEquals(0x02, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("4495136192", pdu0.getSourceAddress().getAddress());
+        assertEquals(0x04, pdu0.getDestAddress().getTon());
+        assertEquals(0x09, pdu0.getDestAddress().getNpi());
+        assertEquals("40404", pdu0.getDestAddress().getAddress());
+        assertEquals(0x00, pdu0.getEsmClass());
+        assertEquals(0x00, pdu0.getProtocolId());
+        assertEquals(0x00, pdu0.getPriority());
+        assertEquals("", pdu0.getScheduleDeliveryTime());
+        assertEquals("", pdu0.getValidityPeriod());
+        assertEquals(0x00, pdu0.getRegisteredDelivery());
+        assertEquals(0x00, pdu0.getReplaceIfPresent());
+        assertEquals(0x00, pdu0.getDataCoding());
+        assertEquals(0x00, pdu0.getDefaultMsgId());
+        assertEquals(0, pdu0.getShortMessageLength());
+        assertArrayEquals(HexUtil.toByteArray(""), pdu0.getShortMessage());
 
-        Assert.assertEquals(3, pdu0.getOptionalParameters().size());
+        assertEquals(3, pdu0.getOptionalParameters().size());
         Tlv tlv0 = pdu0.getOptionalParameter(SmppConstants.TAG_SOURCE_NETWORK_TYPE);
-        Assert.assertEquals(0x01, tlv0.getValueAsByte());
+        assertEquals(0x01, tlv0.getValueAsByte());
         Tlv tlv1 = pdu0.getOptionalParameter(SmppConstants.TAG_DEST_NETWORK_TYPE);
-        Assert.assertEquals(0x01, tlv1.getValueAsByte());
+        assertEquals(0x01, tlv1.getValueAsByte());
         Tlv tlv2 = pdu0.getOptionalParameter(SmppConstants.TAG_MESSAGE_PAYLOAD);
-        Assert.assertArrayEquals(HexUtil.toByteArray("4f"), tlv2.getValue());
+        assertArrayEquals(HexUtil.toByteArray("4f"), tlv2.getValue());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -950,40 +952,40 @@ public class PduDecoderTest {
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
-        Assert.assertEquals(0x3E, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(6651470, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("", pdu0.getServiceType());
-        Assert.assertEquals(0x02, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("4495136192", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals(0x04, pdu0.getDestAddress().getTon());
-        Assert.assertEquals(0x09, pdu0.getDestAddress().getNpi());
-        Assert.assertEquals("40404", pdu0.getDestAddress().getAddress());
-        Assert.assertEquals(0x00, pdu0.getEsmClass());
-        Assert.assertEquals(0x00, pdu0.getProtocolId());
-        Assert.assertEquals(0x00, pdu0.getPriority());
-        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
-        Assert.assertEquals("", pdu0.getValidityPeriod());
-        Assert.assertEquals(0x00, pdu0.getRegisteredDelivery());
-        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
-        Assert.assertEquals(0x00, pdu0.getDataCoding());
-        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
-        Assert.assertEquals(0, pdu0.getShortMessageLength());
-        Assert.assertArrayEquals(HexUtil.toByteArray(""), pdu0.getShortMessage());
+        assertEquals(0x3E, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(6651470, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("", pdu0.getServiceType());
+        assertEquals(0x02, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("4495136192", pdu0.getSourceAddress().getAddress());
+        assertEquals(0x04, pdu0.getDestAddress().getTon());
+        assertEquals(0x09, pdu0.getDestAddress().getNpi());
+        assertEquals("40404", pdu0.getDestAddress().getAddress());
+        assertEquals(0x00, pdu0.getEsmClass());
+        assertEquals(0x00, pdu0.getProtocolId());
+        assertEquals(0x00, pdu0.getPriority());
+        assertEquals("", pdu0.getScheduleDeliveryTime());
+        assertEquals("", pdu0.getValidityPeriod());
+        assertEquals(0x00, pdu0.getRegisteredDelivery());
+        assertEquals(0x00, pdu0.getReplaceIfPresent());
+        assertEquals(0x00, pdu0.getDataCoding());
+        assertEquals(0x00, pdu0.getDefaultMsgId());
+        assertEquals(0, pdu0.getShortMessageLength());
+        assertArrayEquals(HexUtil.toByteArray(""), pdu0.getShortMessage());
 
-        Assert.assertEquals(3, pdu0.getOptionalParameters().size());
+        assertEquals(3, pdu0.getOptionalParameters().size());
         Tlv tlv0 = pdu0.getOptionalParameter(SmppConstants.TAG_SOURCE_NETWORK_TYPE);
-        Assert.assertEquals(0x01, tlv0.getValueAsByte());
+        assertEquals(0x01, tlv0.getValueAsByte());
         Tlv tlv1 = pdu0.getOptionalParameter(SmppConstants.TAG_DEST_NETWORK_TYPE);
-        Assert.assertEquals(0x01, tlv1.getValueAsByte());
+        assertEquals(0x01, tlv1.getValueAsByte());
         Tlv tlv2 = pdu0.getOptionalParameter(SmppConstants.TAG_MESSAGE_PAYLOAD);
-        Assert.assertArrayEquals(HexUtil.toByteArray(""), tlv2.getValue());
+        assertArrayEquals(HexUtil.toByteArray(""), tlv2.getValue());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -992,34 +994,34 @@ public class PduDecoderTest {
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
-        Assert.assertEquals(162, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(1141461, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("", pdu0.getServiceType());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("4495136192057", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals(0x05, pdu0.getDestAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getDestAddress().getNpi());
-        Assert.assertEquals("GTBank", pdu0.getDestAddress().getAddress());
-        Assert.assertEquals(0x04, pdu0.getEsmClass());
-        Assert.assertEquals(0x00, pdu0.getProtocolId());
-        Assert.assertEquals(0x00, pdu0.getPriority());
-        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
-        Assert.assertEquals("", pdu0.getValidityPeriod());
-        Assert.assertEquals(0x01, pdu0.getRegisteredDelivery());
-        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
-        Assert.assertEquals(0x00, pdu0.getDataCoding());
-        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
-        Assert.assertEquals(110, pdu0.getShortMessageLength());
-        Assert.assertArrayEquals(HexUtil.toByteArray("69643a3934323531343330393233207375623a30303120646c7672643a303031207375626d697420646174653a3039313130343031323420646f6e6520646174653a3039313130343031323420737461743a41434345505444206572723a31303720746578743a20323646313032"), pdu0.getShortMessage());
+        assertEquals(162, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(1141461, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("", pdu0.getServiceType());
+        assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("4495136192057", pdu0.getSourceAddress().getAddress());
+        assertEquals(0x05, pdu0.getDestAddress().getTon());
+        assertEquals(0x01, pdu0.getDestAddress().getNpi());
+        assertEquals("GTBank", pdu0.getDestAddress().getAddress());
+        assertEquals(0x04, pdu0.getEsmClass());
+        assertEquals(0x00, pdu0.getProtocolId());
+        assertEquals(0x00, pdu0.getPriority());
+        assertEquals("", pdu0.getScheduleDeliveryTime());
+        assertEquals("", pdu0.getValidityPeriod());
+        assertEquals(0x01, pdu0.getRegisteredDelivery());
+        assertEquals(0x00, pdu0.getReplaceIfPresent());
+        assertEquals(0x00, pdu0.getDataCoding());
+        assertEquals(0x00, pdu0.getDefaultMsgId());
+        assertEquals(110, pdu0.getShortMessageLength());
+        assertArrayEquals(HexUtil.toByteArray("69643a3934323531343330393233207375623a30303120646c7672643a303031207375626d697420646174653a3039313130343031323420646f6e6520646174653a3039313130343031323420737461743a41434345505444206572723a31303720746578743a20323646313032"), pdu0.getShortMessage());
 
-        Assert.assertEquals(0, pdu0.getOptionalParameterCount());
+        assertEquals(0, pdu0.getOptionalParameterCount());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -1028,34 +1030,34 @@ public class PduDecoderTest {
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
-        Assert.assertEquals(235, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(1, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("", pdu0.getServiceType());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("44951361920", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals(0x00, pdu0.getDestAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getDestAddress().getNpi());
-        Assert.assertEquals("40404", pdu0.getDestAddress().getAddress());
-        Assert.assertEquals(0x04, pdu0.getEsmClass());
-        Assert.assertEquals(0x00, pdu0.getProtocolId());
-        Assert.assertEquals(0x00, pdu0.getPriority());
-        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
-        Assert.assertEquals("", pdu0.getValidityPeriod());
-        Assert.assertEquals(0x00, pdu0.getRegisteredDelivery());
-        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
-        Assert.assertEquals(0x03, pdu0.getDataCoding());
-        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
-        Assert.assertEquals(144, pdu0.getShortMessageLength());
-        //Assert.assertArrayEquals(HexUtil.toByteArray("69643a3934323531343330393233207375623a30303120646c7672643a303031207375626d697420646174653a3039313130343031323420646f6e6520646174653a3039313130343031323420737461743a41434345505444206572723a31303720746578743a20323646313032"), pdu0.getShortMessage());
+        assertEquals(235, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(1, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("", pdu0.getServiceType());
+        assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("44951361920", pdu0.getSourceAddress().getAddress());
+        assertEquals(0x00, pdu0.getDestAddress().getTon());
+        assertEquals(0x01, pdu0.getDestAddress().getNpi());
+        assertEquals("40404", pdu0.getDestAddress().getAddress());
+        assertEquals(0x04, pdu0.getEsmClass());
+        assertEquals(0x00, pdu0.getProtocolId());
+        assertEquals(0x00, pdu0.getPriority());
+        assertEquals("", pdu0.getScheduleDeliveryTime());
+        assertEquals("", pdu0.getValidityPeriod());
+        assertEquals(0x00, pdu0.getRegisteredDelivery());
+        assertEquals(0x00, pdu0.getReplaceIfPresent());
+        assertEquals(0x03, pdu0.getDataCoding());
+        assertEquals(0x00, pdu0.getDefaultMsgId());
+        assertEquals(144, pdu0.getShortMessageLength());
+        //assertArrayEquals(HexUtil.toByteArray("69643a3934323531343330393233207375623a30303120646c7672643a303031207375626d697420646174653a3039313130343031323420646f6e6520646174653a3039313130343031323420737461743a41434345505444206572723a31303720746578743a20323646313032"), pdu0.getShortMessage());
 
-        Assert.assertEquals(2, pdu0.getOptionalParameterCount());
+        assertEquals(2, pdu0.getOptionalParameterCount());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -1064,28 +1066,28 @@ public class PduDecoderTest {
 
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
-        Assert.assertEquals(64, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(-1568301278, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("1001", pdu0.getServiceType());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("44951361920", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals(0x00, pdu0.getDestAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getDestAddress().getNpi());
-        Assert.assertEquals("4040404040404040", pdu0.getDestAddress().getAddress());
-        Assert.assertEquals(0x00, pdu0.getEsmClass());
-        Assert.assertEquals(0x00, pdu0.getProtocolId());
-        Assert.assertEquals(0x00, pdu0.getPriority());
-        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
-        Assert.assertEquals("", pdu0.getValidityPeriod());
-        Assert.assertEquals(0x00, pdu0.getRegisteredDelivery());
-        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
-        Assert.assertEquals(0x08, pdu0.getDataCoding());
-        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
-        Assert.assertEquals(0, pdu0.getShortMessageLength());
+        assertEquals(64, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(-1568301278, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("1001", pdu0.getServiceType());
+        assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("44951361920", pdu0.getSourceAddress().getAddress());
+        assertEquals(0x00, pdu0.getDestAddress().getTon());
+        assertEquals(0x01, pdu0.getDestAddress().getNpi());
+        assertEquals("4040404040404040", pdu0.getDestAddress().getAddress());
+        assertEquals(0x00, pdu0.getEsmClass());
+        assertEquals(0x00, pdu0.getProtocolId());
+        assertEquals(0x00, pdu0.getPriority());
+        assertEquals("", pdu0.getScheduleDeliveryTime());
+        assertEquals("", pdu0.getValidityPeriod());
+        assertEquals(0x00, pdu0.getRegisteredDelivery());
+        assertEquals(0x00, pdu0.getReplaceIfPresent());
+        assertEquals(0x08, pdu0.getDataCoding());
+        assertEquals(0x00, pdu0.getDefaultMsgId());
+        assertEquals(0, pdu0.getShortMessageLength());
     }
     
     @Test
@@ -1095,28 +1097,28 @@ public class PduDecoderTest {
         DeliverSm pdu0 = (DeliverSm)transcoder.decode(buffer);
 
         /*
-        Assert.assertEquals(64, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(-1568301278, pdu0.getSequenceNumber());
-        Assert.assertEquals(true, pdu0.isRequest());
-        Assert.assertEquals("1001", pdu0.getServiceType());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("44951361920", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals(0x00, pdu0.getDestAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getDestAddress().getNpi());
-        Assert.assertEquals("4040404040404040", pdu0.getDestAddress().getAddress());
-        Assert.assertEquals(0x00, pdu0.getEsmClass());
-        Assert.assertEquals(0x00, pdu0.getProtocolId());
-        Assert.assertEquals(0x00, pdu0.getPriority());
-        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
-        Assert.assertEquals("", pdu0.getValidityPeriod());
-        Assert.assertEquals(0x00, pdu0.getRegisteredDelivery());
-        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
-        Assert.assertEquals(0x08, pdu0.getDataCoding());
-        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
-        Assert.assertEquals(0, pdu0.getShortMessageLength());
+        assertEquals(64, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DELIVER_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(-1568301278, pdu0.getSequenceNumber());
+        assertEquals(true, pdu0.isRequest());
+        assertEquals("1001", pdu0.getServiceType());
+        assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("44951361920", pdu0.getSourceAddress().getAddress());
+        assertEquals(0x00, pdu0.getDestAddress().getTon());
+        assertEquals(0x01, pdu0.getDestAddress().getNpi());
+        assertEquals("4040404040404040", pdu0.getDestAddress().getAddress());
+        assertEquals(0x00, pdu0.getEsmClass());
+        assertEquals(0x00, pdu0.getProtocolId());
+        assertEquals(0x00, pdu0.getPriority());
+        assertEquals("", pdu0.getScheduleDeliveryTime());
+        assertEquals("", pdu0.getValidityPeriod());
+        assertEquals(0x00, pdu0.getRegisteredDelivery());
+        assertEquals(0x00, pdu0.getReplaceIfPresent());
+        assertEquals(0x08, pdu0.getDataCoding());
+        assertEquals(0x00, pdu0.getDefaultMsgId());
+        assertEquals(0, pdu0.getShortMessageLength());
          */
     }
 
@@ -1129,37 +1131,38 @@ public class PduDecoderTest {
 
         SubmitSm pdu0 = (SubmitSm)transcoder.decode(buffer);
 
-        Assert.assertEquals(304, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_SUBMIT_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(20456, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("", pdu0.getServiceType());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("40404", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals(0x01, pdu0.getDestAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getDestAddress().getNpi());
-        Assert.assertEquals("44951361920", pdu0.getDestAddress().getAddress());
-        Assert.assertEquals(0x00, pdu0.getEsmClass());
-        Assert.assertEquals(0x00, pdu0.getProtocolId());
-        Assert.assertEquals(0x00, pdu0.getPriority());
-        Assert.assertEquals("", pdu0.getScheduleDeliveryTime());
-        Assert.assertEquals("", pdu0.getValidityPeriod());
-        Assert.assertEquals(0x01, pdu0.getRegisteredDelivery());
-        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
-        Assert.assertEquals(0x00, pdu0.getDataCoding());
-        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
-        Assert.assertEquals(255, pdu0.getShortMessage().length);
-        Assert.assertArrayEquals(text255Bytes, pdu0.getShortMessage());
+        assertEquals(304, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_SUBMIT_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(20456, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("", pdu0.getServiceType());
+        assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("40404", pdu0.getSourceAddress().getAddress());
+        assertEquals(0x01, pdu0.getDestAddress().getTon());
+        assertEquals(0x01, pdu0.getDestAddress().getNpi());
+        assertEquals("44951361920", pdu0.getDestAddress().getAddress());
+        assertEquals(0x00, pdu0.getEsmClass());
+        assertEquals(0x00, pdu0.getProtocolId());
+        assertEquals(0x00, pdu0.getPriority());
+        assertEquals("", pdu0.getScheduleDeliveryTime());
+        assertEquals("", pdu0.getValidityPeriod());
+        assertEquals(0x01, pdu0.getRegisteredDelivery());
+        assertEquals(0x00, pdu0.getReplaceIfPresent());
+        assertEquals(0x00, pdu0.getDataCoding());
+        assertEquals(0x00, pdu0.getDefaultMsgId());
+        assertEquals(255, pdu0.getShortMessage().length);
+        assertArrayEquals(text255Bytes, pdu0.getShortMessage());
 
-        Assert.assertNull(pdu0.getOptionalParameters());
+        assertNull(pdu0.getOptionalParameters());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
     
-    @Ignore @Test
+    @Disabled
+    @Test
     public void decodeDeliverSMWithCorrectTotalByteLengthButInvalidShortMessageLength() throws Exception {
         // short_message is only 8 bytes, but short_message_length claims it should be 16
         // the problem is that the pdu_length in the header IS set to the correct length
@@ -1180,7 +1183,7 @@ public class PduDecoderTest {
         DeliverSm pdu = (DeliverSm)transcoder.decode(buffer);
         
         // confirm the sequence number was parsed ok
-        Assert.assertEquals(pdu.getSequenceNumber(), 0x806A179B);
+        assertEquals(pdu.getSequenceNumber(), 0x806A179B);
 
         // make sure the pdu is correct on a reply
         DeliverSmResp pduResponse = pdu.createResponse();
@@ -1189,7 +1192,7 @@ public class PduDecoderTest {
         String actualHex = BufferHelper.createHexString(respbuf).toUpperCase();
         String expectedHex = "000000118000000500000000806A179B00";
         
-        Assert.assertEquals(expectedHex, actualHex);
+        assertEquals(expectedHex, actualHex);
     }
     
     @Test
@@ -1198,39 +1201,39 @@ public class PduDecoderTest {
 
         DataSm pdu0 = (DataSm)transcoder.decode(buffer);
         
-        Assert.assertEquals(0x30, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_DATA_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(0, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("", pdu0.getServiceType());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("5552710000", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals(0x00, pdu0.getDestAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getDestAddress().getNpi());
-        Assert.assertEquals("9695", pdu0.getDestAddress().getAddress());
-        Assert.assertEquals(0x00, pdu0.getEsmClass());
-        Assert.assertEquals(0x01, pdu0.getRegisteredDelivery());
-        Assert.assertEquals(0x00, pdu0.getDataCoding());
+        assertEquals(0x30, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_DATA_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(0, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("", pdu0.getServiceType());
+        assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("5552710000", pdu0.getSourceAddress().getAddress());
+        assertEquals(0x00, pdu0.getDestAddress().getTon());
+        assertEquals(0x01, pdu0.getDestAddress().getNpi());
+        assertEquals("9695", pdu0.getDestAddress().getAddress());
+        assertEquals(0x00, pdu0.getEsmClass());
+        assertEquals(0x01, pdu0.getRegisteredDelivery());
+        assertEquals(0x00, pdu0.getDataCoding());
         
         // these are NOT actually part of data_sm's, but included for compatability
         // with submit_sm and delivery_sm
-        Assert.assertEquals(0x00, pdu0.getProtocolId());
-        Assert.assertEquals(0x00, pdu0.getPriority());
-        Assert.assertNull(pdu0.getScheduleDeliveryTime());
-        Assert.assertNull(pdu0.getValidityPeriod());
-        Assert.assertEquals(0x00, pdu0.getReplaceIfPresent());
-        Assert.assertEquals(0x00, pdu0.getDefaultMsgId());
-        Assert.assertEquals(0, pdu0.getShortMessageLength());
-        Assert.assertNull(pdu0.getShortMessage());
+        assertEquals(0x00, pdu0.getProtocolId());
+        assertEquals(0x00, pdu0.getPriority());
+        assertNull(pdu0.getScheduleDeliveryTime());
+        assertNull(pdu0.getValidityPeriod());
+        assertEquals(0x00, pdu0.getReplaceIfPresent());
+        assertEquals(0x00, pdu0.getDefaultMsgId());
+        assertEquals(0, pdu0.getShortMessageLength());
+        assertNull(pdu0.getShortMessage());
         
         
         Tlv tlv0 = pdu0.getOptionalParameter(SmppConstants.TAG_MESSAGE_PAYLOAD);
-        Assert.assertArrayEquals("Test".getBytes(StandardCharsets.ISO_8859_1), tlv0.getValue());
+        assertArrayEquals("Test".getBytes(StandardCharsets.ISO_8859_1), tlv0.getValue());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
 
@@ -1240,24 +1243,24 @@ public class PduDecoderTest {
 
         CancelSm pdu0 = (CancelSm)transcoder.decode(buffer);
 
-        Assert.assertEquals(45, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_CANCEL_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(20456, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals("", pdu0.getServiceType());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("40404", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals(0x01, pdu0.getDestAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getDestAddress().getNpi());
-        Assert.assertEquals("44951361920", pdu0.getDestAddress().getAddress());
-        Assert.assertEquals("12345", pdu0.getMessageId());
+        assertEquals(45, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_CANCEL_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(20456, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals("", pdu0.getServiceType());
+        assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("40404", pdu0.getSourceAddress().getAddress());
+        assertEquals(0x01, pdu0.getDestAddress().getTon());
+        assertEquals(0x01, pdu0.getDestAddress().getNpi());
+        assertEquals("44951361920", pdu0.getDestAddress().getAddress());
+        assertEquals("12345", pdu0.getMessageId());
 
-        Assert.assertNull(pdu0.getOptionalParameters());
+        assertNull(pdu0.getOptionalParameters());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
 
@@ -1267,20 +1270,20 @@ public class PduDecoderTest {
 
         QuerySm pdu0 = (QuerySm)transcoder.decode(buffer);
 
-        Assert.assertEquals(30, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_QUERY_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(20456, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("40404", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals("12345", pdu0.getMessageId());
+        assertEquals(30, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_QUERY_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(20456, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("40404", pdu0.getSourceAddress().getAddress());
+        assertEquals("12345", pdu0.getMessageId());
 
-        Assert.assertNull(pdu0.getOptionalParameters());
+        assertNull(pdu0.getOptionalParameters());
 
         // interesting -- this example has optional parameters it happened to skip...
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -1289,13 +1292,13 @@ public class PduDecoderTest {
 
         CancelSmResp pdu0 = (CancelSmResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(16, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_CANCEL_SM_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(20456, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isResponse());
+        assertEquals(16, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_CANCEL_SM_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(20456, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isResponse());
 
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -1304,17 +1307,17 @@ public class PduDecoderTest {
 
         QuerySmResp pdu0 = (QuerySmResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(25, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_QUERY_SM_RESP, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(20456, pdu0.getSequenceNumber());
-        Assert.assertEquals("12345", pdu0.getMessageId());
-        Assert.assertEquals("", pdu0.getFinalDate());
-        Assert.assertEquals((byte)0x06, pdu0.getMessageState());
-        Assert.assertEquals((byte)0x00, pdu0.getErrorCode());
-        Assert.assertTrue(pdu0.isResponse());
+        assertEquals(25, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_QUERY_SM_RESP, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(20456, pdu0.getSequenceNumber());
+        assertEquals("12345", pdu0.getMessageId());
+        assertEquals("", pdu0.getFinalDate());
+        assertEquals((byte)0x06, pdu0.getMessageState());
+        assertEquals((byte)0x00, pdu0.getErrorCode());
+        assertTrue(pdu0.isResponse());
 
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -1323,23 +1326,23 @@ public class PduDecoderTest {
 
         ReplaceSm pdu0 = (ReplaceSm)transcoder.decode(buffer);
 
-        Assert.assertEquals(80, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_REPLACE_SM, pdu0.getCommandId());
-        Assert.assertEquals(0, pdu0.getCommandStatus());
-        Assert.assertEquals(20456, pdu0.getSequenceNumber());
-        Assert.assertTrue(pdu0.isRequest());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getTon());
-        Assert.assertEquals(0x01, pdu0.getSourceAddress().getNpi());
-        Assert.assertEquals("5552710000", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals("150203040506708+", pdu0.getScheduleDeliveryTime());
-        Assert.assertEquals("010203040506000R", pdu0.getValidityPeriod());
-        Assert.assertEquals((byte)0x01, pdu0.getRegisteredDelivery());
-        Assert.assertEquals((byte)0x02, pdu0.getDefaultMsgId());
-        Assert.assertEquals("text", new String(pdu0.getShortMessage(), StandardCharsets.ISO_8859_1));
+        assertEquals(80, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_REPLACE_SM, pdu0.getCommandId());
+        assertEquals(0, pdu0.getCommandStatus());
+        assertEquals(20456, pdu0.getSequenceNumber());
+        assertTrue(pdu0.isRequest());
+        assertEquals(0x01, pdu0.getSourceAddress().getTon());
+        assertEquals(0x01, pdu0.getSourceAddress().getNpi());
+        assertEquals("5552710000", pdu0.getSourceAddress().getAddress());
+        assertEquals("150203040506708+", pdu0.getScheduleDeliveryTime());
+        assertEquals("010203040506000R", pdu0.getValidityPeriod());
+        assertEquals((byte)0x01, pdu0.getRegisteredDelivery());
+        assertEquals((byte)0x02, pdu0.getDefaultMsgId());
+        assertEquals("text", new String(pdu0.getShortMessage(), StandardCharsets.ISO_8859_1));
 
-        Assert.assertNull(pdu0.getOptionalParameters());
+        assertNull(pdu0.getOptionalParameters());
 
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -1348,13 +1351,13 @@ public class PduDecoderTest {
 
         ReplaceSmResp pdu0 = (ReplaceSmResp)transcoder.decode(buffer);
 
-        Assert.assertEquals(16, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_REPLACE_SM_RESP, pdu0.getCommandId());
-        Assert.assertTrue(pdu0.isResponse());
-        Assert.assertEquals(2, pdu0.getCommandStatus());
-        Assert.assertEquals(20456, pdu0.getSequenceNumber());
+        assertEquals(16, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_REPLACE_SM_RESP, pdu0.getCommandId());
+        assertTrue(pdu0.isResponse());
+        assertEquals(2, pdu0.getCommandStatus());
+        assertEquals(20456, pdu0.getSequenceNumber());
 
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 
     @Test
@@ -1363,14 +1366,14 @@ public class PduDecoderTest {
 
         AlertNotification pdu0 = (AlertNotification)transcoder.decode(buffer);
 
-        Assert.assertEquals(37, pdu0.getCommandLength());
-        Assert.assertEquals(SmppConstants.CMD_ID_ALERT_NOTIFICATION, pdu0.getCommandId());
-        Assert.assertFalse(pdu0.isResponse());
-        Assert.assertEquals(2, pdu0.getCommandStatus());
-        Assert.assertEquals(20456, pdu0.getSequenceNumber());
-        Assert.assertEquals("5552710000", pdu0.getSourceAddress().getAddress());
-        Assert.assertEquals("40404", pdu0.getEsmeAddress().getAddress());
+        assertEquals(37, pdu0.getCommandLength());
+        assertEquals(SmppConstants.CMD_ID_ALERT_NOTIFICATION, pdu0.getCommandId());
+        assertFalse(pdu0.isResponse());
+        assertEquals(2, pdu0.getCommandStatus());
+        assertEquals(20456, pdu0.getSequenceNumber());
+        assertEquals("5552710000", pdu0.getSourceAddress().getAddress());
+        assertEquals("40404", pdu0.getEsmeAddress().getAddress());
 
-        Assert.assertEquals(0, buffer.readableBytes());
+        assertEquals(0, buffer.readableBytes());
     }
 }
