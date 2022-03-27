@@ -22,38 +22,40 @@ package io.vertx.smpp.util;
 
 // third party imports
 
-import org.junit.Assert;
-import org.junit.Test;
-
 // my imports
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
+ * junit5 by Artem Ayrapetov
  */
 public class SequenceNumberTest {
     
     @Test
     public void usage() throws Exception {
         SequenceNumber seqNum = new SequenceNumber();
-        Assert.assertEquals(1, seqNum.next());
-        Assert.assertEquals(2, seqNum.next());
-        Assert.assertEquals(3, seqNum.next());
-        Assert.assertEquals(4, seqNum.next());
+        assertEquals(1, seqNum.next());
+        assertEquals(2, seqNum.next());
+        assertEquals(3, seqNum.next());
+        assertEquals(4, seqNum.next());
 
         seqNum = new SequenceNumber(0x7FFFFFFF);
-        Assert.assertEquals(0x7FFFFFFF, seqNum.next());
-        Assert.assertEquals(1, seqNum.next());  // wrap around
-        Assert.assertEquals(2, seqNum.next());
-        Assert.assertEquals(3, seqNum.next());
+        assertEquals(0x7FFFFFFF, seqNum.next());
+        assertEquals(1, seqNum.next());  // wrap around
+        assertEquals(2, seqNum.next());
+        assertEquals(3, seqNum.next());
 
-        Assert.assertEquals(4, seqNum.peek());
+        assertEquals(4, seqNum.peek());
 
         seqNum.reset();
         
-        Assert.assertEquals(1, seqNum.peek());
-        Assert.assertEquals(1, seqNum.next());
-        Assert.assertEquals(2, seqNum.next());
-        Assert.assertEquals(3, seqNum.next());
+        assertEquals(1, seqNum.peek());
+        assertEquals(1, seqNum.next());
+        assertEquals(2, seqNum.next());
+        assertEquals(3, seqNum.next());
     }
 }

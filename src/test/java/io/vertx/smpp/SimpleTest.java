@@ -14,38 +14,34 @@ package io.vertx.smpp;
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.RunTestOnContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class SimpleTest {
 
-  @Rule
-  public RunTestOnContext rule = new RunTestOnContext();
-
   @Test
-  public void checkStartupAndBind(TestContext context) {
-      var clientBoundSync = context.async();
-      var server = Smpp.server(rule.vertx());
+  public void checkStartupAndBind(Vertx vertx, VertxTestContext context) {
+      var clientBoundSync = context.checkpoint();
+      var server = Smpp.server(vertx);
       server.start()
           .compose(smppServer ->
-            Smpp.client(rule.vertx())
+            Smpp.client(vertx)
                 .bind(server.actualPort())
           )
           .onComplete(asyncResult -> {
             if (asyncResult.succeeded()) {
               var sess = asyncResult.result();
               if (sess.isBound()) {
-                clientBoundSync.complete();
+                clientBoundSync.flag();
               } else {
-                context.fail("session is not bound");
+                context.failNow("session is not bound");
               }
             } else {
-              context.fail("cannot create client");
+              context.failNow("cannot create client");
             }
         });
   }

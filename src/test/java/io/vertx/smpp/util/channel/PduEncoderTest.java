@@ -29,12 +29,11 @@ import io.vertx.smpp.tlv.Tlv;
 import io.vertx.smpp.types.Address;
 import io.vertx.smpp.types.SmppInvalidArgumentException;
 import io.vertx.smpp.util.HexUtil;
-import org.junit.Assert;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 // my imports
 
@@ -42,6 +41,7 @@ import java.nio.charset.StandardCharsets;
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  * Assetions symplifyed by Artem Ayrapetov
+ * junit5 by Artem Ayrapetov
  */
 public class PduEncoderTest {
 
@@ -60,7 +60,7 @@ public class PduEncoderTest {
         pdu0.setSequenceNumber(171192039);
 
         ByteBuf buffer = transcoder.encode(pdu0);
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000001000000015000000000a342ee7"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("0000001000000015000000000a342ee7"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -70,7 +70,7 @@ public class PduEncoderTest {
         pdu0.setSequenceNumber(171192045);
 
         ByteBuf buffer = transcoder.encode(pdu0);
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000001080000015000000000a342eed"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("0000001080000015000000000a342eed"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -80,7 +80,7 @@ public class PduEncoderTest {
         pdu0.setMessageId("94258431594");
 
         ByteBuf buffer = transcoder.encode(pdu0);
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000001c80000004000000000a342ee1393432353834333135393400"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("0000001c80000004000000000a342ee1393432353834333135393400"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -89,7 +89,7 @@ public class PduEncoderTest {
         pdu0.setSequenceNumber(171192033);
 
         ByteBuf buffer = transcoder.encode(pdu0);
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000001180000004000000000a342ee100"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("0000001180000004000000000a342ee100"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -100,7 +100,7 @@ public class PduEncoderTest {
         pdu0.setCommandLength(16);
 
         ByteBuf buffer = transcoder.encode(pdu0);
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000001080000004000000300a342ee1"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("0000001080000004000000300a342ee1"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -110,7 +110,7 @@ public class PduEncoderTest {
         pdu0.setMessageId("94258431594");
 
         ByteBuf buffer = transcoder.encode(pdu0);
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000001c800000050000000000116ac7393432353834333135393400"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("0000001c800000050000000000116ac7393432353834333135393400"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -120,7 +120,7 @@ public class PduEncoderTest {
         pdu0.setMessageId("94258431594");
 
         ByteBuf buffer = transcoder.encode(pdu0);
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000001c800001030000000000116ac7393432353834333135393400"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("0000001c800001030000000000116ac7393432353834333135393400"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -130,7 +130,7 @@ public class PduEncoderTest {
         pdu0.setSystemId("Smsc Simulator");
 
         ByteBuf buffer = transcoder.encode(pdu0);
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000001f800000090000000000039951536d73632053696d756c61746f7200"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("0000001f800000090000000000039951536d73632053696d756c61746f7200"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -141,7 +141,7 @@ public class PduEncoderTest {
         pdu0.setSystemId("SMSC");
 
         ByteBuf buffer = transcoder.encode(pdu0);
-        Assert.assertArrayEquals(HexUtil.toByteArray("00000015800000090000000e00004db3534d534300"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("00000015800000090000000e00004db3534d534300"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -153,7 +153,7 @@ public class PduEncoderTest {
         pdu0.setOptionalParameter(new Tlv(SmppConstants.TAG_SC_INTERFACE_VERSION, new byte[] { (byte)0x34 }));
 
         ByteBuf buffer = transcoder.encode(pdu0);
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000001d800000090000000000039943536d7363204757000210000134"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("0000001d800000090000000000039943536d7363204757000210000134"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -165,7 +165,7 @@ public class PduEncoderTest {
         pdu0.setOptionalParameter(new Tlv(SmppConstants.TAG_SC_INTERFACE_VERSION, new byte[] { (byte)0x34 }));
 
         ByteBuf buffer = transcoder.encode(pdu0);
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000001d80000002000000000003995f54574954544552000210000134"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("0000001d80000002000000000003995f54574954544552000210000134"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -177,7 +177,7 @@ public class PduEncoderTest {
         pdu0.setOptionalParameter(new Tlv(SmppConstants.TAG_SC_INTERFACE_VERSION, new byte[] { (byte)0x34 }));
 
         ByteBuf buffer = transcoder.encode(pdu0);
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000001d80000001000000000003996274776974746572000210000134"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("0000001d80000001000000000003996274776974746572000210000134"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -191,7 +191,7 @@ public class PduEncoderTest {
 
         ByteBuf buffer = transcoder.encode(pdu0);
         //logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
-        Assert.assertArrayEquals(HexUtil.toByteArray("00000023000000090000000000039951414c4c5f545700414c4c5f5457000034000000"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("00000023000000090000000000039951414c4c5f545700414c4c5f5457000034000000"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -208,7 +208,7 @@ public class PduEncoderTest {
 
         ByteBuf buffer = transcoder.encode(pdu0);
         //logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
-        Assert.assertArrayEquals(HexUtil.toByteArray("00000023000000090000000000039951414c4c5f545700414c4c5f5457000034010200"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("00000023000000090000000000039951414c4c5f545700414c4c5f5457000034010200"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -222,7 +222,7 @@ public class PduEncoderTest {
 
         ByteBuf buffer = transcoder.encode(pdu0);
         //logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000002500000002000000000003995f747769747465720074776974746572000034000000"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("0000002500000002000000000003995f747769747465720074776974746572000034000000"), BufferHelper.createByteArray(buffer));
     }
     
     @Test
@@ -236,7 +236,7 @@ public class PduEncoderTest {
 
         ByteBuf buffer = transcoder.encode(pdu0);
         //logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
-        Assert.assertArrayEquals(HexUtil.toByteArray("00000025000000010000000000039961747769747465720074776974746572000034000000"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("00000025000000010000000000039961747769747465720074776974746572000034000000"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -263,7 +263,7 @@ public class PduEncoderTest {
 
         ByteBuf buffer = transcoder.encode(pdu0);
         //logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
-        Assert.assertArrayEquals(HexUtil.toByteArray("000000400000000500000000000000030002013837363534333231000409343034303400000000000000000000084024232125262F3A000E0001010006000101"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("000000400000000500000000000000030002013837363534333231000409343034303400000000000000000000084024232125262F3A000E0001010006000101"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -293,7 +293,7 @@ public class PduEncoderTest {
 
         ByteBuf buffer = transcoder.encode(pdu0);
         //logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
-        Assert.assertArrayEquals(HexUtil.toByteArray("000000BA00000005000000000000000200010134343935313336313932300001013430343034000400000000000000006E69643A30303539313133393738207375623A30303120646C7672643A303031207375626D697420646174653A3130303231303137333020646F6E6520646174653A3130303231303137333120737461743A44454C49565244206572723A30303020746578743A4024232125262F3A000E0001010006000101001E000833383630316661000427000102"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("000000BA00000005000000000000000200010134343935313336313932300001013430343034000400000000000000006E69643A30303539313133393738207375623A30303120646C7672643A303031207375626D697420646174653A3130303231303137333020646F6E6520646174653A3130303231303137333120737461743A44454C49565244206572723A30303020746578743A4024232125262F3A000E0001010006000101001E000833383630316661000427000102"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -316,7 +316,7 @@ public class PduEncoderTest {
 
         ByteBuf buffer = transcoder.encode(pdu0);
         //logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
-        Assert.assertArrayEquals(HexUtil.toByteArray("00000039000000040000000000004FE80001013430343034000101343439353133363139323000000000000001000000084024232125262F3A"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("00000039000000040000000000004FE80001013430343034000101343439353133363139323000000000000001000000084024232125262F3A"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -326,7 +326,7 @@ public class PduEncoderTest {
         pdu0.setSequenceNumber(1);
 
         ByteBuf buffer = transcoder.encode(pdu0);
-        Assert.assertArrayEquals(HexUtil.toByteArray("00000010000000060000000000000001"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("00000010000000060000000000000001"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -336,7 +336,7 @@ public class PduEncoderTest {
         pdu0.setSequenceNumber(1);
 
         ByteBuf buffer = transcoder.encode(pdu0);
-        Assert.assertArrayEquals(HexUtil.toByteArray("00000010800000060000000000000001"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("00000010800000060000000000000001"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -346,7 +346,7 @@ public class PduEncoderTest {
         pdu0.setSequenceNumber(535159);
 
         ByteBuf buffer = transcoder.encode(pdu0);
-        Assert.assertArrayEquals(HexUtil.toByteArray("00000010800000000000000100082a77"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("00000010800000000000000100082a77"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -374,7 +374,7 @@ public class PduEncoderTest {
         String expectedHex = "00000130000000040000000000004FE80001013430343034000101343439353133363139323000000000000001000000FF" + HexUtil.toHexString(text255.getBytes(StandardCharsets.ISO_8859_1)).toUpperCase();
         String actualHex = HexUtil.toHexString(BufferHelper.createByteArray(buffer)).toUpperCase();
         
-        Assert.assertEquals(expectedHex, actualHex);
+        assertEquals(expectedHex, actualHex);
     }
     
     @Test
@@ -401,7 +401,7 @@ public class PduEncoderTest {
         // writing out all 256 bytes in the buffer
         try {
             pdu0.setShortMessage(text256.getBytes(StandardCharsets.ISO_8859_1));
-            Assert.fail();
+            fail();
         } catch (SmppInvalidArgumentException e) {
             // expected behavior
         }
@@ -426,7 +426,7 @@ public class PduEncoderTest {
         String expectedHex = "000000300000010300000000000000000001013535353237313030303000000139363935000001000424000454657374";
         String actualHex = HexUtil.toHexString(BufferHelper.createByteArray(buffer)).toUpperCase();
         
-        Assert.assertEquals(expectedHex, actualHex);
+        assertEquals(expectedHex, actualHex);
     }
 
     @Test
@@ -440,7 +440,7 @@ public class PduEncoderTest {
 
         ByteBuf buffer = transcoder.encode(pdu0);
 //        logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000002D000000080000000000004FE80031323334350001013430343034000101343439353133363139323000"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("0000002D000000080000000000004FE80031323334350001013430343034000101343439353133363139323000"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -452,7 +452,7 @@ public class PduEncoderTest {
 
         ByteBuf buffer = transcoder.encode(pdu0);
 //        logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
-        Assert.assertArrayEquals(HexUtil.toByteArray("00000010800000080000000000004FE8"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("00000010800000080000000000004FE8"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -464,7 +464,7 @@ public class PduEncoderTest {
 
         ByteBuf buffer = transcoder.encode(pdu0);
 //        logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
-        Assert.assertArrayEquals(HexUtil.toByteArray("00000010800000080000001100004FE8"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("00000010800000080000001100004FE8"), BufferHelper.createByteArray(buffer));
     }
 
 
@@ -478,7 +478,7 @@ public class PduEncoderTest {
 
         ByteBuf buffer = transcoder.encode(pdu0);
 //        logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000001E000000030000000000004FE83132333435000101343034303400"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("0000001E000000030000000000004FE83132333435000101343034303400"), BufferHelper.createByteArray(buffer));
     }
 
     @Test
@@ -493,7 +493,7 @@ public class PduEncoderTest {
 
         ByteBuf buffer = transcoder.encode(pdu0);
 //        logger.debug("{}", HexUtil.toHexString(BufferHelper.createByteArray(buffer)));
-        Assert.assertArrayEquals(HexUtil.toByteArray("00000019800000030000000000004FE8313233343500000600"), BufferHelper.createByteArray(buffer));
+        assertArrayEquals(HexUtil.toByteArray("00000019800000030000000000004FE8313233343500000600"), BufferHelper.createByteArray(buffer));
     }
 
 
@@ -515,7 +515,7 @@ public class PduEncoderTest {
         String expectedHex = "00000050000000070000000000004FE86D73672D313233343500010135353532373130303030003135303230333034303530363730382B00303130323033303430353036303030520001020474657874";
         String actualHex = HexUtil.toHexString(BufferHelper.createByteArray(buffer)).toUpperCase();
 
-        Assert.assertEquals(expectedHex, actualHex);
+        assertEquals(expectedHex, actualHex);
     }
 
     @Test
@@ -529,7 +529,7 @@ public class PduEncoderTest {
 
         String expectedHex = "00000010800000070000000200004FE8";
         String actualHex = HexUtil.toHexString(BufferHelper.createByteArray(buffer)).toUpperCase();
-        Assert.assertEquals(expectedHex, actualHex);
+        assertEquals(expectedHex, actualHex);
     }
 
     @Test
@@ -545,6 +545,6 @@ public class PduEncoderTest {
 
         String expectedHex = "00000025000001020000000200004FE8010135353532373130303030000101343034303400";
         String actualHex = HexUtil.toHexString(BufferHelper.createByteArray(buffer)).toUpperCase();
-        Assert.assertEquals(expectedHex, actualHex);
+        assertEquals(expectedHex, actualHex);
     }
 }

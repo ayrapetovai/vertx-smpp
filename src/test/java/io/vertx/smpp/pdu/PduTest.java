@@ -22,10 +22,11 @@ package io.vertx.smpp.pdu;
 
 // third party imports
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 // my imports
 
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
  * Assetions symplifyed by Artem Ayrapetov
+ * junit5 by Artem Ayrapetov
  */
 public class PduTest {
     private static final Logger logger = LoggerFactory.getLogger(PduTest.class);
@@ -41,25 +43,25 @@ public class PduTest {
     public void hasSequenceNumberAssigned() {
         Pdu pdu0 = new EnquireLink();
 
-        Assert.assertFalse(pdu0.hasSequenceNumberAssigned());
+        assertFalse(pdu0.hasSequenceNumberAssigned());
 
         pdu0.setSequenceNumber(0);
 
-        Assert.assertTrue(pdu0.hasSequenceNumberAssigned());
+        assertTrue(pdu0.hasSequenceNumberAssigned());
 
         pdu0.removeSequenceNumber();
 
-        Assert.assertFalse(pdu0.hasSequenceNumberAssigned());
-        Assert.assertEquals(0, pdu0.getSequenceNumber());
+        assertFalse(pdu0.hasSequenceNumberAssigned());
+        assertEquals(0, pdu0.getSequenceNumber());
     }
 
     @Test
     public void hasCommandLengthCalculatedAndSet() {
         Pdu pdu0 = new EnquireLink();
 
-        Assert.assertFalse(pdu0.hasCommandLengthCalculated());
-        Assert.assertEquals(16, pdu0.calculateAndSetCommandLength());
-        Assert.assertTrue(pdu0.hasCommandLengthCalculated());
-        Assert.assertEquals(16, pdu0.getCommandLength());
+        assertFalse(pdu0.hasCommandLengthCalculated());
+        assertEquals(16, pdu0.calculateAndSetCommandLength());
+        assertTrue(pdu0.hasCommandLengthCalculated());
+        assertEquals(16, pdu0.getCommandLength());
     }
 }

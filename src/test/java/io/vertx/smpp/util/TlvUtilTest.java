@@ -24,16 +24,18 @@ package io.vertx.smpp.util;
 
 import io.vertx.smpp.tlv.Tlv;
 import io.vertx.smpp.tlv.TlvConvertException;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 // my imports
 
 /**
  *
  * @author joelauer (twitter: @jjlauer or <a href="http://twitter.com/jjlauer" target=window>http://twitter.com/jjlauer</a>)
+ * junit5 by Artem Ayrapetov
  */
 public class TlvUtilTest {
     private static final Logger logger = LoggerFactory.getLogger(TlvUtilTest.class);
@@ -44,20 +46,20 @@ public class TlvUtilTest {
 
         // null string should just be 0x00
         tlv0 = TlvUtil.createNullTerminatedStringTlv((short)0x0001, null, "ISO-8859-1");
-        Assert.assertEquals((short)0x0001, tlv0.getTag());
-        Assert.assertArrayEquals(HexUtil.toByteArray("00"), tlv0.getValue());
+        assertEquals((short)0x0001, tlv0.getTag());
+        assertArrayEquals(HexUtil.toByteArray("00"), tlv0.getValue());
 
         tlv0 = TlvUtil.createNullTerminatedStringTlv((short)0x0001, "", "ISO-8859-1");
-        Assert.assertEquals((short)0x0001, tlv0.getTag());
-        Assert.assertArrayEquals(HexUtil.toByteArray("00"), tlv0.getValue());
+        assertEquals((short)0x0001, tlv0.getTag());
+        assertArrayEquals(HexUtil.toByteArray("00"), tlv0.getValue());
 
         tlv0 = TlvUtil.createNullTerminatedStringTlv((short)0x0001, "a");
-        Assert.assertEquals((short)0x0001, tlv0.getTag());
-        Assert.assertArrayEquals(HexUtil.toByteArray("6100"), tlv0.getValue());
+        assertEquals((short)0x0001, tlv0.getTag());
+        assertArrayEquals(HexUtil.toByteArray("6100"), tlv0.getValue());
 
         tlv0 = TlvUtil.createNullTerminatedStringTlv((short)0x0001, "c1net");
-        Assert.assertEquals((short)0x0001, tlv0.getTag());
-        Assert.assertArrayEquals(HexUtil.toByteArray("63316e657400"), tlv0.getValue());
+        assertEquals((short)0x0001, tlv0.getTag());
+        assertArrayEquals(HexUtil.toByteArray("63316e657400"), tlv0.getValue());
     }
 
     @Test
@@ -65,24 +67,24 @@ public class TlvUtilTest {
         Tlv tlv0;
 
         tlv0 = TlvUtil.createFixedLengthStringTlv((short)0x0001, null, 2, "ISO-8859-1");
-        Assert.assertEquals((short)0x0001, tlv0.getTag());
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000"), tlv0.getValue());
+        assertEquals((short)0x0001, tlv0.getTag());
+        assertArrayEquals(HexUtil.toByteArray("0000"), tlv0.getValue());
 
         tlv0 = TlvUtil.createFixedLengthStringTlv((short)0x0001, "", 2);
-        Assert.assertEquals((short)0x0001, tlv0.getTag());
-        Assert.assertArrayEquals(HexUtil.toByteArray("0000"), tlv0.getValue());
+        assertEquals((short)0x0001, tlv0.getTag());
+        assertArrayEquals(HexUtil.toByteArray("0000"), tlv0.getValue());
 
         tlv0 = TlvUtil.createFixedLengthStringTlv((short)0x0001, "1", 2, "ISO-8859-1");
-        Assert.assertEquals((short)0x0001, tlv0.getTag());
-        Assert.assertArrayEquals(HexUtil.toByteArray("3100"), tlv0.getValue());
+        assertEquals((short)0x0001, tlv0.getTag());
+        assertArrayEquals(HexUtil.toByteArray("3100"), tlv0.getValue());
 
         tlv0 = TlvUtil.createFixedLengthStringTlv((short)0x0001, "12", 2);
-        Assert.assertEquals((short)0x0001, tlv0.getTag());
-        Assert.assertArrayEquals(HexUtil.toByteArray("3132"), tlv0.getValue());
+        assertEquals((short)0x0001, tlv0.getTag());
+        assertArrayEquals(HexUtil.toByteArray("3132"), tlv0.getValue());
 
         try {
             TlvUtil.createFixedLengthStringTlv((short)0x0001, "12", 1, "ISO-8859-1");
-            Assert.fail();
+            fail();
         } catch (TlvConvertException e) {
             // correct behavior
         }
