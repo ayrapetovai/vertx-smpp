@@ -1,5 +1,7 @@
 = TODO
 
+- Then user gets notified with onOverflowed, there is at lest one request missed, fide a way for session to do backpressure before it have several requests failed.
+- Session can reconnect if connection brakes, and resend failed requests (if setting is set, reconnect timeout, reconnectEnabled, resendRequestsOnReconnect). Callback session.onReconnect(..).
 - Implement encodings SMPP_v5_0.pdf 4.7.7 data_coding.
 - Since password is set to SmppSessionOptions it lives in memory until the session closes, remove it some how?
 - Refactor package names.

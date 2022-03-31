@@ -49,7 +49,7 @@ Legend: [v] done, [0] partially done, [-] not done.
     .. [v] For send future user can assign a callback *onNackked*, that is called if the `generic_nack` pdu was received as a response, and it's sequence number corresponds to the sequence number of the request.
     .. [v] For send future user can assign a callback *onWriteOverflowed*, that is called when write buffer of the channel becomes full. This means that the receiver of requests (server) cannot take that many requests, and client have to slow down sending.
     User is supposed to do *pause* on the source of requests in case of being notified with *onWriteOverflow*. The session *onOverflowed* callback has check interval no less than 1ms, whereas the send future *onWriteOverflowed* is called as often as send attempts are made.
-    .. [-] User can use all vertx native API for send future, as that *compose(...)* and so on.
+    .. [-] User can use all vertx native API of 'send future', as that *compose(...)* and so on.
     .. [v] User can react on `generic_nack` with no sequence number by passing callback to *configuratior.onUnexpectedResponse(...)*.
 . [-] Client keeps track of metrics for all sessions, which are available to user.
 . [v] User can *doPause()* receiving of PDUs, can *doResume()* receiving, and check is session is paused by *isPaused()*.
@@ -82,11 +82,15 @@ To load SmppGateway, run EchoServerMain, SmppGatewayMain and run jmeter:
 jmeter -n -t {$PROJECT_DIR}/src/test/resources/JmeterSmppGateway.jmx
 ----
 
-== Help
+== Contribution
+* Need help implementing metrics. Even just advice of how to do it the Vert.x way.
+* API criticism and suggestions are welcome.
 
+== Help
+* https://smpp.org[SMPP Specification]
 * https://vertx.io/docs/[Vert.x Documentation]
-* https://stackoverflow.com/questions/tagged/vert.x?sort=newest&pageSize=15[Vert.x Stack Overflow]
 * https://groups.google.com/forum/?fromgroups#!forum/vertx[Vert.x User Group]
 * https://gitter.im/eclipse-vertx/vertx-users[Vert.x Gitter]
 
+'''
 Consider link:TODO.adoc[todo]
