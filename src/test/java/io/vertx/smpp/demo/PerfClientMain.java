@@ -208,8 +208,6 @@ public class PerfClientMain extends AbstractVerticle {
     var deliverSmThroughput = ((double) c.deliverSmRespCount/((c.deliverEnd - c.start)/1000.0));
 
     var table = new StringBuilder();
-    table.append(String.format("done: threads=%d, sessions=%d, window=%s, text(%s), this=%s, that=%s, ssl=%s",
-        THREADS, SESSIONS, WINDOW, ENCODE.name(), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"));
     table.append(String.format(
         "|> threads=%d, sessions=%d, window=%d(mean %d, max %d), text(%s), this=%s, that=%s, ssl=%s",
         THREADS, SESSIONS, WINDOW, (int) c.meanWindowSize, c.maxWindowSize, ENCODE.name(), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"
