@@ -1,5 +1,8 @@
 = TODO
 
+- For version 5 it is necessary to handle congestion_state TLV instead of window. Make strategies: WindowedStrategy, CongestionStrategy.
+- Check Smpp5 2.7 Session Timers to be good with existing code.
+- Maybe rename onGenericNack -> onUnrecognized?
 - Then user gets notified with onOverflowed, there is at lest one request missed, fide a way for session to do backpressure before it have several requests failed.
 - Session can reconnect if connection brakes, and resend failed requests (if setting is set, reconnect timeout, reconnectEnabled, resendRequestsOnReconnect). Callback session.onReconnect(..).
 - Implement encodings SMPP_v5_0.pdf 4.7.7 data_coding.
@@ -15,11 +18,11 @@
 - Chaos testing: make a docker-image with echo-server and use on it `pumba netem --duration 60s --tc-image giadocker/iproute2 delay --destribution pareto --time 1000 --jetter 500 my-container-with-smmpp-echo-server`
 - Find out how to scale client and server or several threads and connection such a way they would not lose performance.
 - Reference and utility implementations:
-* (utility) testcontainers analogue for smpp-server with scenarios.
-* (reference) smpp-client and server with non-event-loop-threads.
-* (utility) ismpp, interactive smpp-client with interactive shell.
-* (reference) simple-smpp-server, able to send deliver_sm to RECEIVER session and client with TRANSMITTER and RECEIVER sessions.
-* (reference) email gateway, smpp -> EG -> smtp
-* (utility) smpp multiplexer, {smpp_1, smpp_2, ..., smpp_n} -> smpp-mux -> smpp-server
-* (utility) smpp-server-mock, can play scenarios.
-* (utility) smpp-client-mock, can play scenarios.
+    * (utility) testcontainers analogue for smpp-server with scenarios.
+    * (reference) smpp-client and server with non-event-loop-threads.
+    * (utility) ismpp, interactive smpp-client with interactive shell.
+    * (reference) simple-smpp-server, able to send deliver_sm to RECEIVER session and client with TRANSMITTER and RECEIVER sessions.
+    * (reference) email gateway, smpp -> EG -> smtp
+    * (utility) smpp multiplexer, {smpp_1, smpp_2, ..., smpp_n} -> smpp-mux -> smpp-server
+    * (utility) smpp-server-mock, can play scenarios.
+    * (utility) smpp-client-mock, can play scenarios.
