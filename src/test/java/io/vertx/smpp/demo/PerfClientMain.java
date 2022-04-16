@@ -65,11 +65,11 @@ public class PerfClientMain extends AbstractVerticle {
   private static final boolean SSL = false;
   private static final boolean AWAIT_DELIVERY = true;
   private static final int     WINDOW = 600;
-//  private static final Encoder ENCODE = NONE;
+  private static final Encoder ENCODE = NONE;
 //  private static final Encoder ENCODE = Encoder.CLOUDHOPPER_GSM;
 //  private static final Encoder ENCODE = Encoder.CLOUDHOPPER_GSM7;
 //  private static final Encoder ENCODE = Encoder.CLOUDHOPPER_UCS_2;
-  private static final Encoder ENCODE = Encoder.CUSTOM_GSM8;
+//  private static final Encoder ENCODE = Encoder.CUSTOM_GSM8;
 //  private static final Encoder ENCODE = Encoder.CUSTOM_GSM7;
 //  private static final Encoder ENCODE = Encoder.PLAIN_UTF8;
   private static final int     SUBMIT_SM_NUMBER = 1_000_000;
@@ -160,10 +160,7 @@ public class PerfClientMain extends AbstractVerticle {
                 .onTimeout(e -> counters.submitSmTimeout++)
                 .onDiscarded(e -> counters.submitSmDiscarded++)
                 .onWindowTimeout(e -> counters.submitSmOfferTimeout++)
-                .onOverflowed(e -> {
-//                  forLoop.pause();
-                  counters.submitSmWriteOverflow++;
-                })
+                .onOverflowed(e -> counters.submitSmWriteOverflow++)
                 .onFailure(e -> counters.submitSmAllFailures++)
                 ;
             var windowSize = sess.getWindowSize();
@@ -207,14 +204,12 @@ public class PerfClientMain extends AbstractVerticle {
     if (c.deliverEnd == 0) {
       c.deliverEnd = System.currentTimeMillis();
     }
-    log.info(
-        "done: threads={}, sessions={}, window={}, text({}), this={}, that={}, ssl={}",
-        THREADS, SESSIONS, WINDOW, ENCODE.name(), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"
-    );
     var submitSmThroughput = ((double) c.submitSmRespCount/((c.submitEnd - c.start)/1000.0));
     var deliverSmThroughput = ((double) c.deliverSmRespCount/((c.deliverEnd - c.start)/1000.0));
 
     var table = new StringBuilder();
+    table.append(String.format("done: threads=%d, sessions=%d, window=%s, text(%s), this=%s, that=%s, ssl=%s",
+        THREADS, SESSIONS, WINDOW, ENCODE.name(), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"));
     table.append(String.format(
         "|> threads=%d, sessions=%d, window=%d(mean %d, max %d), text(%s), this=%s, that=%s, ssl=%s",
         THREADS, SESSIONS, WINDOW, (int) c.meanWindowSize, c.maxWindowSize, ENCODE.name(), SYSTEM_ID, sess.getBoundToSystemId(), SSL? "on": "off"
