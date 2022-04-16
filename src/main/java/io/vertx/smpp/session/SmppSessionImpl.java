@@ -93,9 +93,7 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
       previousWritable = currentWritable;
       currentWritable = channel().isWritable();
 
-      if (previousWritable && !currentWritable) {
-        context.emit(options.getOnOverflowed());
-      } else if (!previousWritable && currentWritable) {
+      if (!previousWritable && currentWritable) {
         context.emit(options.getOnDrained());
       }
     });
@@ -222,6 +220,11 @@ public class SmppSessionImpl extends ConnectionBase implements SmppSession {
                 writeToChannel(req, written);
               } catch (Exception e) {
                 written.fail(new SendPduWriteFailedException("write request to channel failed", e));
+              }
+              if (!channel().isWritable()) {
+                // do not run onOverflowed handler with vertx.runOnContext
+                // some requests can be made before onOverflowed pauses the request source
+                options.getOnOverflowed().handle(null);
               }
             } else {
               windowGuard.release(1);
